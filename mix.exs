@@ -2,9 +2,10 @@ defmodule CldrCollation.MixProject do
   use Mix.Project
 
   @version "0.1.0"
+
   def project do
     [
-      app: :cldr_collation,
+      app: :ex_cldr_collation,
       version: @version,
       name: "Cldr Collation",
       docs: docs(),

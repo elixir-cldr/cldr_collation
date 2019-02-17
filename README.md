@@ -8,7 +8,7 @@ and Nicolas Dufour <nrdufour@gmail.com>
 
 This module requires the package `icu4c` be installed on your system.
 
-For OSX users, the default installation for MAC OS is used.
+For OSX users, the standard installation that is deliviered with MAC OS is used. Not separate installation is required.
 
 ## Installation
 

@@ -1,19 +1,29 @@
 defmodule Cldr.Collation do
   @on_load :init
-
   @so_path './priv/ucol'
+
   def init do
     num_scheds = :erlang.system_info(:schedulers)
     :ok = :erlang.load_nif(@so_path, num_scheds)
   end
 
-  def cmp(a, b, options \\ []) do
-    casing = casing_from_options(options)
-    ucol(a, b, casing)
+  @insensitive 1
+  @sensitive 0
+
+  def compare(a, b) do
+    compare(a, b, @insensitive)
   end
 
-  def compare(a, b, options \\ []) do
+  def compare(a, b, casing) when is_integer(casing) do
+    nif_cmp(a, b, casing)
+  end
+
+  def compare(a, b, options) when is_list(options) do
     casing = casing_from_options(options)
+    nif_cmp(a, b, casing)
+  end
+
+  defp nif_cmp(a, b, casing) do
     case cmp(a, b, casing) do
       1 -> :gt
       0 -> :eq
@@ -21,15 +31,15 @@ defmodule Cldr.Collation do
     end
   end
 
-  def ucol(_a, _b, _casing) do
+  defp cmp(_a, _b, _casing) do
     exit(:nif_library_not_loaded)
   end
 
   defp casing_from_options(options) do
     case Keyword.get(options, :casing, :insensitive) do
-      :insensitive -> 1
-      :sensitive -> 0
-      _ -> 1
+      :insensitive -> @insensitive
+      :sensitive -> @sensitive
+      _ -> @insensitive
     end
   end
 end

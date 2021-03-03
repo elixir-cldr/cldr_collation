@@ -37,7 +37,7 @@ The package can be installed by adding `cldr_collation` to your list of dependen
 ```elixir
 def deps do
   [
-    {:cldr_collation, "~> 0.2.0"}
+    {:ex_cldr_collation, "~> 0.2.0"}
   ]
 end
 

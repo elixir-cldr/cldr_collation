@@ -38,7 +38,7 @@ defmodule CldrCollation.MixProject do
   defp deps do
     [
       {:elixir_make, "~> 0.4", runtime: false},
-      {:ex_doc, "~> 0.19", only: [:dev, :release]},
+      {:ex_doc, "~> 0.19", only: [:dev, :release], runtime: false, optional: true},
       {:ex_cldr, "~> 2.0"},
       {:jason, "~> 1.0"}
     ]

@@ -1,4 +1,16 @@
-# Changelog for Cldr_Collation v0.2.0
+# Changelog for Ex_Cldr_Collation v0.3.0
+
+This is the changelog for Cldr_collation v0.3.0 released on March 3rd, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Add `:inets` to `:extra_applications` for later versions of Elixir
+
+* Fix application name in `README.md`. Thanks to @phlppn.
+
+* Note the requirement for Elixir 1.10 or later in order to use the module-based comparators for `Enum.sort/2`.
+
+# Changelog for Ex_Cldr_Collation v0.2.0
 
 This is the changelog for Cldr_collation v0.2.0 released on Match 13th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 

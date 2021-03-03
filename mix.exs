@@ -1,7 +1,7 @@
 defmodule CldrCollation.MixProject do
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.3.0"
 
   def project do
     [
@@ -10,7 +10,7 @@ defmodule CldrCollation.MixProject do
       name: "Cldr Collation",
       docs: docs(),
       source_url: "https://github.com/kipcole9/cldr_collation",
-      elixir: "~> 1.5",
+      elixir: "~> 1.10",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       compilers: [:elixir_make] ++ Mix.compilers(),
@@ -24,7 +24,7 @@ defmodule CldrCollation.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger, :inets]
     ]
   end
 

@@ -1,3 +1,11 @@
+# Changelog for Ex_Cldr_Collation v0.4.0
+
+This is the changelog for Cldr_collation v0.4.0 released on April 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix compilation issues on OTP 23 and later. On these releases, `liberl_interface.a` doesn't exist and isn't required.  Thanks to @zookzook for the report.
+
 # Changelog for Ex_Cldr_Collation v0.3.0
 
 This is the changelog for Cldr_collation v0.3.0 released on March 3rd, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

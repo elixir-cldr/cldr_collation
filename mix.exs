@@ -1,7 +1,7 @@
 defmodule CldrCollation.MixProject do
   use Mix.Project
 
-  @version "0.3.0"
+  @version "0.4.0"
 
   def project do
     [
@@ -38,7 +38,7 @@ defmodule CldrCollation.MixProject do
   defp deps do
     [
       {:elixir_make, "~> 0.4", runtime: false},
-      {:ex_doc, "~> 0.19", only: [:dev, :release], runtime: false, optional: true},
+      {:ex_doc, "~> 0.19", runtime: false, optional: true},
       {:ex_cldr, "~> 2.0"},
       {:jason, "~> 1.0"}
     ]
@@ -80,7 +80,7 @@ defmodule CldrCollation.MixProject do
         "LICENSE.md",
         "CHANGELOG.md"
       ],
-      skip_undefined_reference_warnings_on: ["changelog"]
+      skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md"]
     ]
   end
 

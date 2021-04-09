@@ -25,7 +25,16 @@ else ifeq ($(UNAME_SYS), Linux)
 endif
 
 CFLAGS += -fPIC -I$(ERTS_INCLUDE_DIR) -I$(ERL_INTERFACE_INCLUDE_DIR)
-LDLIBS += -L$(ERL_INTERFACE_LIB_DIR) -lerl_interface -lei
+
+# On OTP 23 and later, liberl_interface.a doesn't exist and
+# isn't requried
+
+ifneq ("$(wildcard $(ERL_INTERFACE_LIB_DIR)/liberl_interface.a)","")
+    LDLIBS += -L$(ERL_INTERFACE_LIB_DIR) -lerl_interface -lei
+else
+    LDLIBS += -L$(ERL_INTERFACE_LIB_DIR) -lei
+endif
+
 LDFLAGS += -shared
 
 ifeq ($(UNAME_SYS), Darwin)

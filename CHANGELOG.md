@@ -1,14 +1,26 @@
-# Changelog for Ex_Cldr_Collation v0.4.0
+# Changelog
 
-This is the changelog for Cldr_collation v0.4.0 released on April 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+## Ex_Cldr_Collation v0.5.0
+
+This is the changelog for Cldr_collation v0.5.0 released on June 23rd, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
+
+### Enhancements
+
+* Adds `Cldr.Collator.sort/2`
+
+* Adds documentation for `Cldr.Collator.compare/3`
+
+## Ex_Cldr_Collation v0.4.0
+
+This is the changelog for Cldr_collation v0.4.0 released on April 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
 
 ### Bug Fixes
 
 * Fix compilation issues on OTP 23 and later. On these releases, `liberl_interface.a` doesn't exist and isn't required.  Thanks to @zookzook for the report.
 
-# Changelog for Ex_Cldr_Collation v0.3.0
+## Ex_Cldr_Collation v0.3.0
 
-This is the changelog for Cldr_collation v0.3.0 released on March 3rd, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_collation v0.3.0 released on March 3rd, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
 
 ### Enhancements
 
@@ -18,9 +30,9 @@ This is the changelog for Cldr_collation v0.3.0 released on March 3rd, 2020.  Fo
 
 * Note the requirement for Elixir 1.10 or later in order to use the module-based comparators for `Enum.sort/2`.
 
-# Changelog for Ex_Cldr_Collation v0.2.0
+## Ex_Cldr_Collation v0.2.0
 
-This is the changelog for Cldr_collation v0.2.0 released on Match 13th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_collation v0.2.0 released on Match 13th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
 
 ### Enhancements
 

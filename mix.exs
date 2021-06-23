@@ -1,7 +1,7 @@
 defmodule CldrCollation.MixProject do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.5.0"
 
   def project do
     [
@@ -9,7 +9,7 @@ defmodule CldrCollation.MixProject do
       version: @version,
       name: "Cldr Collation",
       docs: docs(),
-      source_url: "https://github.com/kipcole9/cldr_collation",
+      source_url: "https://github.com/elixir-cldr/cldr_collation",
       elixir: "~> 1.10",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
@@ -18,7 +18,11 @@ defmodule CldrCollation.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       make_makefile: "c_src/Makefile",
       description: description(),
-      package: package()
+      package: package(),
+      dialyzer: [
+        ignore_warnings: ".dialyzer_ignore_warnings",
+        plt_add_apps: ~w(inets mix)a
+      ]
     ]
   end
 
@@ -30,17 +34,16 @@ defmodule CldrCollation.MixProject do
 
   defp description do
     """
-    Common Locale Data Repository (CLDR) icu4c NIF-based collator providing locale-sensitive
-    sorting.
+    Common Locale Data Repository (CLDR) icu4c NIF-based collator providing Unicode
+    default collation sorting. Useful sorting not-ASCII strings.
     """
   end
 
   defp deps do
     [
       {:elixir_make, "~> 0.4", runtime: false},
-      {:ex_doc, "~> 0.19", runtime: false, optional: true},
-      {:ex_cldr, "~> 2.0"},
-      {:jason, "~> 1.0"}
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false, optional: true},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
     ]
   end
 

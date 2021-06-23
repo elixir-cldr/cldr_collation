@@ -7,7 +7,7 @@ defmodule Cldr.Collation do
 
   """
   @on_load :init
-  @so_path './priv/ucol'
+  @so_path :code.priv_dir(:ex_cldr_collation) ++ '/ucol'
 
   @type options :: [
     {:casing, :sensitive | :insensitive}

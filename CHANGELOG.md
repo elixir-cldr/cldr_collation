@@ -4,6 +4,12 @@
 
 This is the changelog for Cldr_collation v0.5.0 released on June 23rd, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
 
+### Bug fixes
+
+* Correctly reference the `ucol.so` file when loading at startup
+
+* Removes unrequired dependencies
+
 ### Enhancements
 
 * Adds `Cldr.Collator.sort/2`

@@ -1,0 +1,14 @@
+#! /bin/zsh
+
+# The location of the `ex_cldr_collation` repo
+export EX_CLDR_COLLATION="${EX_CLDR_COLLATION:=$HOME/Development/cldr_collation}"
+[ ! -d $EX_CLDR_COLLATION ] && \
+  { echo "ex_cldr_collation repository $EX_CLDR_COLLATION was not found."; exit 1; }
+
+# The location of the cloned CLDR repo
+export CLDR_REPO="${CLDR_REPO:=$HOME/Development/cldr_repo}"
+[ ! -d $CLDR_REPO ] && { echo "Unicode CLDR repository $CLDR_REPO was not found."; exit 1; }
+
+cp -R $CLDR_REPO/common/uca/ $EX_CLDR_COLLATION/data/uca
+cp -R $CLDR_REPO/common/collation/ $EX_CLDR_COLLATION/data/collation
+

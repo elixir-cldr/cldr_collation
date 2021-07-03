@@ -1,5 +1,13 @@
 # Changelog
 
+## Ex_Cldr_Collation v0.6.0
+
+This is the changelog for Cldr_collation v0.6.0 released on July 3rd, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
+
+### Bug fixes
+
+* Load the nif from a path relative to `:code.priv_dir/1`.
+
 ## Ex_Cldr_Collation v0.5.0
 
 This is the changelog for Cldr_collation v0.5.0 released on June 23rd, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)

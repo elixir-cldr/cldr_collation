@@ -7,7 +7,6 @@ defmodule Cldr.Collation do
 
   """
   @on_load :init
-  @so_path :code.priv_dir(:ex_cldr_collation) ++ '/ucol'
 
   @type options :: [
     {:casing, :sensitive | :insensitive}
@@ -16,8 +15,9 @@ defmodule Cldr.Collation do
   @type comparison :: :lt | :eq | :gt
 
   def init do
+    so_path = :code.priv_dir(:ex_cldr_collation) ++ '/ucol'
     num_scheds = :erlang.system_info(:schedulers)
-    :ok = :erlang.load_nif(@so_path, num_scheds)
+    :ok = :erlang.load_nif(so_path, num_scheds)
   end
 
   @insensitive 1

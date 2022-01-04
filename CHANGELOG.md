@@ -1,5 +1,15 @@
 # Changelog
 
+## Ex_Cldr_Collation v0.7.0
+
+This is the changelog for Cldr_collation v0.7.0 released on January 4th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
+
+### Bug fixes
+
+* Fix the .so path for the NIF at load time, not compile time. Thanks to @sergiorjsd for the report. Closes #3.
+
+* Fix buidling on ARM-based Mac models
+
 ## Ex_Cldr_Collation v0.6.0
 
 This is the changelog for Cldr_collation v0.6.0 released on July 3rd, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)

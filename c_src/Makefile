@@ -10,10 +10,18 @@ NIF_OBJS=$(NIF_DIR)/ucol.o
 NIF_SO=$(PRIVDIR)/ucol.so
 
 UNAME_SYS := $(shell uname -s)
+UNAME_ARCH := $(shell uname -p)
+
 ifeq ($(UNAME_SYS), Darwin)
-	CC ?= cc
-	CFLAGS ?= -O3 -std=c99 -arch x86_64 -Wall -Wmissing-prototypes
-	LDFLAGS ?= -arch x86_64 -flat_namespace -undefined suppress
+	ifeq ($(UNAME_ARCH), arm)
+		CC ?= cc
+		CFLAGS = -O3 -std=c99 -arch arm64 -Wall -Wmissing-prototypes
+		LDFLAGS = -arch arm64 -flat_namespace -undefined suppress
+	else
+		CC ?= cc
+		CFLAGS = -O3 -std=c99 -arch x86_64 -Wall -Wmissing-prototypes
+		LDFLAGS = -arch x86_64 -flat_namespace -undefined suppress
+	endif
 else ifeq ($(UNAME_SYS), FreeBSD)
 	CC ?= cc
 	CFLAGS ?= -O3 -std=c99 -finline-functions -Wall -Wmissing-prototypes
@@ -44,7 +52,6 @@ else
 	ICU_CFLAGS = $(shell pkg-config --cflags icu-uc icu-io)
 	ICU_LIBS = $(shell pkg-config --libs icu-uc icu-io)
 endif
-
 
 all: $(NIF_ENV) $(NIF_SO)
 

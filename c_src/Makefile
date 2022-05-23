@@ -45,7 +45,6 @@ else
 	ICU_LIBS = $(shell pkg-config --libs icu-uc icu-io)
 endif
 
-
 all: $(NIF_ENV) $(NIF_SO)
 
 clean:

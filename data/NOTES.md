@@ -6,3 +6,6 @@ https://unicode.org/reports/tr35/tr35-collation.html
 
 ### TR10 UCA
 https://unicode.org/reports/tr10
+
+### Collation test data
+https://www.unicode.org/Public/UCA/latest/CollationTest.html

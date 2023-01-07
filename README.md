@@ -1,15 +1,36 @@
 # Cldr Collation
 
 A NIF-based Unicode collator based upon the Unicode library `libicu4c`. Builds upon the
-erlang library [erlang-ucol](https://github.com/barrel-db/erlang-ucol) by BenoÃ®t Chesneau <benoitc@e-engura.org> and Nicolas Dufour <nrdufour@gmail.com>
+erlang library [erlang-ucol](https://github.com/barrel-db/erlang-ucol) by Benoit Chesneau <benoitc@e-engura.org> and Nicolas Dufour <nrdufour@gmail.com>
 
 This initial version uses only the "root" locale collator which is the [CLDR DUCET collator](http://userguide.icu-project.org/collation).
 
-## Requirements
 
-This module requires the package `icu4c` be installed on your system.
+## Installation
 
-For Mac OS users, the standard installation that is delivered with Mac OS is used. No separate installation is required.
+### Installing libicu
+
+`ex_cldr_collation` relies upon [libicu](https://icu.unicode.org) which must be installed prior to configuration and compiling this library.  On MacOS, the relevant headers are included in `ex_cldr_collation` and no additional installation is required. On Linux systems, `libicu` and `pckconf` must be installed:
+```bash
+# Install packages
+$ sudo apt-get install pkgconf libicu-dev
+
+# Then check that we can resolve the libicu package 
+# dependencies
+$ pkg-config --libs icu-uc icu-io
+-licuio -licui18n -licuuc -licudata
+```
+
+### Installing ex_cldr_collation
+The package can then be installed by adding `cldr_collation` to your list of dependencies in `mix.exs`:
+
+```elixir
+def deps do
+  [
+    {:ex_cldr_collation, "~> 0.7.0"}
+  ]
+end
+```
 
 ## Examples
 ```elixir
@@ -38,19 +59,7 @@ For Mac OS users, the standard installation that is delivered with Mac OS is use
   ["AAAa", "AAAA"]
 ```
 
-## Installation
 
-The package can be installed by adding `cldr_collation` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:ex_cldr_collation, "~> 0.5.0"}
-  ]
-end
-```
-
-Ensure the package `icu4c` is installed on your system before invoking `mix compile` or `iex -S mix`.
 
 
 

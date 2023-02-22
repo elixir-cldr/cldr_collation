@@ -10,12 +10,28 @@ This initial version uses only the "root" locale collator which is the [CLDR DUC
 
 ### Installing libicu
 
-`ex_cldr_collation` relies upon [libicu](https://icu.unicode.org) which must be installed prior to configuration and compiling this library.  On MacOS, the relevant headers are included in `ex_cldr_collation` and no additional installation is required. On Linux systems, `libicu` and `pckconf` must be installed:
+`ex_cldr_collation` relies upon [libicu](https://icu.unicode.org) which must be installed prior to configuration and compiling this library.  Depending on your platform, `icu-dev` may also need to be installed.
+
+### Installation on MacOS
+
+On MacOS, the relevant headers are included in `ex_cldr_collation` and no additional installation is required.
+
+### Installation on Linux
+
+On Linux systems, `libicu-dev`, `libicu` and `pckconf` must be installed and well as basic development tools for the build process.
+
 ```bash
-# Install packages
+# For Ubuntu
+# libicu is required for compiling the NIF
+# assumes libicu is already installed which is normal on Ubuntu
 $ sudo apt-get install pkgconf libicu-dev
 
-# Then check that we can resolve the libicu package 
+# For Alpine
+# icu-dev is required when compiling the NIF
+# icu is required at runtime
+$ apk add pkgconf icu-dev icu
+
+# Then check that we can resolve the libicu package
 # dependencies
 $ pkg-config --libs icu-uc icu-io
 -licuio -licui18n -licuuc -licudata

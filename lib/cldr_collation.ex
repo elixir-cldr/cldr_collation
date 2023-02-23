@@ -88,23 +88,23 @@ defmodule Cldr.Collation do
 
   ## Arguments
 
-  * `string_1` is an a `t:String.t()`
+  * `string_1` is an a `t:String.t/0`
 
-  * `string_2` is an a `t:String.t()`
+  * `string_2` is an a `t:String.t/0`
 
   * `options` is a keyword list of options
 
   ## Options
 
-  * `casing` is either `:sensitive` or `:insensitive`
+  * `:casing` is either `:sensitive` or `:insensitive`
     indicating if collation is to be case sensitive or not.
-    The default is `:insensitive`
+    The default is `:insensitive`.
 
   ## Returns
 
   * Either of `:lt`, `:eq` or `:gt` signifying if
     `string_1` is less than, equal to or greater than
-    `string_2`
+    `string_2`.
 
   ## Examples
 
@@ -119,7 +119,8 @@ defmodule Cldr.Collation do
 
   @dialyzer {:no_return, compare: 3}
   @dialyzer {:no_return, compare: 2}
-  def compare(string_1, string_2, options \\ @default_options) when is_list(options) do
+  def compare(string_1, string_2, options \\ @default_options)
+      when is_binary(string_1) and is_binary(string_2) and is_list(options) do
     casing = casing_from_options(options)
     nif_compare(string_1, string_2, casing)
   end

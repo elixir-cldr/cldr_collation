@@ -5,7 +5,6 @@ erlang library [erlang-ucol](https://github.com/barrel-db/erlang-ucol) by Benoit
 
 This initial version uses only the "root" locale collator which is the [CLDR DUCET collator](http://userguide.icu-project.org/collation).
 
-
 ## Installation
 
 `ex_cldr_collation` depends upon [libicu](https://unicode-org.github.io/icu/userguide/icu/) to provide the underlying collator. There are two required components:

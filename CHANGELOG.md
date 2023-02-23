@@ -2,6 +2,14 @@
 
 ## Ex_Cldr_Collation v0.7.0
 
+This is the changelog for Cldr_collation v0.7.1 released on February 24th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
+
+### Bug fixes
+
+* Add binary guards to `Cldr.Collation.compare/3`.
+
+## Ex_Cldr_Collation v0.7.0
+
 This is the changelog for Cldr_collation v0.7.0 released on January 4th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
 
 ### Bug fixes

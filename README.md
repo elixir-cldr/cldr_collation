@@ -19,16 +19,24 @@ On MacOS, the relevant headers are included in `ex_cldr_collation` and no additi
 
 ### Installation on Linux
 
-On Linux systems, `libicu-dev`, `libicu` and `pckconf` must be installed and well as basic development tools for the build process.
+On Linux systems, `libicu-dev`, `libicu` and `pkg-conf` must be installed and well as basic development tools for the build process.
 
 ```bash
 # For Ubuntu
-# libicu is required for compiling the NIF
+# pkg-config and libicu are required for compiling the NIF
 # assumes libicu is already installed which is normal on Ubuntu
 $ sudo apt-get install pkgconf libicu-dev
 
+# For Debian
+# pkg-config and icu-dev are required when compiling the NIF
+# libicu is required at runtime
+# Debian Bullseye
+$ sudo apt install pkgconf libicu-dev libicu67
+# Debian Bookworm
+$ sudo apt install pkgconf libicu-dev libicu72
+
 # For Alpine
-# icu-dev is required when compiling the NIF
+# pkg-config and icu-dev are required when compiling the NIF
 # icu is required at runtime
 $ apk add pkgconf icu-dev icu
 

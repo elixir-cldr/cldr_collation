@@ -11,6 +11,7 @@ NIF_SO=$(PRIVDIR)/ucol.so
 
 UNAME_SYS := $(shell uname -s)
 UNAME_ARCH := $(shell uname -p)
+PKG_CONFIG := $(shell which pkg-config)
 
 ifeq ($(UNAME_SYS), Darwin)
 	ifeq ($(UNAME_ARCH), arm)
@@ -51,6 +52,14 @@ ifeq ($(UNAME_SYS), Darwin)
 else
 	ICU_CFLAGS = $(shell pkg-config --cflags icu-uc icu-io)
 	ICU_LIBS = $(shell pkg-config --libs icu-uc icu-io)
+endif
+
+ifeq ($(ICU_FLAGS),"")
+  $(error ICU_FLAGS not set, is pkg-config installed?)
+endif
+
+ifeq ($(ICU_LIBS),"")
+  $(error ICU_LIBS not set, is pkg-config installed?)
 endif
 
 all: $(NIF_ENV) $(NIF_SO)

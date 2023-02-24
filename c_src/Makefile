@@ -11,7 +11,6 @@ NIF_SO=$(PRIVDIR)/ucol.so
 
 UNAME_SYS := $(shell uname -s)
 UNAME_ARCH := $(shell uname -p)
-PKG_CONFIG := $(shell which pkg-config)
 
 ifeq ($(UNAME_SYS), Darwin)
 	ifeq ($(UNAME_ARCH), arm)

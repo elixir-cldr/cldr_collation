@@ -17,7 +17,7 @@ defmodule Cldr.Collation do
   def init do
     so_path = :code.priv_dir(:ex_cldr_collation) ++ '/ucol'
     num_scheds = :erlang.system_info(:schedulers)
-    :ok = :erlang.load_nif(so_path, num_scheds)
+    :erlang.load_nif(so_path, num_scheds)
   end
 
   @insensitive 1

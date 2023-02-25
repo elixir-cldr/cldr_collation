@@ -53,11 +53,7 @@ else
 	ICU_LIBS = $(shell pkg-config --libs icu-uc icu-io)
 endif
 
-ifeq ($(ICU_FLAGS),"")
-  $(error ICU_FLAGS not set, is pkg-config installed?)
-endif
-
-ifeq ($(ICU_LIBS),"")
+ifeq ($(ICU_LIBS),)
   $(error ICU_LIBS not set, is pkg-config installed?)
 endif
 

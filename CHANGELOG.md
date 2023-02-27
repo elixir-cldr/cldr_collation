@@ -1,6 +1,16 @@
 # Changelog
 
-## Ex_Cldr_Collation v0.7.0
+## Ex_Cldr_Collation v0.7.2
+
+This is the changelog for Cldr_collation v0.7.2 released on February 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
+
+### Bug fixes
+
+* Makes the `Makefile` more resilient by exiting if `pkg-config` isn't installed and therefore `ICU_LIBS` is empty. Previously this would fail silently and an unclear runtime error would be reported.
+
+* Improved the error message if the NIF can't be loaded. Thanks to @linusdm.  Closes #8.
+
+## Ex_Cldr_Collation v0.7.1
 
 This is the changelog for Cldr_collation v0.7.1 released on February 24th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
 

@@ -23,5 +23,5 @@ erl_crash.dump
 .tool-versions
 
 # Don't commit .so
-priv/*.so
+priv/**/*.so
 c_src/ucol.o

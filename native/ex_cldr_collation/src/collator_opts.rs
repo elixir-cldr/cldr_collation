@@ -3,7 +3,6 @@
 /// on its fields being stable.
 /// Thus we need to create our own version of CollatorOptions that we can use in our NIF API, and can be easily converted to icu_collator::ComparisonOptions.
 /// This also allows us the flexibily to adjust the NIF API if we so choose, while still being compatible with icu_collator.
-
 use rustler::{NifMap, NifUnitEnum};
 
 #[derive(NifUnitEnum)]
@@ -149,4 +148,3 @@ impl From<CollatorOptions> for icu_collator::CollatorOptions {
         collator_options
     }
 }
-

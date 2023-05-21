@@ -11,5 +11,6 @@ crate-type = ["cdylib"]
 [dependencies]
 icu_collator = "1.2.0"
 icu_locid = "1.2.0"
+icu_provider = { version = "1.2.0", features = ["sync"] }
 icu_testdata = "1.2.0"
 rustler = "0.28.0"

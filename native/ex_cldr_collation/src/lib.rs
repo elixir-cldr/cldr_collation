@@ -1,9 +1,16 @@
+mod collator;
 mod collator_opts;
+mod resource;
 
-use icu_collator::*;
-use icu_locid::Locale;
 use collator_opts::CollatorOptions;
-use rustler::NifResult;
+use resource::{CollatorResource, CollatorResourceArc};
+use rustler::{Env, NifResult};
+
+#[rustler::nif]
+fn create_collator(locale_tag: &str, opts: CollatorOptions) -> NifResult<CollatorResourceArc> {
+    let collator = collator::new(locale_tag, opts)?;
+    Ok(CollatorResource::new_arc(collator))
+}
 
 #[rustler::nif]
 fn sort<'a>(
@@ -11,13 +18,28 @@ fn sort<'a>(
     list: Vec<&'a str>,
     opts: CollatorOptions,
 ) -> NifResult<Vec<&'a str>> {
-    let locale: Locale = locale_tag.parse().map_err(|_| rustler::Error::BadArg)?;
-    let collator =
-        Collator::try_new_unstable(&icu_testdata::unstable(), &locale.into(), opts.into()).unwrap();
+    let collator = collator::new(locale_tag, opts)?;
 
     let mut list = list;
     list.sort_by(|first, second| collator.compare(first, second));
     Ok(list)
 }
 
-rustler::init!("Elixir.Cldr.Collation.Nif", [sort]);
+#[rustler::nif]
+fn sort_using_collator(collator_arc: CollatorResourceArc, list: Vec<&str>) -> Vec<&str> {
+    let collator = collator_arc.collator().lock().unwrap();
+    let mut list = list;
+    list.sort_by(|first, second| collator.compare(first, second));
+    list
+}
+
+fn load(env: Env, _info: rustler::Term) -> bool {
+    rustler::resource!(CollatorResource, env);
+    true
+}
+
+rustler::init!(
+    "Elixir.Cldr.Collation.Nif",
+    [sort, create_collator, sort_using_collator],
+    load = load
+);

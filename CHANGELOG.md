@@ -1,5 +1,13 @@
 # Changelog
 
+## Ex_Cldr_Collation v0.7.3
+
+This is the changelog for Cldr_collation v0.7.3 released on May 28th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
+
+### Bug fixes
+
+* Fix compiler warnings for Elixir 1.17.
+
 ## Ex_Cldr_Collation v0.7.2
 
 This is the changelog for Cldr_collation v0.7.2 released on February 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)

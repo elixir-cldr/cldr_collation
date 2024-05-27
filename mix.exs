@@ -1,7 +1,7 @@
 defmodule CldrCollation.MixProject do
   use Mix.Project
 
-  @version "0.7.2"
+  @version "0.7.3"
 
   def project do
     [
@@ -43,7 +43,7 @@ defmodule CldrCollation.MixProject do
     [
       {:elixir_make, "~> 0.4", runtime: false},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false, optional: true},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.4", only: [:dev], runtime: false}
     ]
   end
 

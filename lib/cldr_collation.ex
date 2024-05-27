@@ -15,7 +15,7 @@ defmodule Cldr.Collation do
   @type comparison :: :lt | :eq | :gt
 
   def init do
-    so_path = :code.priv_dir(:ex_cldr_collation) ++ '/ucol'
+    so_path = :code.priv_dir(:ex_cldr_collation) ++ String.to_charlist("/ucol")
     num_scheds = :erlang.system_info(:schedulers)
     :erlang.load_nif(so_path, num_scheds)
   end

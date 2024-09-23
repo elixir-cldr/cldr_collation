@@ -45,12 +45,14 @@ endif
 
 LDFLAGS += -shared
 
-ifeq ($(UNAME_SYS), Darwin)
-	ICU_CFLAGS = -I$(BASEDIR)/c_src/platform/osx/icu
-	ICU_LIBS = -lpthread -lm -licucore -lstdc++
-else
-	ICU_CFLAGS = $(shell pkg-config --cflags icu-uc icu-io)
-	ICU_LIBS = $(shell pkg-config --libs icu-uc icu-io)
+ICU_CFLAGS = $(shell pkg-config --cflags icu-uc icu-io --silence-errors)
+ICU_LIBS = $(shell pkg-config --libs icu-uc icu-io --silence-errors)
+
+ifeq ($(ICU_LIBS),)
+  ifeq ($(UNAME_SYS), Darwin)
+		ICU_CFLAGS = -I$(BASEDIR)/c_src/platform/osx/icu
+		ICU_LIBS = -lpthread -lm -licucore -lstdc++
+	endif
 endif
 
 ifeq ($(ICU_LIBS),)

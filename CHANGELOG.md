@@ -1,5 +1,13 @@
 # Changelog
 
+## Ex_Cldr_Collation v0.7.4
+
+This is the changelog for Cldr_collation v0.7.4 released on September 25th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
+
+### Bug fixes
+
+* Fix Makefile for Darwin (MacOS) when running in [devenv](https://devenv.sh)
+
 ## Ex_Cldr_Collation v0.7.3
 
 This is the changelog for Cldr_collation v0.7.3 released on May 28th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)

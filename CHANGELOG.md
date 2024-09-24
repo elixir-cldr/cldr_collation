@@ -6,7 +6,7 @@ This is the changelog for Cldr_collation v0.7.4 released on September 25th, 2024
 
 ### Bug fixes
 
-* Fix Makefile for Darwin (MacOS) when running in [devenv](https://devenv.sh)
+* Fix Makefile for Darwin (MacOS) when running in [devenv](https://devenv.sh). Thanks to @serpent213 for the issue. Closes #14.
 
 ## Ex_Cldr_Collation v0.7.3
 

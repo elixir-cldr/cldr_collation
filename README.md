@@ -15,7 +15,17 @@ This initial version uses only the "root" locale collator which is the [CLDR DUC
 
 ### Installation on MacOS
 
-On MacOS, the relevant headers are included in `ex_cldr_collation` and no additional installation is required.
+On MacOS, the relevant headers are included in `ex_cldr_collation` and no additional installation is required. The build process will link to the MacOX native `icucore` library.
+
+However it is also possible to use another installation of `libicu` if, for some reason, the native installation is not sufficiently up-to-date.  An installed `icu4c` will take precedence over the native `icucore` library. For example, the following will install `icu4c` (which includes `libicu`), and link it into the standard search path. When compiling, this installation will take precendence.
+
+```bash
+% brew install icu4c
+% brew link icu4c
+# Remove any old build of the NIF that may have been linked to the native icucore lib
+% rm ./deps/ex_cldr_collation/priv.ucol.so
+% mix deps.compile ex_cldr_collation
+```
 
 ### Installation on Linux
 

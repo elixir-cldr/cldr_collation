@@ -1,5 +1,15 @@
 # Changelog
 
+## Ex_Cldr_Collation v0.7.5
+
+This is the changelog for Cldr_collation v0.7.5 released on September 29th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
+
+### Bug fixes
+
+* Remove deprecated linker option `-undefined suppress` in favour of `-undefined dynamic_lookup` on MacOS.
+
+* Update README to illustrate how an installed `libicu` in the search path will take precendence over user the native `icucore` library.
+
 ## Ex_Cldr_Collation v0.7.4
 
 This is the changelog for Cldr_collation v0.7.4 released on September 25th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)

@@ -94,7 +94,12 @@ end
   ["AAAa", "AAAA"]
 ```
 
+## Troubleshooting
 
+If you encounter [issues](https://github.com/elixir-cldr/cldr_collation/issues/16) with `ex_cldr_collation` in GitHub Action workflows, make sure to [clear the GitHub Action cache](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/caching-dependencies-to-speed-up-workflows#managing-caches).
 
-
-
+```
+{:error,
+ {:load_failed,
+  ~c"Failed to load NIF library /home/runner/work/app/app/_build/test/lib/ex_cldr_collation/priv/ucol: 'libicui18n.so.74: cannot open shared object file: No such file or directory'"}}
+```

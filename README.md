@@ -23,7 +23,7 @@ However it is also possible to use another installation of `libicu` if, for some
 % brew install icu4c
 % brew link icu4c
 # Remove any old build of the NIF that may have been linked to the native icucore lib
-% rm ./deps/ex_cldr_collation/priv.ucol.so
+% rm ./deps/ex_cldr_collation/priv/ucol.so
 % mix deps.compile ex_cldr_collation
 ```
 

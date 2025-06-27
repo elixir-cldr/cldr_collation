@@ -10,7 +10,9 @@ NIF_OBJS=$(NIF_DIR)/ucol.o
 NIF_SO=$(PRIVDIR)/ucol.so
 
 UNAME_SYS := $(shell uname -s)
-UNAME_ARCH := $(shell uname -p)
+
+UNAME_ARCH := $(TARGETPLATFORM)
+UNAME_ARCH ?= $(shell uname -p)
 
 ifeq ($(UNAME_SYS), Darwin)
 	ifeq ($(UNAME_ARCH), arm)
@@ -27,9 +29,16 @@ else ifeq ($(UNAME_SYS), FreeBSD)
 	CFLAGS ?= -O3 -std=c99 -finline-functions -Wall -Wmissing-prototypes
 	CXXFLAGS ?= -O3 -finline-functions -Wall
 else ifeq ($(UNAME_SYS), Linux)
-	CC ?= gcc
-	CFLAGS ?= -O3 -std=c99 -finline-functions -Wall -Wmissing-prototypes
-	CXXFLAGS ?= -O3 -finline-functions -Wall
+	ifeq ($(UNAME_ARCH), x86_64)
+		CC ?= gcc
+		CFLAGS ?= -O3 -std=c99 -finline-functions -Wall -Wmissing-prototypes
+		CXXFLAGS ?= -O3 -finline-functions -Wall
+	else
+		# sudo apt install gcc-aarch64-linux-gnu
+		CC ?= aarch64-linux-gnu-gcc
+		CFLAGS ?= -std=c99 -finline-functions -Wall -Wmissing-prototypes
+		CXXFLAGS ?= -O3 -finline-functions -Wall
+	endif
 endif
 
 CFLAGS += -fPIC -I$(ERTS_INCLUDE_DIR) -I$(ERL_INTERFACE_INCLUDE_DIR)

@@ -83,6 +83,7 @@ defmodule CldrCollation.MixProject do
         "LICENSE.md",
         "CHANGELOG.md"
       ],
+      formatters: ["html"],
       skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md"]
     ]
   end

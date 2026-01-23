@@ -33,22 +33,22 @@ On Linux systems, `libicu-dev`, `libicu` and `pkg-conf` must be installed and we
 
 ```bash
 # For Ubuntu
-# pkg-config and libicu are required for compiling the NIF
+# pkg-config and libicu are required for compiling the NIF;
 # assumes libicu is already installed which is normal on Ubuntu
-$ sudo apt-get install pkgconf libicu-dev
+$ sudo apt-get install build-essential libicu-dev
 
 # For Debian
-# pkg-config and icu-dev are required when compiling the NIF
+# pkg-config and icu-dev are required when compiling the NIF;
 # libicu is required at runtime
 # Debian Bullseye
-$ sudo apt install pkgconf libicu-dev libicu67
+$ sudo apt install build-essential libicu-dev libicu67
 # Debian Bookworm
-$ sudo apt install pkgconf libicu-dev libicu72
+$ sudo apt install build-essential libicu-dev libicu72
 
 # For Alpine
-# pkg-config and icu-dev are required when compiling the NIF
+# erlang-dev and icu-dev are required when compiling the NIF;
 # icu is required at runtime
-$ apk add pkgconf icu-dev icu
+$ apk add build-base icu-dev erlang-dev
 
 # Then check that the libicu package dependencies
 # can be resolved

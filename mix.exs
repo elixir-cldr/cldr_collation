@@ -25,7 +25,8 @@ defmodule Cldr.Collation.MixProject do
   defp deps do
     [
       {:unicode, "~> 1.21"},
-      {:elixir_make, "~> 0.4", runtime: false, optional: true}
+      {:elixir_make, "~> 0.4", runtime: false, optional: true},
+      {:benchee, "~> 1.0", only: :dev, runtime: false}
     ]
   end
 

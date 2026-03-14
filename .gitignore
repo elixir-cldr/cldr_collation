@@ -22,3 +22,7 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 collation-*.tar
 
+# The NIF shared object
+priv/ucol.so
+
+

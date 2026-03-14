@@ -61,7 +61,7 @@ defmodule Collation do
 
   * `string_a` - the first string to compare
   * `string_b` - the second string to compare
-  * `opts` - a keyword list of collation options
+  * `options` - a keyword list of collation options
 
   ### Options
 
@@ -91,8 +91,8 @@ defmodule Collation do
       :eq
 
   """
-  def compare(string_a, string_b, opts \\ []) do
-    options = resolve_options(opts)
+  def compare(string_a, string_b, options \\ []) do
+    options = resolve_options(options)
     key_a = sort_key(string_a, options)
     key_b = sort_key(string_b, options)
 
@@ -112,7 +112,7 @@ defmodule Collation do
   ### Arguments
 
   * `input` - a UTF-8 string or a list of integer codepoints
-  * `opts` - a keyword list of collation options, or a `%Collation.Options{}` struct
+  * `options` - a keyword list of collation options, or a `%Collation.Options{}` struct
 
   ### Options
 
@@ -133,10 +133,10 @@ defmodule Collation do
       true
 
   """
-  def sort_key(input, opts \\ [])
+  def sort_key(input, options \\ [])
 
-  def sort_key(input, opts) when is_list(opts) do
-    sort_key(input, resolve_options(opts))
+  def sort_key(input, options) when is_list(options) do
+    sort_key(input, resolve_options(options))
   end
 
   def sort_key(string, %Options{} = options) when is_binary(string) do
@@ -186,7 +186,7 @@ defmodule Collation do
   ### Arguments
 
   * `strings` - a list of UTF-8 strings to sort
-  * `opts` - a keyword list of collation options
+  * `options` - a keyword list of collation options
 
   ### Options
 
@@ -205,8 +205,8 @@ defmodule Collation do
       ["а", "б", "в"]
 
   """
-  def sort(strings, opts \\ []) do
-    options = resolve_options(opts)
+  def sort(strings, options \\ []) do
+    options = resolve_options(options)
 
     strings
     |> Enum.map(fn s -> {sort_key(s, options), s} end)
@@ -390,12 +390,12 @@ defmodule Collation do
     end
   end
 
-  defp resolve_options(opts) when is_list(opts) do
-    case Keyword.get(opts, :locale) do
-      nil -> Options.new(opts)
-      locale -> Options.from_locale(locale) |> struct(Keyword.delete(opts, :locale))
+  defp resolve_options(options) when is_list(options) do
+    case Keyword.get(options, :locale) do
+      nil -> Options.new(options)
+      locale -> Options.from_locale(locale) |> struct(Keyword.delete(options, :locale))
     end
   end
 
-  defp resolve_options(%Options{} = opts), do: opts
+  defp resolve_options(%Options{} = options), do: options
 end

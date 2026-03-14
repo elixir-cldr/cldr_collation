@@ -24,7 +24,7 @@ defmodule Collation.SortKey do
   ### Arguments
 
   * `processed_elements` - a list of `{%Collation.Element{}, quaternary}` tuples as returned by `Collation.Variable.process/3`
-  * `opts` - a `%Collation.Options{}` struct controlling which levels to include
+  * `options` - a `%Collation.Options{}` struct controlling which levels to include
   * `original_string` - the original input string, used for the identical level (default: `nil`)
 
   ### Returns
@@ -35,35 +35,35 @@ defmodule Collation.SortKey do
   ### Examples
 
       iex> elements = [{%Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0008}, 0}]
-      iex> opts = Collation.Options.new(strength: :primary)
-      iex> Collation.SortKey.build(elements, opts)
+      iex> options = Collation.Options.new(strength: :primary)
+      iex> Collation.SortKey.build(elements, options)
       <<0x23, 0xEC>>
 
   """
-  def build(processed_elements, %Options{} = opts, original_string \\ nil) do
+  def build(processed_elements, %Options{} = options, original_string \\ nil) do
     key = build_primary(processed_elements)
 
     key =
-      if opts.strength in [:secondary, :tertiary, :quaternary, :identical] do
-        key <> @level_separator <> build_secondary(processed_elements, opts)
+      if options.strength in [:secondary, :tertiary, :quaternary, :identical] do
+        key <> @level_separator <> build_secondary(processed_elements, options)
       else
         key
       end
 
     key =
-      if opts.strength in [:tertiary, :quaternary, :identical] do
+      if options.strength in [:tertiary, :quaternary, :identical] do
         # Insert case level between L2 and L3 if case_level is on
         key =
-          if opts.case_level do
+          if options.case_level do
             key <> @level_separator <> build_case_level(processed_elements)
           else
             key
           end
 
-        key <> @level_separator <> build_tertiary(processed_elements, opts)
+        key <> @level_separator <> build_tertiary(processed_elements, options)
       else
         # If case_level is on with strength=secondary, add case level after L2
-        if opts.case_level do
+        if options.case_level do
           key <> @level_separator <> build_case_level(processed_elements)
         else
           key
@@ -71,14 +71,14 @@ defmodule Collation.SortKey do
       end
 
     key =
-      if opts.strength in [:quaternary, :identical] and opts.alternate == :shifted do
+      if options.strength in [:quaternary, :identical] and options.alternate == :shifted do
         key <> @level_separator <> build_quaternary(processed_elements)
       else
         key
       end
 
     key =
-      if opts.strength == :identical do
+      if options.strength == :identical do
         # Identical level: append NFD of original string
         nfd =
           if original_string, do: :unicode.characters_to_nfd_binary(original_string), else: <<>>
@@ -102,7 +102,7 @@ defmodule Collation.SortKey do
     end)
   end
 
-  defp build_secondary(elements, opts) do
+  defp build_secondary(elements, options) do
     weights =
       elements
       |> Enum.reduce([], fn {elem, _q}, acc ->
@@ -115,7 +115,7 @@ defmodule Collation.SortKey do
       |> Enum.reverse()
 
     weights =
-      if opts.backwards do
+      if options.backwards do
         Enum.reverse(weights)
       else
         weights
@@ -125,10 +125,10 @@ defmodule Collation.SortKey do
     |> Enum.reduce(<<>>, fn w, acc -> acc <> <<w::16>> end)
   end
 
-  defp build_tertiary(elements, opts) do
+  defp build_tertiary(elements, options) do
     elements
     |> Enum.reduce(<<>>, fn {elem, _q}, acc ->
-      t = apply_case_first(elem.tertiary, opts.case_first)
+      t = apply_case_first(elem.tertiary, options.case_first)
 
       if t > 0 do
         acc <> <<t::16>>

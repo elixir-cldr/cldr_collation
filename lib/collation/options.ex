@@ -43,7 +43,7 @@ defmodule Collation.Options do
 
   ### Arguments
 
-  * `opts` - a keyword list of collation options (default: `[]`)
+  * `options` - a keyword list of collation options (default: `[]`)
 
   ### Options
 
@@ -71,8 +71,8 @@ defmodule Collation.Options do
       %Collation.Options{strength: :primary, alternate: :shifted}
 
   """
-  def new(opts \\ []) do
-    struct(__MODULE__, opts)
+  def new(options \\ []) do
+    struct(__MODULE__, options)
   end
 
   @doc """
@@ -97,12 +97,12 @@ defmodule Collation.Options do
 
   ### Examples
 
-      iex> opts = Collation.Options.from_locale("en-u-ks-level2")
-      iex> opts.strength
+      iex> options = Collation.Options.from_locale("en-u-ks-level2")
+      iex> options.strength
       :secondary
 
-      iex> opts = Collation.Options.from_locale("da")
-      iex> opts.case_first
+      iex> options = Collation.Options.from_locale("da")
+      iex> options.case_first
       :upper
 
   """
@@ -134,7 +134,7 @@ defmodule Collation.Options do
     |> Map.put(:tailoring, tailoring_overlay)
   end
 
-  # Convert parsed u-pairs to keyword opts
+  # Convert parsed u-pairs to keyword options
   defp u_pairs_to_opts(pairs) do
     Enum.reduce(pairs, [], fn {key, value}, acc ->
       case key do

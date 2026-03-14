@@ -304,12 +304,12 @@ defmodule Collation.Table do
 
   # GenServer
 
-  def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  def start_link(options \\ []) do
+    GenServer.start_link(__MODULE__, options, name: __MODULE__)
   end
 
   @impl true
-  def init(_opts) do
+  def init(_options) do
     {:ok, %{loaded: false}}
   end
 

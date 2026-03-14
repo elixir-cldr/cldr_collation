@@ -34,8 +34,8 @@ defmodule Collation.Han do
   @block_compat 254
   # Public API
 
-  def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  def start_link(options \\ []) do
+    GenServer.start_link(__MODULE__, options, name: __MODULE__)
   end
 
   @doc """
@@ -220,7 +220,7 @@ defmodule Collation.Han do
   # GenServer callbacks
 
   @impl true
-  def init(_opts), do: {:ok, %{loaded: false}}
+  def init(_options), do: {:ok, %{loaded: false}}
 
   @impl true
   def handle_call(:load, _from, %{loaded: true} = state) do

@@ -10,7 +10,7 @@ defmodule Collation.Application do
       Collation.Han
     ]
 
-    opts = [strategy: :one_for_one, name: Collation.Supervisor]
-    Supervisor.start_link(children, opts)
+    options = [strategy: :one_for_one, name: Collation.Supervisor]
+    Supervisor.start_link(children, options)
   end
 end

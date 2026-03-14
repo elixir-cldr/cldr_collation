@@ -107,9 +107,8 @@ defmodule Cldr.Collation.ConformanceTest do
             "(threshold: #{@max_non_ignorable_failures}).\nFirst failures:\n#{sample}"
         )
       else
-        pass_rate = Float.round((total - failure_count) / total * 100, 3)
-
-        IO.puts("NON_IGNORABLE: #{failure_count}/#{total} failures (#{pass_rate}% pass rate)")
+        # pass_rate = Float.round((total - failure_count) / total * 100, 3)
+        # IO.puts("NON_IGNORABLE: #{failure_count}/#{total} failures (#{pass_rate}% pass rate)")
       end
     end
   end
@@ -160,9 +159,8 @@ defmodule Cldr.Collation.ConformanceTest do
             "(threshold: #{@max_shifted_failures}).\nFirst failures:\n#{sample}"
         )
       else
-        pass_rate = Float.round((total - failure_count) / total * 100, 3)
-
-        IO.puts("SHIFTED: #{failure_count}/#{total} failures (#{pass_rate}% pass rate)")
+        # pass_rate = Float.round((total - failure_count) / total * 100, 3)
+        # IO.puts("SHIFTED: #{failure_count}/#{total} failures (#{pass_rate}% pass rate)")
       end
     end
   end

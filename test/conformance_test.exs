@@ -12,7 +12,7 @@ defmodule Collation.ConformanceTest do
   # Surrogate codepoint pairs (D800-DFFF) are excluded since they are
   # not valid Unicode scalar values and cannot appear in Elixir strings.
   @max_non_ignorable_failures 0
-  @max_shifted_failures 30
+  @max_shifted_failures 0
 
   setup_all do
     Collation.ensure_loaded()

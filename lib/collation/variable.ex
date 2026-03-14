@@ -41,9 +41,10 @@ defmodule Collation.Variable do
             zeroed = %Element{primary: 0, secondary: 0, tertiary: 0}
             {[{zeroed, 0} | acc], true}
 
-          # Regular CE (including primary-ignorable not after variable): L4 = 0xFFFF
+          # Regular CE: L4 = 0xFFFF if primary > 0, else L4 = 0
           true ->
-            {[{elem, 0xFFFF} | acc], false}
+            l4 = if elem.primary > 0, do: 0xFFFF, else: 0
+            {[{elem, l4} | acc], false}
         end
       end)
 

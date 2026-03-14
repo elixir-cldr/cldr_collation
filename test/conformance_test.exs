@@ -11,8 +11,8 @@ defmodule Collation.ConformanceTest do
   # - Hangul + combining mark + jamo sequences
   # Surrogate codepoint pairs (D800-DFFF) are excluded since they are
   # not valid Unicode scalar values and cannot appear in Elixir strings.
-  @max_non_ignorable_failures 9
-  @max_shifted_failures 39
+  @max_non_ignorable_failures 0
+  @max_shifted_failures 30
 
   setup_all do
     Collation.ensure_loaded()

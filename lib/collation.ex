@@ -229,23 +229,23 @@ defmodule Collation do
 
   # Try to match the base sequence + each unblocked combining mark
   defp extend_with_combiners(base_cps, base_elements, combiners) do
-    {final_elements, consumed_set, _last_ccc} =
-      Enum.reduce(combiners, {base_elements, MapSet.new(), 0}, fn {cp, ccc}, {elems, consumed, last_ccc} ->
+    {final_elements, consumed_set, _last_ccc, _current_base} =
+      Enum.reduce(combiners, {base_elements, MapSet.new(), 0, base_cps}, fn {cp, ccc}, {elems, consumed, last_ccc, current_base} ->
         # Check if this combining mark is blocked
         if ccc > 0 and (last_ccc == 0 or ccc > last_ccc) do
           # Not blocked - try to extend the match
-          candidate = base_cps ++ [cp]
+          candidate = current_base ++ [cp]
 
           case Table.lookup(candidate) do
             {:ok, new_elements} ->
-              {new_elements, MapSet.put(consumed, cp), ccc}
+              {new_elements, MapSet.put(consumed, cp), ccc, candidate}
 
             :unmapped ->
-              {elems, consumed, ccc}
+              {elems, consumed, ccc, current_base}
           end
         else
           # Blocked - skip
-          {elems, consumed, last_ccc}
+          {elems, consumed, last_ccc, current_base}
         end
       end)
 

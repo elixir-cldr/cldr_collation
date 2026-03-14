@@ -1,0 +1,3 @@
+%{
+  "unicode": {:hex, :unicode, "1.21.0", "9ffb785313c6d579d5ca4ad138f48724b71894ead124589e7c2c704fe47d1b97", [:mix], [], "hexpm", "e0a56cf5744c18778ceab2b2657faa058c1434553266a4d1722f877507ca3dbe"},
+}

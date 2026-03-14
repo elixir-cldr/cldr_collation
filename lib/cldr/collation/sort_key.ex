@@ -1,4 +1,4 @@
-defmodule Collation.SortKey do
+defmodule Cldr.Collation.SortKey do
   @moduledoc """
   Constructs binary sort keys from processed collation elements.
 
@@ -11,7 +11,7 @@ defmodule Collation.SortKey do
 
   import Bitwise
 
-  alias Collation.Options
+  alias Cldr.Collation.Options
 
   @level_separator <<0x00, 0x00>>
 
@@ -23,8 +23,8 @@ defmodule Collation.SortKey do
 
   ### Arguments
 
-  * `processed_elements` - a list of `{%Collation.Element{}, quaternary}` tuples as returned by `Collation.Variable.process/3`
-  * `options` - a `%Collation.Options{}` struct controlling which levels to include
+  * `processed_elements` - a list of `{%Cldr.Collation.Element{}, quaternary}` tuples as returned by `Cldr.Collation.Variable.process/3`
+  * `options` - a `%Cldr.Collation.Options{}` struct controlling which levels to include
   * `original_string` - the original input string, used for the identical level (default: `nil`)
 
   ### Returns
@@ -34,9 +34,9 @@ defmodule Collation.SortKey do
 
   ### Examples
 
-      iex> elements = [{%Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0008}, 0}]
-      iex> options = Collation.Options.new(strength: :primary)
-      iex> Collation.SortKey.build(elements, options)
+      iex> elements = [{%Cldr.Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0008}, 0}]
+      iex> options = Cldr.Collation.Options.new(strength: :primary)
+      iex> Cldr.Collation.SortKey.build(elements, options)
       <<0x23, 0xEC>>
 
   """

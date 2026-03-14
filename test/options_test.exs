@@ -1,7 +1,7 @@
-defmodule Collation.OptionsTest do
+defmodule Cldr.Collation.OptionsTest do
   use ExUnit.Case
 
-  alias Collation.Options
+  alias Cldr.Collation.Options
 
   describe "new/1" do
     test "creates default options" do

@@ -1,6 +1,6 @@
-defmodule Collation.Element do
+defmodule Cldr.Collation.Element do
   @moduledoc """
-  A Collation Element (CE) with primary, secondary, and tertiary weights.
+  A Cldr.Collation Element (CE) with primary, secondary, and tertiary weights.
 
   Weights follow the CLDR/UCA specification:
   - Primary: base character identity (0x0000-0xFFFF)
@@ -26,7 +26,7 @@ defmodule Collation.Element do
 
   ### Arguments
 
-  * `element` - a `%Collation.Element{}` struct
+  * `element` - a `%Cldr.Collation.Element{}` struct
 
   ### Returns
 
@@ -35,10 +35,10 @@ defmodule Collation.Element do
 
   ### Examples
 
-      iex> Collation.Element.ignorable?(%Collation.Element{primary: 0, secondary: 0, tertiary: 0})
+      iex> Cldr.Collation.Element.ignorable?(%Cldr.Collation.Element{primary: 0, secondary: 0, tertiary: 0})
       true
 
-      iex> Collation.Element.ignorable?(%Collation.Element{primary: 0, secondary: 0x0020, tertiary: 0})
+      iex> Cldr.Collation.Element.ignorable?(%Cldr.Collation.Element{primary: 0, secondary: 0x0020, tertiary: 0})
       false
 
   """
@@ -53,7 +53,7 @@ defmodule Collation.Element do
 
   ### Arguments
 
-  * `element` - a `%Collation.Element{}` struct
+  * `element` - a `%Cldr.Collation.Element{}` struct
 
   ### Returns
 
@@ -62,10 +62,10 @@ defmodule Collation.Element do
 
   ### Examples
 
-      iex> Collation.Element.primary_ignorable?(%Collation.Element{primary: 0, secondary: 0x0024, tertiary: 0x0002})
+      iex> Cldr.Collation.Element.primary_ignorable?(%Cldr.Collation.Element{primary: 0, secondary: 0x0024, tertiary: 0x0002})
       true
 
-      iex> Collation.Element.primary_ignorable?(%Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0002})
+      iex> Cldr.Collation.Element.primary_ignorable?(%Cldr.Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0002})
       false
 
   """
@@ -81,7 +81,7 @@ defmodule Collation.Element do
 
   ### Arguments
 
-  * `element` - a `%Collation.Element{}` struct
+  * `element` - a `%Cldr.Collation.Element{}` struct
   * `max_variable_primary` - the maximum primary weight for variable elements (unused, retained for API compatibility)
 
   ### Returns
@@ -91,10 +91,10 @@ defmodule Collation.Element do
 
   ### Examples
 
-      iex> Collation.Element.variable?(%Collation.Element{primary: 0x0269, variable: true}, 0x0B61)
+      iex> Cldr.Collation.Element.variable?(%Cldr.Collation.Element{primary: 0x0269, variable: true}, 0x0B61)
       true
 
-      iex> Collation.Element.variable?(%Collation.Element{primary: 0x23EC, variable: false}, 0x0B61)
+      iex> Cldr.Collation.Element.variable?(%Cldr.Collation.Element{primary: 0x23EC, variable: false}, 0x0B61)
       false
 
   """

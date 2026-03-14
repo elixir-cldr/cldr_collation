@@ -1,4 +1,4 @@
-defmodule Collation.Table do
+defmodule Cldr.Collation.Table do
   @moduledoc """
   Persistent-term-backed collation element table.
 
@@ -12,7 +12,7 @@ defmodule Collation.Table do
 
   use GenServer
 
-  alias Collation.Table.Parser
+  alias Cldr.Collation.Table.Parser
 
   @table_name :collation_table
   @contractions_table :collation_contractions
@@ -34,7 +34,7 @@ defmodule Collation.Table do
 
   ### Examples
 
-      iex> Collation.Table.ensure_loaded()
+      iex> Cldr.Collation.Table.ensure_loaded()
       :ok
 
   """
@@ -54,18 +54,18 @@ defmodule Collation.Table do
 
   ### Returns
 
-  * `{:ok, [%Collation.Element{}]}` - the collation elements for the entry
+  * `{:ok, [%Cldr.Collation.Element{}]}` - the collation elements for the entry
   * `:unmapped` - no entry found in the table
 
   ### Examples
 
-      iex> Collation.Table.ensure_loaded()
-      iex> {:ok, elements} = Collation.Table.lookup(0x0041)
+      iex> Cldr.Collation.Table.ensure_loaded()
+      iex> {:ok, elements} = Cldr.Collation.Table.lookup(0x0041)
       iex> hd(elements).primary > 0
       true
 
-      iex> Collation.Table.ensure_loaded()
-      iex> Collation.Table.lookup(0x10FFFF)
+      iex> Cldr.Collation.Table.ensure_loaded()
+      iex> Cldr.Collation.Table.lookup(0x10FFFF)
       :unmapped
 
   """
@@ -101,8 +101,8 @@ defmodule Collation.Table do
 
   ### Examples
 
-      iex> Collation.Table.ensure_loaded()
-      iex> lengths = Collation.Table.contraction_starters(0x006C)
+      iex> Cldr.Collation.Table.ensure_loaded()
+      iex> lengths = Cldr.Collation.Table.contraction_starters(0x006C)
       iex> is_list(lengths)
       true
 
@@ -131,8 +131,8 @@ defmodule Collation.Table do
 
   ### Examples
 
-      iex> Collation.Table.ensure_loaded()
-      iex> {matched, _elements, rest} = Collation.Table.longest_match([0x0041, 0x0042])
+      iex> Cldr.Collation.Table.ensure_loaded()
+      iex> {matched, _elements, rest} = Cldr.Collation.Table.longest_match([0x0041, 0x0042])
       iex> matched
       [65]
       iex> rest
@@ -195,7 +195,7 @@ defmodule Collation.Table do
   ### Arguments
 
   * `codepoints` - a single integer codepoint, or a list of integer codepoints
-  * `overlay` - a map of `%{[codepoint] => [%Collation.Element{}]}` tailoring entries
+  * `overlay` - a map of `%{[codepoint] => [%Cldr.Collation.Element{}]}` tailoring entries
 
   ### Returns
 
@@ -203,9 +203,9 @@ defmodule Collation.Table do
 
   ### Examples
 
-      iex> Collation.Table.ensure_loaded()
-      iex> overlay = %{[0x0041] => [%Collation.Element{primary: 0xFFFF}]}
-      iex> {:ok, [elem]} = Collation.Table.lookup_with_overlay([0x0041], overlay)
+      iex> Cldr.Collation.Table.ensure_loaded()
+      iex> overlay = %{[0x0041] => [%Cldr.Collation.Element{primary: 0xFFFF}]}
+      iex> {:ok, [elem]} = Cldr.Collation.Table.lookup_with_overlay([0x0041], overlay)
       iex> elem.primary
       0xFFFF
 
@@ -239,8 +239,8 @@ defmodule Collation.Table do
 
   ### Examples
 
-      iex> Collation.Table.ensure_loaded()
-      iex> {matched, _elems, rest} = Collation.Table.longest_match_with_overlay([0x0041, 0x0042], nil)
+      iex> Cldr.Collation.Table.ensure_loaded()
+      iex> {matched, _elems, rest} = Cldr.Collation.Table.longest_match_with_overlay([0x0041, 0x0042], nil)
       iex> matched
       [65]
       iex> rest
@@ -373,7 +373,7 @@ defmodule Collation.Table do
   end
 
   defp data_path(filename) do
-    case :code.priv_dir(:collation) do
+    case :code.priv_dir(:cldr_collation) do
       {:error, :bad_name} ->
         Path.join([File.cwd!(), "priv", filename])
 

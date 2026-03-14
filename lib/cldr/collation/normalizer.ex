@@ -1,4 +1,4 @@
-defmodule Collation.Normalizer do
+defmodule Cldr.Collation.Normalizer do
   @moduledoc """
   Unicode NFD normalization for collation.
   Delegates to Erlang's :unicode module.
@@ -22,10 +22,10 @@ defmodule Collation.Normalizer do
 
   ### Examples
 
-      iex> "café" |> Collation.Normalizer.nfd() |> String.to_charlist() |> length()
+      iex> "café" |> Cldr.Collation.Normalizer.nfd() |> String.to_charlist() |> length()
       5
 
-      iex> Collation.Normalizer.nfd("e\u0301")
+      iex> Cldr.Collation.Normalizer.nfd("e\u0301")
       "e\u0301"
 
   """
@@ -50,10 +50,10 @@ defmodule Collation.Normalizer do
 
   ### Examples
 
-      iex> Collation.Normalizer.to_codepoints("abc")
+      iex> Cldr.Collation.Normalizer.to_codepoints("abc")
       [97, 98, 99]
 
-      iex> Collation.Normalizer.to_codepoints("é")
+      iex> Cldr.Collation.Normalizer.to_codepoints("é")
       [233]
 
   """
@@ -76,10 +76,10 @@ defmodule Collation.Normalizer do
 
   ### Examples
 
-      iex> Collation.Normalizer.normalize_to_codepoints("abc")
+      iex> Cldr.Collation.Normalizer.normalize_to_codepoints("abc")
       [97, 98, 99]
 
-      iex> Collation.Normalizer.normalize_to_codepoints("café", true)
+      iex> Cldr.Collation.Normalizer.normalize_to_codepoints("café", true)
       [99, 97, 102, 101, 769]
 
   """

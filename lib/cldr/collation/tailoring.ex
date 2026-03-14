@@ -1,4 +1,4 @@
-defmodule Collation.Tailoring do
+defmodule Cldr.Collation.Tailoring do
   @moduledoc """
   CLDR locale-specific collation tailoring.
 
@@ -17,7 +17,7 @@ defmodule Collation.Tailoring do
 
   """
 
-  alias Collation.{Element, Table}
+  alias Cldr.Collation.{Element, Table}
 
   # Embedded CLDR tailoring rules per {language, collation_type}.
   # Source: unicode-org/cldr/common/collation/*.xml (CLDR 46)
@@ -61,8 +61,8 @@ defmodule Collation.Tailoring do
 
   ### Examples
 
-      iex> Collation.Table.ensure_loaded()
-      iex> {overlay, _opts} = Collation.Tailoring.get_tailoring("es", :standard)
+      iex> Cldr.Collation.Table.ensure_loaded()
+      iex> {overlay, _opts} = Cldr.Collation.Tailoring.get_tailoring("es", :standard)
       iex> is_map(overlay)
       true
 
@@ -83,7 +83,7 @@ defmodule Collation.Tailoring do
 
   ### Examples
 
-      iex> locales = Collation.Tailoring.supported_locales()
+      iex> locales = Cldr.Collation.Tailoring.supported_locales()
       iex> {"es", :standard} in locales
       true
 
@@ -111,7 +111,7 @@ defmodule Collation.Tailoring do
 
   ### Examples
 
-      iex> ops = Collation.Tailoring.parse_rules("&N<ñ<<<Ñ")
+      iex> ops = Cldr.Collation.Tailoring.parse_rules("&N<ñ<<<Ñ")
       iex> length(ops)
       3
 

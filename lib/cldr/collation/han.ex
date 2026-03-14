@@ -1,4 +1,4 @@
-defmodule Collation.Han do
+defmodule Cldr.Collation.Han do
   @moduledoc """
   Han character ordering using radical-stroke indexes.
 
@@ -17,7 +17,7 @@ defmodule Collation.Han do
   use GenServer
 
   import Bitwise
-  alias Collation.Element
+  alias Cldr.Collation.Element
 
   @table_name :collation_han_radicals
 
@@ -50,7 +50,7 @@ defmodule Collation.Han do
 
   ### Examples
 
-      iex> Collation.Han.ensure_loaded()
+      iex> Cldr.Collation.Han.ensure_loaded()
       :ok
 
   """
@@ -70,13 +70,13 @@ defmodule Collation.Han do
 
   ### Returns
 
-  * `[%Collation.Element{}, %Collation.Element{}]` - two CEs encoding the radical-stroke key
+  * `[%Cldr.Collation.Element{}, %Cldr.Collation.Element{}]` - two CEs encoding the radical-stroke key
   * `nil` - if the character has no radical data (falls back to implicit weights)
 
   ### Examples
 
-      iex> Collation.Han.ensure_loaded()
-      iex> elements = Collation.Han.collation_elements(0x4E00)
+      iex> Cldr.Collation.Han.ensure_loaded()
+      iex> elements = Cldr.Collation.Han.collation_elements(0x4E00)
       iex> length(elements)
       2
 
@@ -122,7 +122,7 @@ defmodule Collation.Han do
 
   ### Examples
 
-      iex> Collation.Han.compute_key(1, 0, 0, 0, 0x4E00)
+      iex> Cldr.Collation.Han.compute_key(1, 0, 0, 0, 0x4E00)
       17592186064384
 
   """
@@ -149,11 +149,11 @@ defmodule Collation.Han do
 
   ### Returns
 
-  A list of two `%Collation.Element{}` structs.
+  A list of two `%Cldr.Collation.Element{}` structs.
 
   ### Examples
 
-      iex> elements = Collation.Han.key_to_elements(0)
+      iex> elements = Cldr.Collation.Han.key_to_elements(0)
       iex> hd(elements).primary
       0xFB40
 
@@ -194,10 +194,10 @@ defmodule Collation.Han do
 
   ### Examples
 
-      iex> Collation.Han.block_index(0x4E00)
+      iex> Cldr.Collation.Han.block_index(0x4E00)
       0
 
-      iex> Collation.Han.block_index(0x3400)
+      iex> Cldr.Collation.Han.block_index(0x3400)
       1
 
   """
@@ -274,7 +274,7 @@ defmodule Collation.Han do
 
   ### Examples
 
-      iex> Collation.Han.parse_radical_line("not a radical line")
+      iex> Cldr.Collation.Han.parse_radical_line("not a radical line")
       :skip
 
   """
@@ -331,7 +331,7 @@ defmodule Collation.Han do
   end
 
   defp fractional_uca_path do
-    case :code.priv_dir(:collation) do
+    case :code.priv_dir(:cldr_collation) do
       {:error, :bad_name} -> Path.join([File.cwd!(), "priv", "FractionalUCA.txt"])
       priv_dir -> Path.join(priv_dir, "FractionalUCA.txt")
     end

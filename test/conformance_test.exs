@@ -1,4 +1,4 @@
-defmodule Collation.ConformanceTest do
+defmodule Cldr.Collation.ConformanceTest do
   use ExUnit.Case
 
   @moduletag :conformance
@@ -15,7 +15,7 @@ defmodule Collation.ConformanceTest do
   @max_shifted_failures 0
 
   setup_all do
-    Collation.ensure_loaded()
+    Cldr.Collation.ensure_loaded()
     :ok
   end
 
@@ -51,9 +51,9 @@ defmodule Collation.ConformanceTest do
   end
 
   defp compare_codepoints(cps_a, cps_b, opts) do
-    options = Collation.Options.new(opts)
-    key_a = Collation.sort_key(cps_a, options)
-    key_b = Collation.sort_key(cps_b, options)
+    options = Cldr.Collation.Options.new(opts)
+    key_a = Cldr.Collation.sort_key(cps_a, options)
+    key_b = Cldr.Collation.sort_key(cps_b, options)
 
     cond do
       key_a < key_b -> :lt

@@ -1,4 +1,4 @@
-defmodule Collation.Application do
+defmodule Cldr.Collation.Application do
   @moduledoc false
 
   use Application
@@ -6,11 +6,11 @@ defmodule Collation.Application do
   @impl true
   def start(_type \\ :normal, _args \\ []) do
     children = [
-      Collation.Table,
-      Collation.Han
+      Cldr.Collation.Table,
+      Cldr.Collation.Han
     ]
 
-    options = [strategy: :one_for_one, name: Collation.Supervisor]
+    options = [strategy: :one_for_one, name: Cldr.Collation.Supervisor]
     Supervisor.start_link(children, options)
   end
 end

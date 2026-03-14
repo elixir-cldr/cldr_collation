@@ -1,4 +1,4 @@
-defmodule Collation.TailoringTest do
+defmodule Cldr.Collation.TailoringTest do
   use ExUnit.Case, async: true
 
   # ===================================================================
@@ -7,19 +7,19 @@ defmodule Collation.TailoringTest do
 
   describe "parse_rules/1" do
     test "parses simple primary tailoring" do
-      ops = Collation.Tailoring.parse_rules("&N<ñ<<<Ñ")
+      ops = Cldr.Collation.Tailoring.parse_rules("&N<ñ<<<Ñ")
 
       assert [{:reset, [?N]}, {:primary, [?ñ]}, {:tertiary, [?Ñ]}] = ops
     end
 
     test "parses secondary tailoring" do
-      ops = Collation.Tailoring.parse_rules("&AE<<ä<<<Ä")
+      ops = Cldr.Collation.Tailoring.parse_rules("&AE<<ä<<<Ä")
 
       assert [{:reset, [?A, ?E]}, {:secondary, [?ä]}, {:tertiary, [?Ä]}] = ops
     end
 
     test "parses multi-character contraction" do
-      ops = Collation.Tailoring.parse_rules("&C<ch<<<Ch<<<CH")
+      ops = Cldr.Collation.Tailoring.parse_rules("&C<ch<<<Ch<<<CH")
 
       assert [
                {:reset, [?C]},
@@ -30,12 +30,12 @@ defmodule Collation.TailoringTest do
     end
 
     test "parses option override" do
-      ops = Collation.Tailoring.parse_rules("[caseFirst upper]")
+      ops = Cldr.Collation.Tailoring.parse_rules("[caseFirst upper]")
       assert [{:option, :case_first, :upper}] = ops
     end
 
     test "parses before reset" do
-      ops = Collation.Tailoring.parse_rules("&[before 1]ǀ<æ<<<Æ")
+      ops = Cldr.Collation.Tailoring.parse_rules("&[before 1]ǀ<æ<<<Æ")
 
       assert [
                {:reset_before, 1, [?ǀ]},
@@ -46,7 +46,7 @@ defmodule Collation.TailoringTest do
 
     test "parses multiple lines" do
       rules = "&N<ñ<<<Ñ\n&C<ch<<<Ch<<<CH"
-      ops = Collation.Tailoring.parse_rules(rules)
+      ops = Cldr.Collation.Tailoring.parse_rules(rules)
       assert length(ops) == 7
     end
   end
@@ -57,25 +57,25 @@ defmodule Collation.TailoringTest do
 
   describe "get_tailoring/2" do
     setup do
-      Collation.ensure_loaded()
+      Cldr.Collation.ensure_loaded()
       :ok
     end
 
     test "returns overlay for Spanish standard" do
-      {overlay, opts} = Collation.Tailoring.get_tailoring("es", :standard)
+      {overlay, opts} = Cldr.Collation.Tailoring.get_tailoring("es", :standard)
       assert is_map(overlay)
       assert map_size(overlay) > 0
       assert opts == []
     end
 
     test "returns overlay with option overrides for Danish" do
-      {overlay, opts} = Collation.Tailoring.get_tailoring("da", :standard)
+      {overlay, opts} = Cldr.Collation.Tailoring.get_tailoring("da", :standard)
       assert is_map(overlay)
       assert opts == [case_first: :upper]
     end
 
     test "returns overlay for German phonebook" do
-      {overlay, opts} = Collation.Tailoring.get_tailoring("de", :phonebook)
+      {overlay, opts} = Cldr.Collation.Tailoring.get_tailoring("de", :phonebook)
       assert is_map(overlay)
       assert opts == []
       # Should have entries for ä, ö, ü, Ä, Ö, Ü
@@ -85,13 +85,13 @@ defmodule Collation.TailoringTest do
     end
 
     test "returns nil for unsupported locale" do
-      assert nil == Collation.Tailoring.get_tailoring("en", :standard)
+      assert nil == Cldr.Collation.Tailoring.get_tailoring("en", :standard)
     end
   end
 
   describe "supported_locales/0" do
     test "lists available tailorings" do
-      locales = Collation.Tailoring.supported_locales()
+      locales = Cldr.Collation.Tailoring.supported_locales()
       assert {"es", :standard} in locales
       assert {"de", :phonebook} in locales
       assert {"sv", :standard} in locales

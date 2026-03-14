@@ -1,4 +1,4 @@
-defmodule Collation.Reorder do
+defmodule Cldr.Collation.Reorder do
   @moduledoc """
   Script reordering for collation (kr= / reorder option).
 
@@ -32,10 +32,10 @@ defmodule Collation.Reorder do
 
   ### Examples
 
-      iex> Collation.Reorder.build_mapping([])
+      iex> Cldr.Collation.Reorder.build_mapping([])
       nil
 
-      iex> mapping = Collation.Reorder.build_mapping(["Grek", "Latn"])
+      iex> mapping = Cldr.Collation.Reorder.build_mapping(["Grek", "Latn"])
       iex> is_function(mapping, 1)
       true
 
@@ -162,7 +162,7 @@ defmodule Collation.Reorder do
 
   ### Examples
 
-      iex> ranges = Collation.Reorder.load_script_ranges()
+      iex> ranges = Cldr.Collation.Reorder.load_script_ranges()
       iex> is_map(ranges)
       true
 
@@ -200,7 +200,7 @@ defmodule Collation.Reorder do
   end
 
   defp fractional_uca_path do
-    case :code.priv_dir(:collation) do
+    case :code.priv_dir(:cldr_collation) do
       {:error, :bad_name} ->
         Path.join([File.cwd!(), "priv", "FractionalUCA.txt"])
 
@@ -240,11 +240,11 @@ defmodule Collation.Reorder do
 
   ### Examples
 
-      iex> Collation.Reorder.apply_mapping(nil, 0x2A00)
+      iex> Cldr.Collation.Reorder.apply_mapping(nil, 0x2A00)
       0x2A00
 
-      iex> mapping = Collation.Reorder.build_mapping(["Grek", "Latn"])
-      iex> remapped = Collation.Reorder.apply_mapping(mapping, 0x2A00)
+      iex> mapping = Cldr.Collation.Reorder.build_mapping(["Grek", "Latn"])
+      iex> remapped = Cldr.Collation.Reorder.apply_mapping(mapping, 0x2A00)
       iex> is_integer(remapped)
       true
 

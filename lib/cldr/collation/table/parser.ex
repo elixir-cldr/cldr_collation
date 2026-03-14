@@ -1,4 +1,4 @@
-defmodule Collation.Table.Parser do
+defmodule Cldr.Collation.Table.Parser do
   @moduledoc """
   Parses the allkeys_CLDR.txt file into a map of codepoint sequences to collation elements.
 
@@ -9,7 +9,7 @@ defmodule Collation.Table.Parser do
 
   """
 
-  alias Collation.Element
+  alias Cldr.Collation.Element
 
   @doc """
   Parse the allkeys_CLDR.txt file into a collation table.
@@ -22,12 +22,12 @@ defmodule Collation.Table.Parser do
 
   A map with two keys:
 
-  * `:entries` - `%{[integer()] => [%Collation.Element{}]}` mapping codepoint sequences to collation elements
+  * `:entries` - `%{[integer()] => [%Cldr.Collation.Element{}]}` mapping codepoint sequences to collation elements
   * `:version` - the UCA version string from the file header, or `nil`
 
   ### Examples
 
-      iex> result = Collation.Table.Parser.parse("priv/allkeys_CLDR.txt")
+      iex> result = Cldr.Collation.Table.Parser.parse("priv/allkeys_CLDR.txt")
       iex> is_map(result.entries) and is_binary(result.version)
       true
 
@@ -72,7 +72,7 @@ defmodule Collation.Table.Parser do
 
   ### Examples
 
-      iex> {:ok, cps, elems} = Collation.Table.Parser.parse_entry("0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A")
+      iex> {:ok, cps, elems} = Cldr.Collation.Table.Parser.parse_entry("0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A")
       iex> cps
       [65]
       iex> hd(elems).primary
@@ -117,16 +117,16 @@ defmodule Collation.Table.Parser do
 
   ### Returns
 
-  A list of `%Collation.Element{}` structs with parsed primary, secondary, tertiary
+  A list of `%Cldr.Collation.Element{}` structs with parsed primary, secondary, tertiary
   weights and the `variable` flag.
 
   ### Examples
 
-      iex> Collation.Table.Parser.parse_elements("[.23EC.0020.0008]")
-      [%Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0008, variable: false}]
+      iex> Cldr.Collation.Table.Parser.parse_elements("[.23EC.0020.0008]")
+      [%Cldr.Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0008, variable: false}]
 
-      iex> Collation.Table.Parser.parse_elements("[*0269.0020.0002]")
-      [%Collation.Element{primary: 0x0269, secondary: 0x0020, tertiary: 0x0002, variable: true}]
+      iex> Cldr.Collation.Table.Parser.parse_elements("[*0269.0020.0002]")
+      [%Cldr.Collation.Element{primary: 0x0269, secondary: 0x0020, tertiary: 0x0002, variable: true}]
 
   """
   def parse_elements(str) do
@@ -156,13 +156,13 @@ defmodule Collation.Table.Parser do
 
   ### Returns
 
-  An updated entries map `%{[integer()] => [%Collation.Element{}]}` with new
+  An updated entries map `%{[integer()] => [%Cldr.Collation.Element{}]}` with new
   entries merged in. Existing entries are never overwritten.
 
   ### Examples
 
-      iex> existing = %{[0x0041] => [%Collation.Element{primary: 0x23EC}]}
-      iex> result = Collation.Table.Parser.parse_fractional_supplement("priv/FractionalUCA.txt", existing)
+      iex> existing = %{[0x0041] => [%Cldr.Collation.Element{primary: 0x23EC}]}
+      iex> result = Cldr.Collation.Table.Parser.parse_fractional_supplement("priv/FractionalUCA.txt", existing)
       iex> map_size(result) > map_size(existing)
       true
 
@@ -218,7 +218,7 @@ defmodule Collation.Table.Parser do
 
   ### Examples
 
-      iex> Collation.Table.Parser.parse_fractional_entry("invalid line")
+      iex> Cldr.Collation.Table.Parser.parse_fractional_entry("invalid line")
       :skip
 
   """

@@ -1,4 +1,4 @@
-defmodule Collation.Variable do
+defmodule Cldr.Collation.Variable do
   @moduledoc """
   Variable weight handling for the collation algorithm.
 
@@ -11,20 +11,20 @@ defmodule Collation.Variable do
 
   """
 
-  alias Collation.Element
+  alias Cldr.Collation.Element
 
   @doc """
   Process a list of collation elements according to the variable weight rules.
 
   ### Arguments
 
-  * `elements` - a list of `%Collation.Element{}` structs
+  * `elements` - a list of `%Cldr.Collation.Element{}` structs
   * `alternate` - the variable handling mode: `:non_ignorable` or `:shifted`
   * `max_variable_primary` - the maximum primary weight for variable elements
 
   ### Returns
 
-  A list of `{%Collation.Element{}, quaternary_weight}` tuples.
+  A list of `{%Cldr.Collation.Element{}, quaternary_weight}` tuples.
 
   For `:non_ignorable`, quaternary is always `0`.
   For `:shifted`:
@@ -35,8 +35,8 @@ defmodule Collation.Variable do
 
   ### Examples
 
-      iex> elems = [%Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0002}]
-      iex> [{elem, q}] = Collation.Variable.process(elems, :non_ignorable, 0x0B61)
+      iex> elems = [%Cldr.Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0002}]
+      iex> [{elem, q}] = Cldr.Collation.Variable.process(elems, :non_ignorable, 0x0B61)
       iex> {elem.primary, q}
       {0x23EC, 0}
 

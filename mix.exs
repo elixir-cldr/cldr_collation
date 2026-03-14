@@ -1,9 +1,9 @@
-defmodule Collation.MixProject do
+defmodule Cldr.Collation.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :collation,
+      app: :cldr_collation,
       version: "0.1.0",
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
@@ -14,7 +14,7 @@ defmodule Collation.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: {Collation.Application, []},
+      mod: {Cldr.Collation.Application, []},
       extra_applications: [:logger]
     ]
   end

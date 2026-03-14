@@ -1,4 +1,4 @@
-defmodule Collation.ImplicitWeights do
+defmodule Cldr.Collation.ImplicitWeights do
   @moduledoc """
   Computes implicit collation elements for codepoints not in the DUCET/CLDR allkeys table.
 
@@ -12,7 +12,7 @@ defmodule Collation.ImplicitWeights do
   """
 
   import Bitwise
-  alias Collation.Element
+  alias Cldr.Collation.Element
 
   # CJK Unified Ideograph ranges
   # Core CJK block
@@ -86,10 +86,10 @@ defmodule Collation.ImplicitWeights do
 
   ### Examples
 
-      iex> Collation.ImplicitWeights.unified_ideograph?(0x4E00)
+      iex> Cldr.Collation.ImplicitWeights.unified_ideograph?(0x4E00)
       true
 
-      iex> Collation.ImplicitWeights.unified_ideograph?(0x0041)
+      iex> Cldr.Collation.ImplicitWeights.unified_ideograph?(0x0041)
       false
 
   """
@@ -136,10 +136,10 @@ defmodule Collation.ImplicitWeights do
 
   ### Examples
 
-      iex> Collation.ImplicitWeights.hangul_syllable?(0xAC00)
+      iex> Cldr.Collation.ImplicitWeights.hangul_syllable?(0xAC00)
       true
 
-      iex> Collation.ImplicitWeights.hangul_syllable?(0x0041)
+      iex> Cldr.Collation.ImplicitWeights.hangul_syllable?(0x0041)
       false
 
   """
@@ -160,11 +160,11 @@ defmodule Collation.ImplicitWeights do
   ### Returns
 
   * `{:hangul_decompose, jamo}` - for Hangul syllables, returns the constituent jamo for table lookup
-  * `[%Collation.Element{}, %Collation.Element{}]` - two implicit CEs for CJK or unassigned codepoints
+  * `[%Cldr.Collation.Element{}, %Cldr.Collation.Element{}]` - two implicit CEs for CJK or unassigned codepoints
 
   ### Examples
 
-      iex> [ce1, ce2] = Collation.ImplicitWeights.compute(0x4E00)
+      iex> [ce1, ce2] = Cldr.Collation.ImplicitWeights.compute(0x4E00)
       iex> ce1.primary >= 0xFB40
       true
       iex> ce2.secondary
@@ -203,10 +203,10 @@ defmodule Collation.ImplicitWeights do
 
   ### Examples
 
-      iex> Collation.ImplicitWeights.decompose_hangul_to_jamo(0xAC00)
+      iex> Cldr.Collation.ImplicitWeights.decompose_hangul_to_jamo(0xAC00)
       [0x1100, 0x1161]
 
-      iex> Collation.ImplicitWeights.decompose_hangul_to_jamo(0xAC01)
+      iex> Cldr.Collation.ImplicitWeights.decompose_hangul_to_jamo(0xAC01)
       [0x1100, 0x1161, 0x11A8]
 
   """

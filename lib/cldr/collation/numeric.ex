@@ -1,4 +1,4 @@
-defmodule Collation.Numeric do
+defmodule Cldr.Collation.Numeric do
   @moduledoc """
   Numeric collation support (kn=true / numeric=true).
 
@@ -10,7 +10,7 @@ defmodule Collation.Numeric do
 
   """
 
-  alias Collation.Element
+  alias Cldr.Collation.Element
 
   @doc """
   Process codepoint/element pairs, replacing digit sequence CEs with
@@ -22,17 +22,17 @@ defmodule Collation.Numeric do
 
   ### Arguments
 
-  * `ce_pairs` - a list of `{codepoints, [%Collation.Element{}]}` pairs
+  * `ce_pairs` - a list of `{codepoints, [%Cldr.Collation.Element{}]}` pairs
 
   ### Returns
 
-  A flat list of `%Collation.Element{}` structs with digit sequences replaced
+  A flat list of `%Cldr.Collation.Element{}` structs with digit sequences replaced
   by numeric collation elements.
 
   ### Examples
 
-      iex> pairs = [{[0x31], [%Collation.Element{primary: 0x21E7}]}, {[0x30], [%Collation.Element{primary: 0x21E6}]}]
-      iex> result = Collation.Numeric.process_elements(pairs)
+      iex> pairs = [{[0x31], [%Cldr.Collation.Element{primary: 0x21E7}]}, {[0x30], [%Cldr.Collation.Element{primary: 0x21E6}]}]
+      iex> result = Cldr.Collation.Numeric.process_elements(pairs)
       iex> length(result)
       3
 
@@ -102,12 +102,12 @@ defmodule Collation.Numeric do
 
   ### Returns
 
-  A list of `%Collation.Element{}` structs: one length-prefix CE followed by
+  A list of `%Cldr.Collation.Element{}` structs: one length-prefix CE followed by
   one CE per significant digit.
 
   ### Examples
 
-      iex> result = Collation.Numeric.encode_numeric_value([0x31, 0x30])
+      iex> result = Cldr.Collation.Numeric.encode_numeric_value([0x31, 0x30])
       iex> length(result)
       3
 

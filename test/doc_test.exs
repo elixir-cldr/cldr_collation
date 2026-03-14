@@ -1,18 +1,18 @@
-defmodule Collation.DocTest do
+defmodule Cldr.Collation.DocTest do
   use ExUnit.Case, async: true
 
-  doctest Collation
-  doctest Collation.Element
-  doctest Collation.Han
-  doctest Collation.ImplicitWeights
-  doctest Collation.Normalizer
-  doctest Collation.Numeric
-  doctest Collation.Options
-  doctest Collation.Reorder
-  doctest Collation.SortKey
-  doctest Collation.Table
-  doctest Collation.Table.Parser
-  doctest Collation.Tailoring
-  doctest Collation.Tailoring.LocaleDefaults
-  doctest Collation.Variable
+  doctest Cldr.Collation
+  doctest Cldr.Collation.Element
+  doctest Cldr.Collation.Han
+  doctest Cldr.Collation.ImplicitWeights
+  doctest Cldr.Collation.Normalizer
+  doctest Cldr.Collation.Numeric
+  doctest Cldr.Collation.Options
+  doctest Cldr.Collation.Reorder
+  doctest Cldr.Collation.SortKey
+  doctest Cldr.Collation.Table
+  doctest Cldr.Collation.Table.Parser
+  doctest Cldr.Collation.Tailoring
+  doctest Cldr.Collation.Tailoring.LocaleDefaults
+  doctest Cldr.Collation.Variable
 end

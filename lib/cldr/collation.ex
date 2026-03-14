@@ -1,13 +1,13 @@
-defmodule Collation do
+defmodule Cldr.Collation do
   @moduledoc """
-  Implements the Unicode Collation Algorithm (UCA) as extended by CLDR.
+  Implements the Unicode Cldr.Collation Algorithm (UCA) as extended by CLDR.
 
-  Collation is the general term for the process and function of
+  Cldr.Collation is the general term for the process and function of
   determining the sorting order of strings of characters, for example for
   lists of strings presented to users, or in databases for sorting and selecting
   records.
 
-  Collation varies by language, by application (some languages use special
+  Cldr.Collation varies by language, by application (some languages use special
   phonebook sorting), and other criteria (for example, phonetic vs. visual).
 
   CLDR provides collation data for many languages and styles. The data
@@ -19,27 +19,27 @@ defmodule Collation do
   ## Basic Usage
 
       # Compare two strings
-      iex> Collation.compare("café", "cafe")
+      iex> Cldr.Collation.compare("café", "cafe")
       :gt
 
       # Sort a list of strings
-      iex> Collation.sort(["café", "cafe", "Cafe"])
+      iex> Cldr.Collation.sort(["café", "cafe", "Cafe"])
       ["cafe", "Cafe", "café"]
 
       # Generate a sort key
-      iex> Collation.sort_key("hello")
+      iex> Cldr.Collation.sort_key("hello")
       <<36, 196, 36, 83, 37, 40, 37, 40, 37, 152, 0, 0, 0, 32, 0, 32, 0, 32, 0, 32, 0,
         32, 0, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2>>
 
       # With options
-      iex> Collation.compare("a", "A", strength: :secondary)
+      iex> Cldr.Collation.compare("a", "A", strength: :secondary)
       :eq
 
       # From BCP47 locale
-      iex> Collation.compare("a", "A", locale: "en-u-ks-level2")
+      iex> Cldr.Collation.compare("a", "A", locale: "en-u-ks-level2")
       :eq
 
-  ## Collation Options
+  ## Cldr.Collation Options
 
   All BCP47 -u- extension collation keys are supported:
 
@@ -55,7 +55,7 @@ defmodule Collation do
 
   """
 
-  alias Collation.{
+  alias Cldr.Collation.{
     Element,
     ImplicitWeights,
     Normalizer,
@@ -96,10 +96,10 @@ defmodule Collation do
 
   ### Examples
 
-      iex> Collation.compare("cafe", "café")
+      iex> Cldr.Collation.compare("cafe", "café")
       :lt
 
-      iex> Collation.compare("a", "A", strength: :secondary)
+      iex> Cldr.Collation.compare("a", "A", strength: :secondary)
       :eq
 
   """
@@ -124,7 +124,7 @@ defmodule Collation do
   ### Arguments
 
   * `input` - a UTF-8 string or a list of integer codepoints
-  * `options` - a keyword list of collation options, or a `%Collation.Options{}` struct
+  * `options` - a keyword list of collation options, or a `%Cldr.Collation.Options{}` struct
 
   ### Options
 
@@ -136,12 +136,12 @@ defmodule Collation do
 
   ### Examples
 
-      iex> key_a = Collation.sort_key("cafe")
-      iex> key_b = Collation.sort_key("café")
+      iex> key_a = Cldr.Collation.sort_key("cafe")
+      iex> key_b = Cldr.Collation.sort_key("café")
       iex> key_a < key_b
       true
 
-      iex> Collation.sort_key("hello") == Collation.sort_key("hello")
+      iex> Cldr.Collation.sort_key("hello") == Cldr.Collation.sort_key("hello")
       true
 
   """
@@ -159,6 +159,7 @@ defmodule Collation do
 
   def sort_key(codepoints, %Options{} = options) when is_list(codepoints) do
     ensure_loaded()
+
     codepoints =
       if options.normalization do
         codepoints
@@ -209,10 +210,10 @@ defmodule Collation do
 
   ### Examples
 
-      iex> Collation.sort(["café", "cafe", "Cafe"])
+      iex> Cldr.Collation.sort(["café", "cafe", "Cafe"])
       ["cafe", "Cafe", "café"]
 
-      iex> Collation.sort(["б", "а", "в"])
+      iex> Cldr.Collation.sort(["б", "а", "в"])
       ["а", "б", "в"]
 
   """
@@ -237,7 +238,7 @@ defmodule Collation do
 
   ### Examples
 
-      iex> Collation.ensure_loaded()
+      iex> Cldr.Collation.ensure_loaded()
       :ok
 
   """
@@ -365,7 +366,7 @@ defmodule Collation do
 
   defp produce_with_numeric(codepoints, _options) do
     pairs = collect_ce_pairs(codepoints, [])
-    Collation.Numeric.process_elements(pairs)
+    Cldr.Collation.Numeric.process_elements(pairs)
   end
 
   defp collect_ce_pairs([], acc), do: Enum.reverse(acc)

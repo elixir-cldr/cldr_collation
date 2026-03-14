@@ -1,6 +1,6 @@
-defmodule Collation.Options do
+defmodule Cldr.Collation.Options do
   @moduledoc """
-  Collation options corresponding to BCP47 -u- extension keys.
+  Cldr.Collation options corresponding to BCP47 -u- extension keys.
 
   Supports both Elixir keyword list construction and parsing from
   BCP47 locale strings (e.g., "en-u-co-phonebk-ks-level2").
@@ -60,15 +60,15 @@ defmodule Collation.Options do
 
   ### Returns
 
-  A `%Collation.Options{}` struct.
+  A `%Cldr.Collation.Options{}` struct.
 
   ### Examples
 
-      iex> Collation.Options.new()
-      %Collation.Options{strength: :tertiary, alternate: :non_ignorable}
+      iex> Cldr.Collation.Options.new()
+      %Cldr.Collation.Options{strength: :tertiary, alternate: :non_ignorable}
 
-      iex> Collation.Options.new(strength: :primary, alternate: :shifted)
-      %Collation.Options{strength: :primary, alternate: :shifted}
+      iex> Cldr.Collation.Options.new(strength: :primary, alternate: :shifted)
+      %Cldr.Collation.Options{strength: :primary, alternate: :shifted}
 
   """
   def new(options \\ []) do
@@ -91,24 +91,24 @@ defmodule Collation.Options do
 
   ### Returns
 
-  A `%Collation.Options{}` struct with parsed values, locale defaults, and a
+  A `%Cldr.Collation.Options{}` struct with parsed values, locale defaults, and a
   tailoring overlay (if available for the locale). Unrecognized keys are ignored
   and defaults are used for missing keys.
 
   ### Examples
 
-      iex> options = Collation.Options.from_locale("en-u-ks-level2")
+      iex> options = Cldr.Collation.Options.from_locale("en-u-ks-level2")
       iex> options.strength
       :secondary
 
-      iex> options = Collation.Options.from_locale("da")
+      iex> options = Cldr.Collation.Options.from_locale("da")
       iex> options.case_first
       :upper
 
   """
   def from_locale(locale) when is_binary(locale) do
-    alias Collation.Tailoring
-    alias Collation.Tailoring.LocaleDefaults
+    alias Cldr.Collation.Tailoring
+    alias Cldr.Collation.Tailoring.LocaleDefaults
 
     language = LocaleDefaults.extract_language(locale)
     locale_defaults = LocaleDefaults.options_for(locale)
@@ -245,7 +245,7 @@ defmodule Collation.Options do
 
   ### Arguments
 
-  * `options` - a `%Collation.Options{}` struct
+  * `options` - a `%Cldr.Collation.Options{}` struct
 
   ### Returns
 
@@ -258,10 +258,10 @@ defmodule Collation.Options do
 
   ### Examples
 
-      iex> Collation.Options.max_variable_primary(%Collation.Options{max_variable: :punct})
+      iex> Cldr.Collation.Options.max_variable_primary(%Cldr.Collation.Options{max_variable: :punct})
       0x0B61
 
-      iex> Collation.Options.max_variable_primary(%Collation.Options{max_variable: :space})
+      iex> Cldr.Collation.Options.max_variable_primary(%Cldr.Collation.Options{max_variable: :space})
       0x0209
 
   """

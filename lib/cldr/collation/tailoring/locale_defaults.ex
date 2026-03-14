@@ -1,4 +1,4 @@
-defmodule Collation.Tailoring.LocaleDefaults do
+defmodule Cldr.Collation.Tailoring.LocaleDefaults do
   @moduledoc """
   Preset collation option defaults for common locales.
 
@@ -39,10 +39,10 @@ defmodule Collation.Tailoring.LocaleDefaults do
 
   ### Examples
 
-      iex> Collation.Tailoring.LocaleDefaults.options_for("da")
+      iex> Cldr.Collation.Tailoring.LocaleDefaults.options_for("da")
       [case_first: :upper]
 
-      iex> Collation.Tailoring.LocaleDefaults.options_for("en")
+      iex> Cldr.Collation.Tailoring.LocaleDefaults.options_for("en")
       []
 
   """
@@ -64,10 +64,10 @@ defmodule Collation.Tailoring.LocaleDefaults do
 
   ### Examples
 
-      iex> Collation.Tailoring.LocaleDefaults.default_type("de")
+      iex> Cldr.Collation.Tailoring.LocaleDefaults.default_type("de")
       :standard
 
-      iex> Collation.Tailoring.LocaleDefaults.default_type("es")
+      iex> Cldr.Collation.Tailoring.LocaleDefaults.default_type("es")
       :standard
 
   """
@@ -89,10 +89,10 @@ defmodule Collation.Tailoring.LocaleDefaults do
 
   ### Examples
 
-      iex> Collation.Tailoring.LocaleDefaults.extract_language("de-AT-u-co-phonebk")
+      iex> Cldr.Collation.Tailoring.LocaleDefaults.extract_language("de-AT-u-co-phonebk")
       "de"
 
-      iex> Collation.Tailoring.LocaleDefaults.extract_language("sv")
+      iex> Cldr.Collation.Tailoring.LocaleDefaults.extract_language("sv")
       "sv"
 
   """

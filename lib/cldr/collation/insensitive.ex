@@ -39,7 +39,7 @@ defmodule Cldr.Collation.Insensitive do
   @spec compare(String.t(), String.t()) :: :lt | :eq | :gt
   def compare(string_a, string_b) do
     if Cldr.Collation.Nif.available?() do
-      Cldr.Collation.Nif.nif_compare(string_a, string_b, :insensitive)
+      Cldr.Collation.Nif.nif_compare(string_a, string_b, %Cldr.Collation.Options{strength: :secondary})
     else
       Cldr.Collation.compare(string_a, string_b, backend: :elixir, strength: :secondary)
     end

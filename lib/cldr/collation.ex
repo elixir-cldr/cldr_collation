@@ -58,9 +58,10 @@ defmodule Cldr.Collation do
   ## NIF Backend
 
   An optional NIF backend using ICU4C is available for high-performance collation.
-  When compiled, it is used automatically for simple comparisons (root DUCET with
-  case-sensitive or case-insensitive strength). Advanced options (locale tailoring,
-  reordering, numeric, etc.) always use the pure Elixir implementation.
+  When compiled, it is used automatically for comparisons that only use
+  ICU-configurable attributes (strength, backwards, alternate, case_first,
+  case_level, normalization, numeric). Options requiring locale tailoring,
+  script reordering, or non-default max_variable use the pure Elixir backend.
 
   To enable the NIF backend:
 
@@ -128,7 +129,7 @@ defmodule Cldr.Collation do
     options = resolve_options(options)
 
     if use_nif?(options) do
-      Nif.nif_compare(string_a, string_b, Options.nif_casing(options))
+      Nif.nif_compare(string_a, string_b, options)
     else
       key_a = sort_key(string_a, options)
       key_b = sort_key(string_b, options)
@@ -247,13 +248,9 @@ defmodule Cldr.Collation do
     options = resolve_options(options)
 
     if use_nif?(options) do
-      comparator =
-        case Options.nif_casing(options) do
-          :sensitive -> Cldr.Collation.Sensitive
-          :insensitive -> Cldr.Collation.Insensitive
-        end
-
-      Enum.sort(strings, comparator)
+      Enum.sort(strings, fn a, b ->
+        Nif.nif_compare(a, b, options) in [:lt, :eq]
+      end)
     else
       strings
       |> Enum.map(fn s -> {sort_key(s, options), s} end)
@@ -464,8 +461,8 @@ defmodule Cldr.Collation do
     unless Options.nif_compatible?(options) do
       raise ArgumentError,
             "NIF collation backend does not support the given options. " <>
-              "Only strength (:secondary/:tertiary) is supported with the NIF backend. " <>
-              "Use backend: :elixir or backend: :default for advanced options."
+              "Options requiring reorder, tailoring, or non-default max_variable " <>
+              "are not supported. Use backend: :elixir or backend: :default."
     end
 
     true

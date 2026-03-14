@@ -3,8 +3,9 @@ defmodule Cldr.Collation.Nif do
   Optional NIF-based collation using ICU's C library.
 
   This module provides high-performance Unicode collation by wrapping ICU4C
-  via a Native Interface Function (NIF). It supports the CLDR root collation
-  (DUCET) with case-sensitive and case-insensitive comparison modes.
+  via a Native Interface Function (NIF). It supports all ICU-configurable
+  collation attributes: strength, backwards (French), alternate handling,
+  case first, case level, normalization, and numeric collation.
 
   The NIF is opt-in and requires:
 
@@ -16,10 +17,25 @@ defmodule Cldr.Collation.Nif do
   pure Elixir implementation is used automatically.
   """
 
+  alias Cldr.Collation.Options
+
   @on_load :init
 
-  @sensitive 0
-  @insensitive 1
+  # Sentinel value meaning "use ICU default / no change"
+  @opt_default -1
+
+  # ICU UColAttributeValue enum values
+  @ucol_primary 0
+  @ucol_secondary 1
+  @ucol_quaternary 3
+  @ucol_identical 15
+
+  @ucol_on 17
+
+  @ucol_shifted 20
+
+  @ucol_lower_first 24
+  @ucol_upper_first 25
 
   @doc false
   def init do
@@ -47,16 +63,16 @@ defmodule Cldr.Collation.Nif do
   """
   @spec available?() :: boolean()
   def available? do
-    function_exported?(__MODULE__, :cmp, 3) and
+    function_exported?(__MODULE__, :cmp, 9) and
       match?({:ok, _}, nif_loaded?())
   end
 
   @doc false
   defp nif_loaded? do
     try do
-      # If NIF is loaded, cmp/3 will be replaced by the native implementation.
-      # Calling with empty strings is a lightweight probe.
-      cmp("", "", @insensitive)
+      # If NIF is loaded, cmp/9 will be replaced by the native implementation.
+      # Calling with empty strings and all defaults is a lightweight probe.
+      cmp("", "", @opt_default, @opt_default, @opt_default, @opt_default, @opt_default, @opt_default, @opt_default)
       {:ok, true}
     rescue
       _ -> {:error, :not_loaded}
@@ -66,13 +82,13 @@ defmodule Cldr.Collation.Nif do
   end
 
   @doc """
-  Compare two strings using the ICU NIF collator.
+  Compare two strings using the ICU NIF collator with full option support.
 
   ### Arguments
 
   * `string_a` - the first string to compare
   * `string_b` - the second string to compare
-  * `casing` - `:sensitive` for case-sensitive or `:insensitive` for case-insensitive comparison
+  * `options` - a `%Cldr.Collation.Options{}` struct
 
   ### Returns
 
@@ -81,24 +97,55 @@ defmodule Cldr.Collation.Nif do
   * `:gt` if `string_a` sorts after `string_b`
 
   """
-  @spec nif_compare(String.t(), String.t(), :sensitive | :insensitive) :: :lt | :eq | :gt
-  def nif_compare(string_a, string_b, casing) do
-    casing_flag =
-      case casing do
-        :insensitive -> @insensitive
-        :sensitive -> @sensitive
-      end
+  @spec nif_compare(String.t(), String.t(), Options.t()) :: :lt | :eq | :gt
+  def nif_compare(string_a, string_b, %Options{} = options) do
+    {strength, backwards, alternate, case_first, case_level, normalization, numeric} =
+      options_to_nif_args(options)
 
-    case cmp(string_a, string_b, casing_flag) do
+    case cmp(string_a, string_b, strength, backwards, alternate, case_first, case_level, normalization, numeric) do
       1 -> :gt
       0 -> :eq
       -1 -> :lt
     end
   end
 
-  @dialyzer {:no_return, cmp: 3}
   @doc false
-  def cmp(_a, _b, _casing) do
+  def options_to_nif_args(%Options{} = options) do
+    strength = encode_strength(options.strength)
+    backwards = encode_bool(options.backwards)
+    alternate = encode_alternate(options.alternate)
+    case_first = encode_case_first(options.case_first)
+    case_level = encode_bool(options.case_level)
+    normalization = encode_bool(options.normalization)
+    numeric = encode_bool(options.numeric)
+
+    {strength, backwards, alternate, case_first, case_level, normalization, numeric}
+  end
+
+  # Encode strength to ICU enum value.
+  # Tertiary is the ICU default, so we use the sentinel to avoid unnecessary setAttribute.
+  defp encode_strength(:tertiary), do: @opt_default
+  defp encode_strength(:primary), do: @ucol_primary
+  defp encode_strength(:secondary), do: @ucol_secondary
+  defp encode_strength(:quaternary), do: @ucol_quaternary
+  defp encode_strength(:identical), do: @ucol_identical
+
+  # Encode boolean options. false is the ICU default for all boolean attributes.
+  defp encode_bool(false), do: @opt_default
+  defp encode_bool(true), do: @ucol_on
+
+  # Encode alternate handling. :non_ignorable is the ICU default.
+  defp encode_alternate(:non_ignorable), do: @opt_default
+  defp encode_alternate(:shifted), do: @ucol_shifted
+
+  # Encode case_first. false (off) is the ICU default.
+  defp encode_case_first(false), do: @opt_default
+  defp encode_case_first(:upper), do: @ucol_upper_first
+  defp encode_case_first(:lower), do: @ucol_lower_first
+
+  @dialyzer {:no_return, cmp: 9}
+  @doc false
+  def cmp(_a, _b, _strength, _backwards, _alternate, _case_first, _case_level, _normalization, _numeric) do
     :erlang.nif_error(:nif_library_not_loaded)
   end
 end

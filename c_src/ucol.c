@@ -31,8 +31,10 @@ typedef struct {
     ErlNifMutex* collMutex;
 } priv_data_t;
 
+/* Use -1 as sentinel for "use default / no change" */
+#define OPT_DEFAULT (-1)
+
 static ERL_NIF_TERM ucol(ErlNifEnv*, int, const ERL_NIF_TERM []);
-static int collate_binary(priv_data_t*, ctx_t*, ERL_NIF_TERM, ERL_NIF_TERM, ERL_NIF_TERM);
 static int on_load(ErlNifEnv*, void**, ERL_NIF_TERM);
 static void on_unload(ErlNifEnv*, void*);
 static __inline void reserve_coll(priv_data_t*, ctx_t*);
@@ -66,15 +68,23 @@ release_coll(priv_data_t* pData, ctx_t *ctx)
 
 /* ------------------------------------------------------------------------- */
 
+/*
+ * cmp(string_a, string_b, strength, backwards, alternate, case_first,
+ *     case_level, normalization, numeric)
+ *
+ * Each option is an integer. OPT_DEFAULT (-1) means "use collator default".
+ * Other values are the ICU enum values (e.g. UCOL_PRIMARY=0, UCOL_ON=17).
+ */
 static ERL_NIF_TERM
 ucol(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
-    ERL_NIF_TERM term_a          = argv[0];
-    ERL_NIF_TERM term_b          = argv[1];
-    ERL_NIF_TERM term_has_nocase = argv[2];
-
+    ErlNifBinary binA, binB;
+    int strength, backwards, alternate, case_first, case_level, normalization, numeric;
+    int any_set = 0;
     ctx_t ctx;
-    int result;
     priv_data_t* pData;
+    UErrorCode status = U_ZERO_ERROR;
+    UCharIterator iterA, iterB;
+    int response;
 
     ctx.env = env;
     ctx.error = 0;
@@ -82,62 +92,85 @@ ucol(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 
     pData = (priv_data_t*) enif_priv_data(env);
 
-    result = collate_binary(pData, &ctx, term_a, term_b, term_has_nocase);
+    /* Extract binary arguments */
+    if (!enif_inspect_binary(env, argv[0], &binA) ||
+        !enif_inspect_binary(env, argv[1], &binB)) {
+        return enif_make_int(env, 0);
+    }
+
+    /* Extract option integers */
+    if (!enif_get_int(env, argv[2], &strength) ||
+        !enif_get_int(env, argv[3], &backwards) ||
+        !enif_get_int(env, argv[4], &alternate) ||
+        !enif_get_int(env, argv[5], &case_first) ||
+        !enif_get_int(env, argv[6], &case_level) ||
+        !enif_get_int(env, argv[7], &normalization) ||
+        !enif_get_int(env, argv[8], &numeric)) {
+        return enif_make_int(env, 0);
+    }
+
+    /* Set up UTF-8 iterators */
+    uiter_setUTF8(&iterA, (const char *) binA.data, (uint32_t) binA.size);
+    uiter_setUTF8(&iterB, (const char *) binB.data, (uint32_t) binB.size);
+
+    /* Grab a collator from the pool */
+    reserve_coll(pData, &ctx);
+
+    /* Apply non-default attributes */
+    if (strength != OPT_DEFAULT) {
+        ucol_setAttribute(ctx.coll, UCOL_STRENGTH, (UColAttributeValue) strength, &status);
+        any_set = 1;
+    }
+    if (backwards != OPT_DEFAULT) {
+        ucol_setAttribute(ctx.coll, UCOL_FRENCH_COLLATION, (UColAttributeValue) backwards, &status);
+        any_set = 1;
+    }
+    if (alternate != OPT_DEFAULT) {
+        ucol_setAttribute(ctx.coll, UCOL_ALTERNATE_HANDLING, (UColAttributeValue) alternate, &status);
+        any_set = 1;
+    }
+    if (case_first != OPT_DEFAULT) {
+        ucol_setAttribute(ctx.coll, UCOL_CASE_FIRST, (UColAttributeValue) case_first, &status);
+        any_set = 1;
+    }
+    if (case_level != OPT_DEFAULT) {
+        ucol_setAttribute(ctx.coll, UCOL_CASE_LEVEL, (UColAttributeValue) case_level, &status);
+        any_set = 1;
+    }
+    if (normalization != OPT_DEFAULT) {
+        ucol_setAttribute(ctx.coll, UCOL_NORMALIZATION_MODE, (UColAttributeValue) normalization, &status);
+        any_set = 1;
+    }
+    if (numeric != OPT_DEFAULT) {
+        ucol_setAttribute(ctx.coll, UCOL_NUMERIC_COLLATION, (UColAttributeValue) numeric, &status);
+        any_set = 1;
+    }
+
+    /* Perform the comparison */
+    response = ucol_strcollIter(ctx.coll, &iterA, &iterB, &status);
+
+    /* Restore all modified attributes to defaults */
+    if (any_set) {
+        status = U_ZERO_ERROR;
+        if (strength != OPT_DEFAULT)
+            ucol_setAttribute(ctx.coll, UCOL_STRENGTH, UCOL_DEFAULT, &status);
+        if (backwards != OPT_DEFAULT)
+            ucol_setAttribute(ctx.coll, UCOL_FRENCH_COLLATION, UCOL_DEFAULT, &status);
+        if (alternate != OPT_DEFAULT)
+            ucol_setAttribute(ctx.coll, UCOL_ALTERNATE_HANDLING, UCOL_DEFAULT, &status);
+        if (case_first != OPT_DEFAULT)
+            ucol_setAttribute(ctx.coll, UCOL_CASE_FIRST, UCOL_DEFAULT, &status);
+        if (case_level != OPT_DEFAULT)
+            ucol_setAttribute(ctx.coll, UCOL_CASE_LEVEL, UCOL_DEFAULT, &status);
+        if (normalization != OPT_DEFAULT)
+            ucol_setAttribute(ctx.coll, UCOL_NORMALIZATION_MODE, UCOL_DEFAULT, &status);
+        if (numeric != OPT_DEFAULT)
+            ucol_setAttribute(ctx.coll, UCOL_NUMERIC_COLLATION, UCOL_DEFAULT, &status);
+    }
+
     release_coll(pData, &ctx);
 
-    return enif_make_int(env, result);
-}
-
-int
-collate_binary(priv_data_t* pData, ctx_t* ctx, ERL_NIF_TERM term_a, ERL_NIF_TERM term_b, ERL_NIF_TERM term_has_nocase)
-{
-    ErlNifBinary binA, binB;
-    int has_nocase, response;
-
-    if(!enif_get_int(ctx->env, term_has_nocase, &has_nocase)) {
-        ctx->error = 1;
-        return 0;
-    }
-    if(!enif_inspect_binary(ctx->env, term_a, &binA)) {
-        ctx->error = 1;
-        return 0;
-    }
-    if(!enif_inspect_binary(ctx->env, term_b, &binB)) {
-        ctx->error = 1;
-        return 0;
-    }
-
-    switch(has_nocase) {
-    case 0: /* COLLATE */
-    case 1: /* COLLATE_NO_CASE: */
-        {
-        UErrorCode status = U_ZERO_ERROR;
-        UCharIterator iterA;
-        UCharIterator iterB;
-
-        uiter_setUTF8(&iterA, (const char *) binA.data, (uint32_t) binA.size);
-        uiter_setUTF8(&iterB, (const char *) binB.data, (uint32_t) binB.size);
-
-        /* grab a collator */
-        reserve_coll(pData, ctx);
-
-        if (has_nocase == 1) /* switching this collator to case insensitive */
-          ucol_setAttribute(ctx->coll, UCOL_STRENGTH, UCOL_PRIMARY, &status);
-
-        /* by default, it will collate case sensitive */
-        response = ucol_strcollIter(ctx->coll, &iterA, &iterB, &status);
-
-        if (has_nocase == 1) /* puting back this collator to case sensitive */
-          ucol_setAttribute(ctx->coll, UCOL_STRENGTH, UCOL_DEFAULT, &status);
-
-        break;
-        }
-
-    default:
-        response = -1;
-    }
-
-    return response;
+    return enif_make_int(env, response);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -265,7 +298,7 @@ on_upgrade(ErlNifEnv* env, void** priv_data, void** old_data, ERL_NIF_TERM info)
 static ErlNifFunc
 nif_funcs[] =
 {
-    {"cmp", 3, ucol}
+    {"cmp", 9, ucol}
 };
 
 ERL_NIF_INIT(Elixir.Cldr.Collation.Nif, nif_funcs, &on_load, &on_reload, &on_upgrade, &on_unload)

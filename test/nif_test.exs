@@ -39,8 +39,8 @@ defmodule Cldr.Collation.NifTest do
     end
 
     test "backend: :default falls back to elixir when NIF unavailable or options incompatible" do
-      # With advanced options, NIF cannot be used even if available
-      result = Cldr.Collation.sort(["b", "a"], backend: :default, numeric: true)
+      # With reorder options, NIF cannot be used even if available
+      result = Cldr.Collation.sort(["b", "a"], backend: :default, reorder: ["Grek"])
       assert result == ["a", "b"]
     end
 
@@ -55,7 +55,7 @@ defmodule Cldr.Collation.NifTest do
     test "backend: :nif with incompatible options raises" do
       if Cldr.Collation.Nif.available?() do
         assert_raise ArgumentError, ~r/NIF collation backend does not support/, fn ->
-          Cldr.Collation.compare("a", "b", backend: :nif, numeric: true)
+          Cldr.Collation.compare("a", "b", backend: :nif, reorder: ["Grek"])
         end
       end
     end
@@ -99,16 +99,35 @@ defmodule Cldr.Collation.NifTest do
       assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{})
     end
 
-    test "secondary strength is NIF-compatible" do
-      assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{strength: :secondary})
+    test "all strength levels are NIF-compatible" do
+      for strength <- [:primary, :secondary, :tertiary, :quaternary, :identical] do
+        assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{strength: strength})
+      end
     end
 
-    test "primary strength is not NIF-compatible" do
-      refute Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{strength: :primary})
+    test "numeric option is NIF-compatible" do
+      assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{numeric: true})
     end
 
-    test "numeric option is not NIF-compatible" do
-      refute Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{numeric: true})
+    test "backwards option is NIF-compatible" do
+      assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{backwards: true})
+    end
+
+    test "alternate: :shifted is NIF-compatible" do
+      assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{alternate: :shifted})
+    end
+
+    test "case_first is NIF-compatible" do
+      assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{case_first: :upper})
+      assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{case_first: :lower})
+    end
+
+    test "case_level is NIF-compatible" do
+      assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{case_level: true})
+    end
+
+    test "normalization is NIF-compatible" do
+      assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{normalization: true})
     end
 
     test "locale tailoring is not NIF-compatible" do
@@ -117,6 +136,145 @@ defmodule Cldr.Collation.NifTest do
 
     test "reorder is not NIF-compatible" do
       refute Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{reorder: ["Grek"]})
+    end
+
+    test "non-default max_variable is not NIF-compatible" do
+      refute Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{max_variable: :space})
+    end
+  end
+
+  # Tests that verify NIF and Elixir backends produce identical results.
+  # These tests run with both backends explicitly and compare outputs.
+  describe "NIF/Elixir parity" do
+    # Helper to compare NIF and Elixir results
+    defp assert_parity(a, b, opts) do
+      nif_result = Cldr.Collation.compare(a, b, [{:backend, :nif} | opts])
+      elixir_result = Cldr.Collation.compare(a, b, [{:backend, :elixir} | opts])
+
+      assert nif_result == elixir_result,
+             "NIF (#{inspect(nif_result)}) != Elixir (#{inspect(elixir_result)}) " <>
+               "for compare(#{inspect(a)}, #{inspect(b)}, #{inspect(opts)})"
+    end
+
+    defp assert_sort_parity(strings, opts) do
+      nif_result = Cldr.Collation.sort(strings, [{:backend, :nif} | opts])
+      elixir_result = Cldr.Collation.sort(strings, [{:backend, :elixir} | opts])
+
+      assert nif_result == elixir_result,
+             "NIF sort != Elixir sort for #{inspect(opts)}"
+    end
+
+    @tag :nif
+    test "strength: :primary" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("a", "A", strength: :primary)
+        assert_parity("café", "cafe", strength: :primary)
+      end
+    end
+
+    @tag :nif
+    test "strength: :secondary" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("a", "A", strength: :secondary)
+        assert_parity("café", "cafe", strength: :secondary)
+      end
+    end
+
+    @tag :nif
+    test "strength: :tertiary" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("a", "A", strength: :tertiary)
+        assert_parity("café", "cafe", strength: :tertiary)
+      end
+    end
+
+    @tag :nif
+    test "strength: :quaternary" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("a", "A", strength: :quaternary)
+        assert_parity("café", "cafe", strength: :quaternary)
+      end
+    end
+
+    @tag :nif
+    test "strength: :identical" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("a", "A", strength: :identical)
+      end
+    end
+
+    @tag :nif
+    test "backwards: true (French collation)" do
+      if Cldr.Collation.Nif.available?() do
+        # French collation reverses secondary weights, affecting accent ordering
+        assert_parity("côte", "coté", backwards: true)
+        assert_parity("côte", "coté", backwards: false)
+      end
+    end
+
+    @tag :nif
+    test "alternate: :shifted" do
+      if Cldr.Collation.Nif.available?() do
+        # With shifted, punctuation/spaces are variable and may be ignored
+        assert_parity("black-bird", "blackbird", alternate: :shifted)
+        assert_parity("black bird", "blackbird", alternate: :shifted)
+      end
+    end
+
+    @tag :nif
+    test "case_first: :upper" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("a", "A", case_first: :upper)
+        assert_sort_parity(["a", "A", "b", "B"], case_first: :upper)
+      end
+    end
+
+    @tag :nif
+    test "case_first: :lower" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("a", "A", case_first: :lower)
+        assert_sort_parity(["a", "A", "b", "B"], case_first: :lower)
+      end
+    end
+
+    @tag :nif
+    test "case_level: true" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("a", "A", case_level: true)
+      end
+    end
+
+    @tag :nif
+    test "normalization: true" do
+      if Cldr.Collation.Nif.available?() do
+        # é as single codepoint vs e + combining acute
+        assert_parity("é", "e\u0301", normalization: true)
+      end
+    end
+
+    @tag :nif
+    test "numeric: true" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("2", "10", numeric: true)
+        assert_sort_parity(["file10", "file2", "file1"], numeric: true)
+      end
+    end
+
+    @tag :nif
+    test "combined options" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("a", "A", strength: :secondary, numeric: true)
+        assert_parity("2", "10", strength: :primary, numeric: true)
+      end
+    end
+
+    @tag :nif
+    test "NIF now handles numeric option directly" do
+      if Cldr.Collation.Nif.available?() do
+        # This previously would fall back to Elixir; now NIF handles it
+        result = Cldr.Collation.compare("2", "10", backend: :nif, numeric: true)
+        assert result == :lt
+      end
     end
   end
 end

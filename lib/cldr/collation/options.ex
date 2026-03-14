@@ -306,10 +306,13 @@ defmodule Cldr.Collation.Options do
   @doc """
   Returns whether the given options can be handled by the NIF backend.
 
-  The NIF backend only supports root DUCET collation with case-sensitive
-  (tertiary) or case-insensitive (secondary) strength. Any advanced options
-  like locale tailoring, reordering, numeric collation, etc. require the
-  pure Elixir backend.
+  The NIF backend supports all ICU-configurable collation attributes:
+  strength (all 5 levels), backwards, alternate, case_first, case_level,
+  normalization, and numeric collation.
+
+  Options that require the pure Elixir backend: `reorder` (needs ICU 4.0+),
+  `tailoring` (locale-specific rules), and non-default `max_variable`
+  (fragile across ICU versions).
 
   ### Arguments
 
@@ -326,42 +329,16 @@ defmodule Cldr.Collation.Options do
       true
 
       iex> Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{numeric: true})
+      true
+
+      iex> Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{reorder: ["Grek"]})
       false
 
   """
   @spec nif_compatible?(t()) :: boolean()
   def nif_compatible?(%__MODULE__{} = options) do
-    options.strength in [:secondary, :tertiary] and
-      options.alternate == :non_ignorable and
-      options.backwards == false and
-      options.normalization == false and
-      options.case_level == false and
-      options.case_first == false and
-      options.numeric == false and
-      options.reorder == [] and
+    options.reorder == [] and
       options.max_variable == :punct and
       options.tailoring == nil
-  end
-
-  @doc """
-  Returns the NIF casing flag for the given options.
-
-  ### Arguments
-
-  * `options` - a `%Cldr.Collation.Options{}` struct
-
-  ### Returns
-
-  * `:sensitive` for tertiary or higher strength
-  * `:insensitive` for secondary or lower strength
-
-  """
-  @spec nif_casing(t()) :: :sensitive | :insensitive
-  def nif_casing(%__MODULE__{strength: strength}) do
-    case strength do
-      :primary -> :insensitive
-      :secondary -> :insensitive
-      _ -> :sensitive
-    end
   end
 end

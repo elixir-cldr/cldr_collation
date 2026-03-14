@@ -60,7 +60,8 @@ defmodule Collation.ImplicitWeights do
   @tbase 0x11A7
   @vcount 21
   @tcount 28
-  @ncount @vcount * @tcount  # 588
+  # 588
+  @ncount @vcount * @tcount
   # Implicit weight bases from UCA
   # The CLDR uses specific base values for each group
   @han_base 0xFB40
@@ -68,7 +69,27 @@ defmodule Collation.ImplicitWeights do
   @unassigned_base 0xFBC0
 
   @doc """
-  Returns true if this codepoint is a CJK Unified Ideograph.
+  Check if a codepoint is a CJK Unified Ideograph.
+
+  Covers the core CJK block, all extensions (A through H), compatibility
+  ideographs, and specific compatibility ideograph codepoints.
+
+  ### Arguments
+
+  * `cp` - an integer codepoint
+
+  ### Returns
+
+  * `true` if the codepoint is a CJK Unified Ideograph
+  * `false` otherwise
+
+  ### Examples
+
+      iex> Collation.ImplicitWeights.unified_ideograph?(0x4E00)
+      true
+
+      iex> Collation.ImplicitWeights.unified_ideograph?(0x0041)
+      false
   """
   def unified_ideograph?(cp) do
     (cp >= @cjk_unified_start and cp <= @cjk_unified_end) or
@@ -81,22 +102,70 @@ defmodule Collation.ImplicitWeights do
       (cp >= @cjk_ext_g_start and cp <= @cjk_ext_g_end) or
       (cp >= @cjk_ext_h_start and cp <= @cjk_ext_h_end) or
       (cp >= @cjk_compat_start and cp <= @cjk_compat_end) or
-      cp in [0xFA0E, 0xFA0F, 0xFA11, 0xFA13, 0xFA14, 0xFA1F, 0xFA21,
-             0xFA23, 0xFA24, 0xFA27, 0xFA28, 0xFA29]
+      cp in [
+        0xFA0E,
+        0xFA0F,
+        0xFA11,
+        0xFA13,
+        0xFA14,
+        0xFA1F,
+        0xFA21,
+        0xFA23,
+        0xFA24,
+        0xFA27,
+        0xFA28,
+        0xFA29
+      ]
   end
 
   @doc """
-  Returns true if this codepoint is a Hangul syllable.
+  Check if a codepoint is a Hangul syllable.
+
+  Hangul syllables occupy the range U+AC00..U+D7A3.
+
+  ### Arguments
+
+  * `cp` - an integer codepoint
+
+  ### Returns
+
+  * `true` if the codepoint is a Hangul syllable
+  * `false` otherwise
+
+  ### Examples
+
+      iex> Collation.ImplicitWeights.hangul_syllable?(0xAC00)
+      true
+
+      iex> Collation.ImplicitWeights.hangul_syllable?(0x0041)
+      false
   """
   def hangul_syllable?(cp), do: cp >= @hangul_start and cp <= @hangul_end
 
   @doc """
-  Compute implicit collation elements for a codepoint.
-  Returns a list of `%Element{}` structs.
+  Compute implicit collation elements for a codepoint not in the allkeys table.
 
-  The UCA implicit weight algorithm produces two CEs:
-  - CE1: [AAAA, 0020, 0002] where AAAA = base + (cp >> 15)
-  - CE2: [BBBB, 0000, 0000] where BBBB = (cp & 0x7FFF) | 0x8000
+  Handles three cases:
+  - Hangul syllables: algorithmically decomposed to jamo
+  - CJK Unified Ideographs: implicit weight pair from code point value
+  - All others: unassigned implicit weight pair
+
+  ### Arguments
+
+  * `cp` - an integer codepoint
+
+  ### Returns
+
+  * `{:hangul_decompose, jamo}` - for Hangul syllables, returns the constituent jamo for table lookup
+  * `[%Collation.Element{}, %Collation.Element{}]` - two implicit CEs for CJK or unassigned codepoints
+
+  ### Examples
+
+      iex> [ce1, ce2] = Collation.ImplicitWeights.compute(0x4E00)
+      iex> ce1.primary >= 0xFB40
+      true
+      iex> ce2.secondary
+      0
   """
   def compute(cp) do
     cond do
@@ -115,8 +184,26 @@ defmodule Collation.ImplicitWeights do
   end
 
   @doc """
-  Decompose a Hangul syllable into its jamo and look up each.
-  Returns the constituent jamo codepoints (not CEs) for further lookup.
+  Decompose a Hangul syllable into its constituent jamo codepoints.
+
+  Uses the algorithmic decomposition defined in the Unicode Standard
+  (Chapter 3, Section 3.12).
+
+  ### Arguments
+
+  * `cp` - an integer codepoint for a Hangul syllable (U+AC00..U+D7A3)
+
+  ### Returns
+
+  A list of 2 or 3 jamo codepoints: `[lead, vowel]` or `[lead, vowel, trail]`.
+
+  ### Examples
+
+      iex> Collation.ImplicitWeights.decompose_hangul_to_jamo(0xAC00)
+      [0x1100, 0x1161]
+
+      iex> Collation.ImplicitWeights.decompose_hangul_to_jamo(0xAC01)
+      [0x1100, 0x1161, 0x11A8]
   """
   def decompose_hangul_to_jamo(cp) do
     sindex = cp - @sbase

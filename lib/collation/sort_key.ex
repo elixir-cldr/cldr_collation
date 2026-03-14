@@ -15,10 +15,28 @@ defmodule Collation.SortKey do
   @level_separator <<0x00, 0x00>>
 
   @doc """
-  Build a binary sort key from processed elements.
+  Build a binary sort key from processed collation elements.
 
-  `processed_elements` is a list of `{%Element{}, quaternary}` tuples
-  as returned by `Variable.process/3`.
+  Constructs a multi-level binary key by extracting weights at each level
+  (primary, secondary, tertiary, quaternary, identical) separated by `0x0000`.
+
+  ### Arguments
+
+  * `processed_elements` - a list of `{%Collation.Element{}, quaternary}` tuples as returned by `Collation.Variable.process/3`
+  * `opts` - a `%Collation.Options{}` struct controlling which levels to include
+  * `original_string` - the original input string, used for the identical level (default: `nil`)
+
+  ### Returns
+
+  A binary sort key where levels are separated by `<<0x00, 0x00>>`. The number
+  of levels included depends on the `:strength` option.
+
+  ### Examples
+
+      iex> elements = [{%Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0008}, 0}]
+      iex> opts = Collation.Options.new(strength: :primary)
+      iex> Collation.SortKey.build(elements, opts)
+      <<0x23, 0xEC>>
   """
   def build(processed_elements, %Options{} = opts, original_string \\ nil) do
     key = build_primary(processed_elements)
@@ -60,7 +78,9 @@ defmodule Collation.SortKey do
     key =
       if opts.strength == :identical do
         # Identical level: append NFD of original string
-        nfd = if original_string, do: :unicode.characters_to_nfd_binary(original_string), else: <<>>
+        nfd =
+          if original_string, do: :unicode.characters_to_nfd_binary(original_string), else: <<>>
+
         key <> @level_separator <> nfd
       else
         key

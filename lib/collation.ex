@@ -42,17 +42,52 @@ defmodule Collation do
   - `max_variable` - `:punct` (default), `:space`, `:symbol`, `:currency`
   """
 
-  alias Collation.{Element, ImplicitWeights, Normalizer, Options, Reorder, SortKey, Table, Variable}
+  alias Collation.{
+    Element,
+    ImplicitWeights,
+    Normalizer,
+    Options,
+    Reorder,
+    SortKey,
+    Table,
+    Variable
+  }
 
   @doc """
   Compare two strings using the CLDR collation algorithm.
 
-  Returns `:lt`, `:eq`, or `:gt`.
+  ### Arguments
 
-  ## Options
+  * `string_a` - the first string to compare
+  * `string_b` - the second string to compare
+  * `opts` - a keyword list of collation options
 
-  See module documentation for available options. Can also pass `locale:` to
-  parse options from a BCP47 locale string.
+  ### Options
+
+  * `:strength` - comparison level: `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`, or `:identical`
+  * `:alternate` - variable weight handling: `:non_ignorable` (default) or `:shifted`
+  * `:backwards` - reverse secondary weights for French sorting: `false` (default) or `true`
+  * `:normalization` - NFD normalize input: `false` (default) or `true`
+  * `:case_level` - insert case-only comparison level: `false` (default) or `true`
+  * `:case_first` - case ordering: `false` (default), `:upper`, or `:lower`
+  * `:numeric` - numeric string comparison: `false` (default) or `true`
+  * `:reorder` - list of script codes to reorder: `[]` (default)
+  * `:max_variable` - variable weight boundary: `:punct` (default), `:space`, `:symbol`, or `:currency`
+  * `:locale` - a BCP47 locale string with `-u-` extension keys (e.g., `"en-u-ks-level2"`)
+
+  ### Returns
+
+  * `:lt` - if `string_a` sorts before `string_b`
+  * `:eq` - if `string_a` and `string_b` are equal at the given strength
+  * `:gt` - if `string_a` sorts after `string_b`
+
+  ### Examples
+
+      iex> Collation.compare("cafe", "café")
+      :lt
+
+      iex> Collation.compare("a", "A", strength: :secondary)
+      :eq
   """
   def compare(string_a, string_b, opts \\ []) do
     options = resolve_options(opts)
@@ -67,14 +102,33 @@ defmodule Collation do
   end
 
   @doc """
-  Generate a binary sort key for the given string.
+  Generate a binary sort key for the given input.
 
   Sort keys can be compared directly with `<`, `>`, `==` for ordering.
   This is efficient when the same strings need to be compared multiple times.
 
-  ## Options
+  ### Arguments
 
-  Accepts a keyword list or a `%Collation.Options{}` struct.
+  * `input` - a UTF-8 string or a list of integer codepoints
+  * `opts` - a keyword list of collation options, or a `%Collation.Options{}` struct
+
+  ### Options
+
+  Accepts the same options as `compare/3`.
+
+  ### Returns
+
+  A binary sort key that can be compared with standard binary comparison operators.
+
+  ### Examples
+
+      iex> key_a = Collation.sort_key("cafe")
+      iex> key_b = Collation.sort_key("café")
+      iex> key_a < key_b
+      true
+
+      iex> Collation.sort_key("hello") == Collation.sort_key("hello")
+      true
   """
   def sort_key(input, opts \\ [])
 
@@ -126,9 +180,26 @@ defmodule Collation do
   @doc """
   Sort a list of strings using the CLDR collation algorithm.
 
-  ## Options
+  ### Arguments
 
-  See module documentation for available options.
+  * `strings` - a list of UTF-8 strings to sort
+  * `opts` - a keyword list of collation options
+
+  ### Options
+
+  Accepts the same options as `compare/3`.
+
+  ### Returns
+
+  A new list of strings sorted according to the CLDR collation rules.
+
+  ### Examples
+
+      iex> Collation.sort(["café", "cafe", "Cafe"])
+      ["cafe", "Cafe", "café"]
+
+      iex> Collation.sort(["б", "а", "в"])
+      ["а", "б", "в"]
   """
   def sort(strings, opts \\ []) do
     options = resolve_options(opts)
@@ -140,7 +211,19 @@ defmodule Collation do
   end
 
   @doc """
-  Ensure the collation tables are loaded. Called automatically by other functions.
+  Ensure the collation tables are loaded into ETS.
+
+  Called automatically by `compare/3`, `sort_key/2`, and `sort/2`.
+  Can be called explicitly to pre-warm the tables at application startup.
+
+  ### Returns
+
+  * `:ok` - tables are loaded and ready
+
+  ### Examples
+
+      iex> Collation.ensure_loaded()
+      :ok
   """
   def ensure_loaded do
     Table.ensure_loaded()
@@ -230,7 +313,10 @@ defmodule Collation do
   # Try to match the base sequence + each unblocked combining mark
   defp extend_with_combiners(base_cps, base_elements, combiners) do
     {final_elements, consumed_set, _last_ccc, _current_base} =
-      Enum.reduce(combiners, {base_elements, MapSet.new(), 0, base_cps}, fn {cp, ccc}, {elems, consumed, last_ccc, current_base} ->
+      Enum.reduce(combiners, {base_elements, MapSet.new(), 0, base_cps}, fn {cp, ccc},
+                                                                            {elems, consumed,
+                                                                             last_ccc,
+                                                                             current_base} ->
         # Check if this combining mark is blocked
         if ccc > 0 and (last_ccc == 0 or ccc > last_ccc) do
           # Not blocked - try to extend the match

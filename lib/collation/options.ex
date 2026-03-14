@@ -35,15 +35,64 @@ defmodule Collation.Options do
           type: atom()
         }
 
-  @doc "Create options from a keyword list."
+  @doc """
+  Create a new options struct from a keyword list.
+
+  ### Arguments
+
+  * `opts` - a keyword list of collation options (default: `[]`)
+
+  ### Options
+
+  * `:strength` - `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`, or `:identical`
+  * `:alternate` - `:non_ignorable` (default) or `:shifted`
+  * `:backwards` - `false` (default) or `true`
+  * `:normalization` - `false` (default) or `true`
+  * `:case_level` - `false` (default) or `true`
+  * `:case_first` - `false` (default), `:upper`, or `:lower`
+  * `:numeric` - `false` (default) or `true`
+  * `:reorder` - list of script codes (default: `[]`)
+  * `:max_variable` - `:space`, `:punct` (default), `:symbol`, or `:currency`
+  * `:type` - `:standard` (default), `:search`, `:phonebook`, etc.
+
+  ### Returns
+
+  A `%Collation.Options{}` struct.
+
+  ### Examples
+
+      iex> Collation.Options.new()
+      %Collation.Options{strength: :tertiary, alternate: :non_ignorable}
+
+      iex> Collation.Options.new(strength: :primary, alternate: :shifted)
+      %Collation.Options{strength: :primary, alternate: :shifted}
+  """
   def new(opts \\ []) do
     struct(__MODULE__, opts)
   end
 
   @doc """
-  Parse collation options from a BCP47 locale string with -u- extension.
+  Parse collation options from a BCP47 locale string with `-u-` extension.
 
-  Example: "en-u-co-phonebk-ks-level2-ka-shifted"
+  Extracts collation-related keys from the Unicode locale extension subtag.
+  Supported BCP47 keys: `co`, `ks`, `ka`, `kb`, `kk`, `kc`, `kf`, `kn`, `kr`, `kv`.
+
+  ### Arguments
+
+  * `locale` - a BCP47 locale string (e.g., `"en-u-co-phonebk-ks-level2-ka-shifted"`)
+
+  ### Returns
+
+  A `%Collation.Options{}` struct with parsed values. Unrecognized keys are ignored
+  and defaults are used for missing keys.
+
+  ### Examples
+
+      iex> Collation.Options.from_locale("en-u-ks-level2")
+      %Collation.Options{strength: :secondary}
+
+      iex> Collation.Options.from_locale("fr-u-kb-true-ka-shifted")
+      %Collation.Options{backwards: true, alternate: :shifted}
   """
   def from_locale(locale) when is_binary(locale) do
     case extract_u_extension(locale) do
@@ -152,14 +201,32 @@ defmodule Collation.Options do
   defp parse_type(other), do: String.to_atom(other)
 
   @doc """
-  Returns the maximum primary weight that counts as "variable"
-  for the given max_variable setting.
+  Return the maximum primary weight that counts as "variable" for the given setting.
 
-  These boundaries come from the FractionalUCA.txt top_byte groupings:
-  - space: primary weights in the SPACE group
-  - punct: SPACE + PUNCTUATION groups
-  - symbol: SPACE + PUNCTUATION + SYMBOL groups
-  - currency: SPACE + PUNCTUATION + SYMBOL + CURRENCY groups
+  These boundaries come from the FractionalUCA.txt top_byte groupings. Variable
+  elements at or below this primary weight threshold are affected by the
+  `:alternate` setting in shifted mode.
+
+  ### Arguments
+
+  * `options` - a `%Collation.Options{}` struct
+
+  ### Returns
+
+  A non-negative integer representing the maximum primary weight boundary:
+
+  * `:space` - `0x0209`
+  * `:punct` - `0x0B61`
+  * `:symbol` - `0x0EE3`
+  * `:currency` - `0x0EFF`
+
+  ### Examples
+
+      iex> Collation.Options.max_variable_primary(%Collation.Options{max_variable: :punct})
+      0x0B61
+
+      iex> Collation.Options.max_variable_primary(%Collation.Options{max_variable: :space})
+      0x0209
   """
   def max_variable_primary(%__MODULE__{max_variable: :space}), do: 0x0209
   def max_variable_primary(%__MODULE__{max_variable: :punct}), do: 0x0B61

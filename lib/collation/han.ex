@@ -37,7 +37,21 @@ defmodule Collation.Han do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  @doc "Ensure Han radical data is loaded."
+  @doc """
+  Ensure the Han radical data is loaded into ETS.
+
+  Loads radical-stroke data from FractionalUCA.txt on first call.
+  Subsequent calls are no-ops.
+
+  ### Returns
+
+  * `:ok` - the radical data is loaded and ready
+
+  ### Examples
+
+      iex> Collation.Han.ensure_loaded()
+      :ok
+  """
   def ensure_loaded do
     case :ets.whereis(@table_name) do
       :undefined -> GenServer.call(__MODULE__, :load, :infinity)
@@ -48,8 +62,21 @@ defmodule Collation.Han do
   @doc """
   Compute collation elements for a Han character using radical-stroke ordering.
 
-  Returns `[%Element{}, %Element{}]` - two CEs encoding the radical-stroke key,
-  or `nil` if the character has no radical data (falls back to implicit weights).
+  ### Arguments
+
+  * `codepoint` - an integer codepoint for a CJK Unified Ideograph
+
+  ### Returns
+
+  * `[%Collation.Element{}, %Collation.Element{}]` - two CEs encoding the radical-stroke key
+  * `nil` - if the character has no radical data (falls back to implicit weights)
+
+  ### Examples
+
+      iex> Collation.Han.ensure_loaded()
+      iex> elements = Collation.Han.collation_elements(0x4E00)
+      iex> length(elements)
+      2
   """
   def collation_elements(codepoint) do
     ensure_loaded()
@@ -77,18 +104,55 @@ defmodule Collation.Han do
   - bits 28-31: simplification level
   - bits 20-27: block index
   - bits 0-19: code point
+
+  ### Arguments
+
+  * `radical` - the Kangxi radical number (1-214)
+  * `residual_strokes` - the residual stroke count after removing the radical
+  * `simplification` - the simplification level (0 for traditional)
+  * `block` - the CJK block index (see `block_index/1`)
+  * `codepoint` - the Unicode codepoint
+
+  ### Returns
+
+  A 64-bit integer encoding all components of the radical-stroke sort key.
+
+  ### Examples
+
+      iex> Collation.Han.compute_key(1, 0, 0, 0, 0x4E00)
+      17609365585920
   """
   def compute_key(radical, residual_strokes, simplification, block, codepoint) do
     import Bitwise
 
-    (radical <<< 44) |||
-      (residual_strokes <<< 36) |||
-      (simplification <<< 28) |||
-      (block <<< 20) |||
+    radical <<< 44 |||
+      residual_strokes <<< 36 |||
+      simplification <<< 28 |||
+      block <<< 20 |||
       codepoint
   end
 
-  @doc "Convert a 64-bit radical-stroke key to collation elements."
+  @doc """
+  Convert a 64-bit radical-stroke key to two collation elements.
+
+  Encodes the key as two CEs using the Han implicit base (`0xFB40`):
+  - CE1: primary = `0xFB40 + (key >> 32)`, secondary = `0x0020`, tertiary = `0x0002`
+  - CE2: primary = `(key & 0xFFFF) | 0x8000`, secondary = `0x0000`, tertiary = `0x0000`
+
+  ### Arguments
+
+  * `key` - a 64-bit integer radical-stroke key from `compute_key/5`
+
+  ### Returns
+
+  A list of two `%Collation.Element{}` structs.
+
+  ### Examples
+
+      iex> elements = Collation.Han.key_to_elements(0)
+      iex> hd(elements).primary
+      0xFB40
+  """
   def key_to_elements(key) do
     # Encode as two CEs with primary weights derived from the key
     # Use the Han implicit base (0xFB40) as a starting point
@@ -103,7 +167,34 @@ defmodule Collation.Han do
     ]
   end
 
-  @doc "Get the block index for a codepoint."
+  @doc """
+  Get the CJK block index for a codepoint.
+
+  Maps a codepoint to its CJK Unified Ideograph block for use in the
+  radical-stroke sort key.
+
+  ### Arguments
+
+  * `cp` - an integer codepoint
+
+  ### Returns
+
+  An integer block index:
+
+  * `0` - CJK Unified Ideographs (U+4E00..U+9FFF)
+  * `1` - Extension A (U+3400..U+4DBF)
+  * `2` - Extension B (U+20000..U+2A6DF)
+  * `3`..`8` - Extensions C through H
+  * `254` - CJK Compatibility Ideographs (U+F900..U+FAFF)
+
+  ### Examples
+
+      iex> Collation.Han.block_index(0x4E00)
+      0
+
+      iex> Collation.Han.block_index(0x3400)
+      1
+  """
   def block_index(cp) do
     cond do
       cp >= 0x4E00 and cp <= 0x9FFF -> @block_cjk_unified
@@ -166,8 +257,19 @@ defmodule Collation.Han do
   @doc """
   Parse a radical definition line from FractionalUCA.txt.
 
-  Format: `[radical N=CANONICAL:MEMBER_LIST]`
-  Members are individual codepoints or ranges (CP1-CP2).
+  ### Arguments
+
+  * `line` - a trimmed line from FractionalUCA.txt in the format `[radical N=CANONICAL:MEMBER_LIST]`
+
+  ### Returns
+
+  * `{:ok, radical_num, members}` - the radical number and a list of `{codepoint, simplification, strokes}` tuples
+  * `:skip` - the line is not a radical definition
+
+  ### Examples
+
+      iex> Collation.Han.parse_radical_line("not a radical line")
+      :skip
   """
   def parse_radical_line(line) do
     case Regex.run(~r/^\[radical (\d+)=.+?:(.+)\]$/, line) do
@@ -202,7 +304,11 @@ defmodule Collation.Han do
             {c, simp, stroke_group}
           end
 
-        parse_member_chars(rest2, range_entries ++ acc_rest ++ [{prev_cp, simp, stroke_group}], stroke_group)
+        parse_member_chars(
+          rest2,
+          range_entries ++ acc_rest ++ [{prev_cp, simp, stroke_group}],
+          stroke_group
+        )
 
       _ ->
         parse_member_chars(rest, acc, stroke_group)

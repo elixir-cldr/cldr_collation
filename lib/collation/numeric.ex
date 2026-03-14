@@ -12,11 +12,28 @@ defmodule Collation.Numeric do
   alias Collation.Element
 
   @doc """
-  Process a list of codepoints and their collation elements,
-  replacing digit sequence CEs with numeric-value-based CEs.
+  Process codepoint/element pairs, replacing digit sequence CEs with
+  numeric-value-based CEs.
 
-  Takes a list of `{codepoints, [%Element{}]}` pairs and returns
-  a flat list of `%Element{}` with digit sequences replaced.
+  Groups consecutive decimal digit codepoints into runs and replaces their
+  collation elements with length-prefixed numeric encodings so that `"2"`
+  sorts before `"10"`.
+
+  ### Arguments
+
+  * `ce_pairs` - a list of `{codepoints, [%Collation.Element{}]}` pairs
+
+  ### Returns
+
+  A flat list of `%Collation.Element{}` structs with digit sequences replaced
+  by numeric collation elements.
+
+  ### Examples
+
+      iex> pairs = [{[0x31], [%Collation.Element{primary: 0x21E7}]}, {[0x30], [%Collation.Element{primary: 0x21E6}]}]
+      iex> result = Collation.Numeric.process_elements(pairs)
+      iex> length(result)
+      3
   """
   def process_elements(ce_pairs) do
     ce_pairs
@@ -64,18 +81,33 @@ defmodule Collation.Numeric do
 
   defp digit_codepoints?(cps) do
     Enum.all?(cps, fn cp ->
-      (cp >= 0x0030 and cp <= 0x0039) or  # ASCII digits
-        Unicode.GeneralCategory.category(cp) == :Nd  # Any decimal digit
+      # ASCII digits
+      # Any decimal digit
+      (cp >= 0x0030 and cp <= 0x0039) or
+        Unicode.GeneralCategory.category(cp) == :Nd
     end)
   end
 
   @doc """
   Encode a sequence of digit codepoints as numeric collation elements.
 
-  The encoding follows ICU's approach:
-  1. Convert digits to their numeric values
-  2. Strip leading zeros
-  3. Encode as: length prefix + digit values
+  Follows ICU's approach: converts digits to numeric values, strips leading
+  zeros, then encodes as a length prefix CE followed by one CE per digit.
+
+  ### Arguments
+
+  * `codepoints` - a list of integer codepoints representing decimal digits
+
+  ### Returns
+
+  A list of `%Collation.Element{}` structs: one length-prefix CE followed by
+  one CE per significant digit.
+
+  ### Examples
+
+      iex> result = Collation.Numeric.encode_numeric_value([0x31, 0x30])
+      iex> length(result)
+      3
   """
   def encode_numeric_value(codepoints) do
     # Convert to decimal digit values
@@ -97,7 +129,8 @@ defmodule Collation.Numeric do
     # Primary weight for numeric: digit base + encoded value
     # We use a scheme where the length prefix ensures longer numbers sort after shorter
     # The digit_base comes from the DIGIT group in FractionalUCA
-    digit_base = 0x21E6  # Primary weight of DIGIT ZERO in allkeys_CLDR.txt
+    # Primary weight of DIGIT ZERO in allkeys_CLDR.txt
+    digit_base = 0x21E6
 
     length_ce = %Element{
       primary: digit_base + len,

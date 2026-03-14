@@ -12,9 +12,31 @@ defmodule Collation.Reorder do
   import Bitwise
 
   @doc """
-  Build a reorder mapping from the given script codes.
+  Build a reorder mapping function from the given script codes.
 
-  Returns a function that remaps primary weights, or `nil` if no reordering.
+  Creates a function that remaps primary weight lead bytes to reorder scripts.
+  Core codes (space, punct, symbol, currency, digit) that are not explicitly
+  listed are prepended automatically.
+
+  ### Arguments
+
+  * `reorder_codes` - a list of script code strings (e.g., `["Grek", "Latn"]`).
+    Supports ISO 15924 codes (`"Latn"`, `"Grek"`, `"Cyrl"`) and special codes
+    (`"space"`, `"punct"`, `"symbol"`, `"currency"`, `"digit"`, `"others"`).
+
+  ### Returns
+
+  * A function `(primary :: integer()) -> integer()` that remaps primary weights
+  * `nil` if the list is empty or no valid mappings were found
+
+  ### Examples
+
+      iex> Collation.Reorder.build_mapping([])
+      nil
+
+      iex> mapping = Collation.Reorder.build_mapping(["Grek", "Latn"])
+      iex> is_function(mapping, 1)
+      true
   """
   def build_mapping([]), do: nil
 
@@ -103,7 +125,7 @@ defmodule Collation.Reorder do
 
           case Map.get(remap, lead_byte) do
             nil -> primary
-            new_lead -> (new_lead <<< 8) ||| (primary &&& 0xFF)
+            new_lead -> new_lead <<< 8 ||| (primary &&& 0xFF)
           end
         end
       end
@@ -126,8 +148,21 @@ defmodule Collation.Reorder do
   end
 
   @doc """
-  Load script-to-lead-byte-range mapping from FractionalUCA.txt.
-  Returns `%{script_name => {start_byte, end_byte}}`.
+  Load the script-to-lead-byte-range mapping from FractionalUCA.txt.
+
+  Parses `[top_byte ...]` entries from the data file. Falls back to
+  hardcoded defaults if the file is not found.
+
+  ### Returns
+
+  A map `%{String.t() => {start_byte, end_byte}}` where keys are lowercase
+  script/group names and values are lead byte range tuples.
+
+  ### Examples
+
+      iex> ranges = Collation.Reorder.load_script_ranges()
+      iex> is_map(ranges)
+      true
   """
   def load_script_ranges do
     path = fractional_uca_path()
@@ -188,7 +223,28 @@ defmodule Collation.Reorder do
     }
   end
 
-  @doc "Apply reorder mapping to a primary weight. Returns the remapped primary."
+  @doc """
+  Apply a reorder mapping to a primary weight.
+
+  ### Arguments
+
+  * `mapping_fn` - a reorder mapping function from `build_mapping/1`, or `nil`
+  * `primary` - the primary weight to remap
+
+  ### Returns
+
+  The remapped primary weight, or the original if `mapping_fn` is `nil`.
+
+  ### Examples
+
+      iex> Collation.Reorder.apply_mapping(nil, 0x2A00)
+      0x2A00
+
+      iex> mapping = Collation.Reorder.build_mapping(["Grek", "Latn"])
+      iex> remapped = Collation.Reorder.apply_mapping(mapping, 0x2A00)
+      iex> is_integer(remapped)
+      true
+  """
   def apply_mapping(nil, primary), do: primary
   def apply_mapping(mapping_fn, primary), do: mapping_fn.(primary)
 end

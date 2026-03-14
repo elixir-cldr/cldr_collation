@@ -15,7 +15,21 @@ defmodule Collation.Table do
 
   # Public API
 
-  @doc "Ensure the table is loaded. Idempotent."
+  @doc """
+  Ensure the collation table is loaded into ETS.
+
+  Loads the `allkeys_CLDR.txt` and `FractionalUCA.txt` data files on first call.
+  Subsequent calls are no-ops.
+
+  ### Returns
+
+  * `:ok` - the table is loaded and ready for lookups
+
+  ### Examples
+
+      iex> Collation.Table.ensure_loaded()
+      :ok
+  """
   def ensure_loaded do
     case :ets.whereis(@table_name) do
       :undefined -> GenServer.call(__MODULE__, :load, :infinity)
@@ -24,8 +38,27 @@ defmodule Collation.Table do
   end
 
   @doc """
-  Look up collation elements for a single codepoint or codepoint sequence (contraction).
-  Returns `{:ok, [%Element{}]}` or `:unmapped`.
+  Look up collation elements for a codepoint or codepoint sequence.
+
+  ### Arguments
+
+  * `codepoint` - a single integer codepoint, or a list of integer codepoints (contraction)
+
+  ### Returns
+
+  * `{:ok, [%Collation.Element{}]}` - the collation elements for the entry
+  * `:unmapped` - no entry found in the table
+
+  ### Examples
+
+      iex> Collation.Table.ensure_loaded()
+      iex> {:ok, elements} = Collation.Table.lookup(0x0041)
+      iex> hd(elements).primary > 0
+      true
+
+      iex> Collation.Table.ensure_loaded()
+      iex> Collation.Table.lookup(0x10FFFF)
+      :unmapped
   """
   def lookup(codepoint) when is_integer(codepoint) do
     case :ets.lookup(@table_name, [codepoint]) do
@@ -42,8 +75,23 @@ defmodule Collation.Table do
   end
 
   @doc """
-  Check if a codepoint begins any contraction.
-  Returns the set of contraction lengths starting with this codepoint.
+  Check if a codepoint begins any multi-codepoint contraction.
+
+  ### Arguments
+
+  * `codepoint` - an integer codepoint to check
+
+  ### Returns
+
+  A list of contraction lengths that start with this codepoint, or `[]` if
+  this codepoint does not begin any contractions.
+
+  ### Examples
+
+      iex> Collation.Table.ensure_loaded()
+      iex> lengths = Collation.Table.contraction_starters(0x006C)
+      iex> is_list(lengths)
+      true
   """
   def contraction_starters(codepoint) do
     case :ets.lookup(@contractions_table, codepoint) do
@@ -55,12 +103,28 @@ defmodule Collation.Table do
   @doc """
   Find the longest matching entry for the given codepoint sequence.
 
-  Returns `{matched_cps, elements, remaining_cps}` where:
-  - `matched_cps` is the list of codepoints that matched
-  - `elements` is the list of CEs for the match
-  - `remaining_cps` is the unprocessed tail
+  Tries contractions from longest to shortest, falling back to a single
+  codepoint lookup.
 
-  If no match at all, returns `:unmapped` with the first codepoint.
+  ### Arguments
+
+  * `codepoints` - a list of integer codepoints to match against
+
+  ### Returns
+
+  * `{matched_cps, elements, remaining_cps}` - a successful match with the
+    matched codepoints, their collation elements, and the remaining unprocessed tail
+  * `{:unmapped, codepoint, remaining_cps}` - the first codepoint has no table entry
+  * `:done` - the input list is empty
+
+  ### Examples
+
+      iex> Collation.Table.ensure_loaded()
+      iex> {matched, _elements, rest} = Collation.Table.longest_match([0x0041, 0x0042])
+      iex> matched
+      [65]
+      iex> rest
+      [66]
   """
   def longest_match([cp | rest] = _codepoints) do
     # Check if this codepoint starts any contractions
@@ -135,7 +199,9 @@ defmodule Collation.Table do
 
   defp load_table do
     table = :ets.new(@table_name, [:named_table, :set, :public, read_concurrency: true])
-    contractions = :ets.new(@contractions_table, [:named_table, :set, :public, read_concurrency: true])
+
+    contractions =
+      :ets.new(@contractions_table, [:named_table, :set, :public, read_concurrency: true])
 
     allkeys_path = data_path("allkeys_CLDR.txt")
     %{entries: entries} = Parser.parse(allkeys_path)

@@ -109,9 +109,7 @@ defmodule Collation.ConformanceTest do
       else
         pass_rate = Float.round((total - failure_count) / total * 100, 3)
 
-        IO.puts(
-          "NON_IGNORABLE: #{failure_count}/#{total} failures (#{pass_rate}% pass rate)"
-        )
+        IO.puts("NON_IGNORABLE: #{failure_count}/#{total} failures (#{pass_rate}% pass rate)")
       end
     end
   end
@@ -164,9 +162,7 @@ defmodule Collation.ConformanceTest do
       else
         pass_rate = Float.round((total - failure_count) / total * 100, 3)
 
-        IO.puts(
-          "SHIFTED: #{failure_count}/#{total} failures (#{pass_rate}% pass rate)"
-        )
+        IO.puts("SHIFTED: #{failure_count}/#{total} failures (#{pass_rate}% pass rate)")
       end
     end
   end

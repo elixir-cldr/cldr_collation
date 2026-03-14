@@ -15,13 +15,29 @@ defmodule Collation.Variable do
   @doc """
   Process a list of collation elements according to the variable weight rules.
 
-  Returns a list of `{%Element{}, quaternary_weight}` tuples.
+  ### Arguments
 
-  For `:non_ignorable`, quaternary is always 0.
+  * `elements` - a list of `%Collation.Element{}` structs
+  * `alternate` - the variable handling mode: `:non_ignorable` or `:shifted`
+  * `max_variable_primary` - the maximum primary weight for variable elements
+
+  ### Returns
+
+  A list of `{%Collation.Element{}, quaternary_weight}` tuples.
+
+  For `:non_ignorable`, quaternary is always `0`.
   For `:shifted`:
   - Variable CEs: L1/L2/L3 become 0, L4 = original L1
-  - Ignorable CEs following a variable: L4 = 0 (already ignorable)
-  - Regular CEs: L4 = 0xFFFF (maximum, sorts after shifted)
+  - Ignorable CEs following a variable: all weights become 0, L4 = 0
+  - Regular CEs with primary > 0: L4 = `0xFFFF`
+  - Primary-ignorable CEs not after a variable: L4 = `0`
+
+  ### Examples
+
+      iex> elems = [%Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0002}]
+      iex> [{elem, q}] = Collation.Variable.process(elems, :non_ignorable, 0x0B61)
+      iex> {elem.primary, q}
+      {0x23EC, 0}
   """
   def process(elements, :non_ignorable, _max_variable_primary) do
     Enum.map(elements, fn elem -> {elem, 0} end)

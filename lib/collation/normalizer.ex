@@ -4,7 +4,29 @@ defmodule Collation.Normalizer do
   Delegates to Erlang's :unicode module.
   """
 
-  @doc "Normalize a string to NFD form."
+  @doc """
+  Normalize a string to NFD (Canonical Decomposition) form.
+
+  Uses Erlang's `:unicode.characters_to_nfd_binary/1` followed by a canonical
+  reordering pass using the `unicode` package's CCC data to correct ordering
+  for newer Unicode codepoints.
+
+  ### Arguments
+
+  * `string` - a UTF-8 binary string
+
+  ### Returns
+
+  The NFD-normalized string as a UTF-8 binary.
+
+  ### Examples
+
+      iex> Collation.Normalizer.nfd("café")
+      "café"
+
+      iex> Collation.Normalizer.nfd("e\\u0301")
+      "e\\u0301"
+  """
   def nfd(string) when is_binary(string) do
     string
     |> :unicode.characters_to_nfd_binary()
@@ -13,13 +35,50 @@ defmodule Collation.Normalizer do
     |> List.to_string()
   end
 
-  @doc "Convert a string to a list of codepoints."
+  @doc """
+  Convert a string to a list of integer codepoints.
+
+  ### Arguments
+
+  * `string` - a UTF-8 binary string
+
+  ### Returns
+
+  A list of integer codepoints.
+
+  ### Examples
+
+      iex> Collation.Normalizer.to_codepoints("abc")
+      [97, 98, 99]
+
+      iex> Collation.Normalizer.to_codepoints("é")
+      [233]
+  """
   def to_codepoints(string) when is_binary(string) do
     string
     |> String.to_charlist()
   end
 
-  @doc "Normalize and convert to codepoints."
+  @doc """
+  Optionally normalize a string and convert it to a list of integer codepoints.
+
+  ### Arguments
+
+  * `string` - a UTF-8 binary string
+  * `normalize?` - whether to apply NFD normalization first (default: `false`)
+
+  ### Returns
+
+  A list of integer codepoints, optionally NFD-normalized.
+
+  ### Examples
+
+      iex> Collation.Normalizer.normalize_to_codepoints("abc")
+      [97, 98, 99]
+
+      iex> Collation.Normalizer.normalize_to_codepoints("café", true)
+      [99, 97, 102, 101, 769]
+  """
   def normalize_to_codepoints(string, normalize? \\ false) do
     string
     |> then(fn s -> if normalize?, do: nfd(s), else: s end)

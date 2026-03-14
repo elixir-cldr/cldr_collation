@@ -11,6 +11,7 @@ defmodule Collation.Han do
   - Code point value
 
   The radical data is parsed from FractionalUCA.txt `[radical N=...]` entries.
+
   """
 
   use GenServer
@@ -51,6 +52,7 @@ defmodule Collation.Han do
 
       iex> Collation.Han.ensure_loaded()
       :ok
+
   """
   def ensure_loaded do
     case :ets.whereis(@table_name) do
@@ -77,6 +79,7 @@ defmodule Collation.Han do
       iex> elements = Collation.Han.collation_elements(0x4E00)
       iex> length(elements)
       2
+
   """
   def collation_elements(codepoint) do
     ensure_loaded()
@@ -121,6 +124,7 @@ defmodule Collation.Han do
 
       iex> Collation.Han.compute_key(1, 0, 0, 0, 0x4E00)
       17609365585920
+
   """
   def compute_key(radical, residual_strokes, simplification, block, codepoint) do
     import Bitwise
@@ -152,6 +156,7 @@ defmodule Collation.Han do
       iex> elements = Collation.Han.key_to_elements(0)
       iex> hd(elements).primary
       0xFB40
+
   """
   def key_to_elements(key) do
     # Encode as two CEs with primary weights derived from the key
@@ -194,6 +199,7 @@ defmodule Collation.Han do
 
       iex> Collation.Han.block_index(0x3400)
       1
+
   """
   def block_index(cp) do
     cond do
@@ -270,6 +276,7 @@ defmodule Collation.Han do
 
       iex> Collation.Han.parse_radical_line("not a radical line")
       :skip
+
   """
   def parse_radical_line(line) do
     case Regex.run(~r/^\[radical (\d+)=.+?:(.+)\]$/, line) do

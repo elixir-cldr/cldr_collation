@@ -8,6 +8,7 @@ defmodule Collation.Variable do
 
   - `:non_ignorable` - Variable CEs keep all their weights (default for CLDR)
   - `:shifted` - Variable CEs have L1/L2/L3 zeroed, original L1 moves to L4
+
   """
 
   alias Collation.Element
@@ -38,6 +39,7 @@ defmodule Collation.Variable do
       iex> [{elem, q}] = Collation.Variable.process(elems, :non_ignorable, 0x0B61)
       iex> {elem.primary, q}
       {0x23EC, 0}
+
   """
   def process(elements, :non_ignorable, _max_variable_primary) do
     Enum.map(elements, fn elem -> {elem, 0} end)

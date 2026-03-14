@@ -27,3 +27,4 @@ All public functions ahould have a standard template format:
 * A section with heading ### Options is the last function argument is a keyword list. Each option to be named and described
 * A section with heading ### Returns that describes the alternative return values from the function
 * A section with heading ### Examples that includes one or two doctest examples
+* A blank line before the closing `"""`

@@ -7,6 +7,7 @@ defmodule Collation.Table do
   written once and never modified.
 
   Handles both single codepoint mappings and contractions (multi-codepoint sequences).
+
   """
 
   use GenServer
@@ -32,6 +33,7 @@ defmodule Collation.Table do
 
       iex> Collation.Table.ensure_loaded()
       :ok
+
   """
   def ensure_loaded do
     case :persistent_term.get(@table_name, nil) do
@@ -62,6 +64,7 @@ defmodule Collation.Table do
       iex> Collation.Table.ensure_loaded()
       iex> Collation.Table.lookup(0x10FFFF)
       :unmapped
+
   """
   def lookup(codepoint) when is_integer(codepoint) do
     table = :persistent_term.get(@table_name)
@@ -99,6 +102,7 @@ defmodule Collation.Table do
       iex> lengths = Collation.Table.contraction_starters(0x006C)
       iex> is_list(lengths)
       true
+
   """
   def contraction_starters(codepoint) do
     contractions = :persistent_term.get(@contractions_table)
@@ -130,6 +134,7 @@ defmodule Collation.Table do
       [65]
       iex> rest
       [66]
+
   """
   def longest_match([cp | rest] = _codepoints) do
     # Check if this codepoint starts any contractions
@@ -200,6 +205,7 @@ defmodule Collation.Table do
       iex> {:ok, [elem]} = Collation.Table.lookup_with_overlay([0x0041], overlay)
       iex> elem.primary
       0xFFFF
+
   """
   def lookup_with_overlay(codepoint, overlay) when is_integer(codepoint) do
     lookup_with_overlay([codepoint], overlay)
@@ -236,6 +242,7 @@ defmodule Collation.Table do
       [65]
       iex> rest
       [66]
+
   """
   def longest_match_with_overlay(codepoints, nil), do: longest_match(codepoints)
 

@@ -4,6 +4,7 @@ defmodule Collation.Options do
 
   Supports both Elixir keyword list construction and parsing from
   BCP47 locale strings (e.g., "en-u-co-phonebk-ks-level2").
+
   """
 
   defstruct strength: :tertiary,
@@ -68,6 +69,7 @@ defmodule Collation.Options do
 
       iex> Collation.Options.new(strength: :primary, alternate: :shifted)
       %Collation.Options{strength: :primary, alternate: :shifted}
+
   """
   def new(opts \\ []) do
     struct(__MODULE__, opts)
@@ -102,6 +104,7 @@ defmodule Collation.Options do
       iex> opts = Collation.Options.from_locale("da")
       iex> opts.case_first
       :upper
+
   """
   def from_locale(locale) when is_binary(locale) do
     alias Collation.Tailoring
@@ -260,6 +263,7 @@ defmodule Collation.Options do
 
       iex> Collation.Options.max_variable_primary(%Collation.Options{max_variable: :space})
       0x0209
+
   """
   def max_variable_primary(%__MODULE__{max_variable: :space}), do: 0x0209
   def max_variable_primary(%__MODULE__{max_variable: :punct}), do: 0x0B61

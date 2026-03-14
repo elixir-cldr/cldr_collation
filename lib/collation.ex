@@ -40,6 +40,7 @@ defmodule Collation do
   - `numeric` - `false` (default), `true` - numeric string comparison
   - `reorder` - `[]` (default), list of script codes
   - `max_variable` - `:punct` (default), `:space`, `:symbol`, `:currency`
+
   """
 
   alias Collation.{
@@ -88,6 +89,7 @@ defmodule Collation do
 
       iex> Collation.compare("a", "A", strength: :secondary)
       :eq
+
   """
   def compare(string_a, string_b, opts \\ []) do
     options = resolve_options(opts)
@@ -129,6 +131,7 @@ defmodule Collation do
 
       iex> Collation.sort_key("hello") == Collation.sort_key("hello")
       true
+
   """
   def sort_key(input, opts \\ [])
 
@@ -200,6 +203,7 @@ defmodule Collation do
 
       iex> Collation.sort(["б", "а", "в"])
       ["а", "б", "в"]
+
   """
   def sort(strings, opts \\ []) do
     options = resolve_options(opts)
@@ -224,6 +228,7 @@ defmodule Collation do
 
       iex> Collation.ensure_loaded()
       :ok
+
   """
   def ensure_loaded do
     Table.ensure_loaded()

@@ -2,6 +2,7 @@ defmodule Collation.Normalizer do
   @moduledoc """
   Unicode NFD normalization for collation.
   Delegates to Erlang's :unicode module.
+
   """
 
   @doc """
@@ -26,6 +27,7 @@ defmodule Collation.Normalizer do
 
       iex> Collation.Normalizer.nfd("e\\u0301")
       "e\\u0301"
+
   """
   def nfd(string) when is_binary(string) do
     string
@@ -53,6 +55,7 @@ defmodule Collation.Normalizer do
 
       iex> Collation.Normalizer.to_codepoints("é")
       [233]
+
   """
   def to_codepoints(string) when is_binary(string) do
     string
@@ -78,6 +81,7 @@ defmodule Collation.Normalizer do
 
       iex> Collation.Normalizer.normalize_to_codepoints("café", true)
       [99, 97, 102, 101, 769]
+
   """
   def normalize_to_codepoints(string, normalize? \\ false) do
     string

@@ -7,6 +7,7 @@ defmodule Collation.Reorder do
   before Latin characters.
 
   The reorder groups and their lead byte ranges are parsed from FractionalUCA.txt.
+
   """
 
   import Bitwise
@@ -37,6 +38,7 @@ defmodule Collation.Reorder do
       iex> mapping = Collation.Reorder.build_mapping(["Grek", "Latn"])
       iex> is_function(mapping, 1)
       true
+
   """
   def build_mapping([]), do: nil
 
@@ -163,6 +165,7 @@ defmodule Collation.Reorder do
       iex> ranges = Collation.Reorder.load_script_ranges()
       iex> is_map(ranges)
       true
+
   """
   def load_script_ranges do
     path = fractional_uca_path()
@@ -244,6 +247,7 @@ defmodule Collation.Reorder do
       iex> remapped = Collation.Reorder.apply_mapping(mapping, 0x2A00)
       iex> is_integer(remapped)
       true
+
   """
   def apply_mapping(nil, primary), do: primary
   def apply_mapping(mapping_fn, primary), do: mapping_fn.(primary)

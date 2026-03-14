@@ -6,6 +6,7 @@ defmodule Collation.SortKey do
   binary comparison (`<`, `>`, `==`) to determine string ordering.
 
   Structure: [L1 weights] 0000 [L2 weights] 0000 [L3 weights] [0000 L4 weights]
+
   """
 
   import Bitwise
@@ -37,6 +38,7 @@ defmodule Collation.SortKey do
       iex> opts = Collation.Options.new(strength: :primary)
       iex> Collation.SortKey.build(elements, opts)
       <<0x23, 0xEC>>
+
   """
   def build(processed_elements, %Options{} = opts, original_string \\ nil) do
     key = build_primary(processed_elements)

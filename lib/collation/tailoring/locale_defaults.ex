@@ -5,6 +5,7 @@ defmodule Collation.Tailoring.LocaleDefaults do
   Maps BCP47 language tags to their standard collation option overrides
   as defined by CLDR. These defaults are applied before any explicit
   BCP47 `-u-` extension keys.
+
   """
 
   # Locale defaults from CLDR.
@@ -43,6 +44,7 @@ defmodule Collation.Tailoring.LocaleDefaults do
 
       iex> Collation.Tailoring.LocaleDefaults.options_for("en")
       []
+
   """
   def options_for(locale) when is_binary(locale) do
     language = extract_language(locale)
@@ -67,6 +69,7 @@ defmodule Collation.Tailoring.LocaleDefaults do
 
       iex> Collation.Tailoring.LocaleDefaults.default_type("es")
       :standard
+
   """
   def default_type(locale) when is_binary(locale) do
     language = extract_language(locale)
@@ -91,6 +94,7 @@ defmodule Collation.Tailoring.LocaleDefaults do
 
       iex> Collation.Tailoring.LocaleDefaults.extract_language("sv")
       "sv"
+
   """
   def extract_language(locale) do
     locale

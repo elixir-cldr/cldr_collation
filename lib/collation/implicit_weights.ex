@@ -8,6 +8,7 @@ defmodule Collation.ImplicitWeights do
   - Unassigned codepoints
 
   See UTS #10 Section 10.1 for the implicit weight computation.
+
   """
 
   import Bitwise
@@ -90,6 +91,7 @@ defmodule Collation.ImplicitWeights do
 
       iex> Collation.ImplicitWeights.unified_ideograph?(0x0041)
       false
+
   """
   def unified_ideograph?(cp) do
     (cp >= @cjk_unified_start and cp <= @cjk_unified_end) or
@@ -139,6 +141,7 @@ defmodule Collation.ImplicitWeights do
 
       iex> Collation.ImplicitWeights.hangul_syllable?(0x0041)
       false
+
   """
   def hangul_syllable?(cp), do: cp >= @hangul_start and cp <= @hangul_end
 
@@ -166,6 +169,7 @@ defmodule Collation.ImplicitWeights do
       true
       iex> ce2.secondary
       0
+
   """
   def compute(cp) do
     cond do
@@ -204,6 +208,7 @@ defmodule Collation.ImplicitWeights do
 
       iex> Collation.ImplicitWeights.decompose_hangul_to_jamo(0xAC01)
       [0x1100, 0x1161, 0x11A8]
+
   """
   def decompose_hangul_to_jamo(cp) do
     sindex = cp - @sbase

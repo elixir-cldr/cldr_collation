@@ -7,6 +7,7 @@ defmodule Collation.Numeric do
 
   The numeric value is encoded as a length-prefixed big-endian number
   in the primary weight.
+
   """
 
   alias Collation.Element
@@ -34,6 +35,7 @@ defmodule Collation.Numeric do
       iex> result = Collation.Numeric.process_elements(pairs)
       iex> length(result)
       3
+
   """
   def process_elements(ce_pairs) do
     ce_pairs
@@ -108,6 +110,7 @@ defmodule Collation.Numeric do
       iex> result = Collation.Numeric.encode_numeric_value([0x31, 0x30])
       iex> length(result)
       3
+
   """
   def encode_numeric_value(codepoints) do
     # Convert to decimal digit values

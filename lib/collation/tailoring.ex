@@ -14,6 +14,7 @@ defmodule Collation.Tailoring do
 
   Tailoring data is embedded directly from CLDR XML sources, covering common
   European and Asian locales.
+
   """
 
   alias Collation.{Element, Table}
@@ -64,6 +65,7 @@ defmodule Collation.Tailoring do
       iex> {overlay, _opts} = Collation.Tailoring.get_tailoring("es", :standard)
       iex> is_map(overlay)
       true
+
   """
   def get_tailoring(language, type) do
     case Map.get(@tailorings, {language, type}) do
@@ -84,6 +86,7 @@ defmodule Collation.Tailoring do
       iex> locales = Collation.Tailoring.supported_locales()
       iex> {"es", :standard} in locales
       true
+
   """
   def supported_locales do
     Map.keys(@tailorings)
@@ -111,6 +114,7 @@ defmodule Collation.Tailoring do
       iex> ops = Collation.Tailoring.parse_rules("&N<ñ<<<Ñ")
       iex> length(ops)
       3
+
   """
   def parse_rules(rules_str) do
     rules_str

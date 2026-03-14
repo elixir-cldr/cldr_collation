@@ -6,6 +6,7 @@ defmodule Collation.Table.Parser do
   - Single codepoint: `0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A`
   - Multi-CE: `00E9 ; [.2453.0020.0002][.0000.0024.0002] # LATIN SMALL LETTER E WITH ACUTE`
   - Contraction: `006C 00B7 ; [.2528.0020.0002][.0000.011F.0002] # LATIN SMALL LETTER L, MIDDLE DOT`
+
   """
 
   alias Collation.Element
@@ -29,6 +30,7 @@ defmodule Collation.Table.Parser do
       iex> result = Collation.Table.Parser.parse("priv/allkeys_CLDR.txt")
       iex> is_map(result.entries) and is_binary(result.version)
       true
+
   """
   def parse(path) do
     path
@@ -75,6 +77,7 @@ defmodule Collation.Table.Parser do
       [65]
       iex> hd(elems).primary
       0x23EC
+
   """
   def parse_entry(line) do
     case String.split(line, ";", parts: 2) do
@@ -124,6 +127,7 @@ defmodule Collation.Table.Parser do
 
       iex> Collation.Table.Parser.parse_elements("[*0269.0020.0002]")
       [%Collation.Element{primary: 0x0269, secondary: 0x0020, tertiary: 0x0002, variable: true}]
+
   """
   def parse_elements(str) do
     ~r/\[([.*])([0-9A-Fa-f]{4})\.([0-9A-Fa-f]{4})\.([0-9A-Fa-f]{4})\]/
@@ -161,6 +165,7 @@ defmodule Collation.Table.Parser do
       iex> result = Collation.Table.Parser.parse_fractional_supplement("priv/FractionalUCA.txt", existing)
       iex> map_size(result) > map_size(existing)
       true
+
   """
   def parse_fractional_supplement(path, existing_entries) do
     path
@@ -215,6 +220,7 @@ defmodule Collation.Table.Parser do
 
       iex> Collation.Table.Parser.parse_fractional_entry("invalid line")
       :skip
+
   """
   def parse_fractional_entry(line) do
     case String.split(line, ";", parts: 2) do

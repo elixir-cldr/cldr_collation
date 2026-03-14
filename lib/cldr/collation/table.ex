@@ -321,17 +321,17 @@ defmodule Cldr.Collation.Table do
 
   @impl true
   def init(_options) do
-    {:ok, %{loaded: false}, {:continue, :load}}
+    if System.get_env("CLDR_COLLATION_NIF") == "true" do
+      {:ok, %{loaded: false}}
+    else
+      {:ok, %{loaded: false}, {:continue, :load}}
+    end
   end
 
   @impl true
-  def handle_continue(:load, %{loaded: false} = state) do
+  def handle_continue(:load, state) do
     load_table()
     {:noreply, %{state | loaded: true}}
-  end
-
-  def handle_continue(:load, %{loaded: true} = state) do
-    {:noreply, state}
   end
 
   @impl true

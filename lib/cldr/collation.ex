@@ -266,10 +266,16 @@ defmodule Cldr.Collation do
   end
 
   @doc """
-  Ensure the collation tables are loaded into ETS.
+  Ensure the collation tables are loaded into persistent term storage.
 
-  Called automatically by `compare/3`, `sort_key/2`, and `sort/2`.
-  Can be called explicitly to pre-warm the tables at application startup.
+  When the NIF backend is available and all options are NIF-compatible,
+  the collation tables are not needed and are not loaded automatically.
+  The tables are only loaded on demand when the Elixir backend is used
+  (for `sort_key/2`, locale tailoring, or when `backend: :elixir` is
+  specified).
+
+  This function can be called explicitly to pre-warm the tables at
+  application startup if you know you will use the Elixir backend.
 
   ### Returns
 

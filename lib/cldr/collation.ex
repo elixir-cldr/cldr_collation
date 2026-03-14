@@ -52,12 +52,28 @@ defmodule Cldr.Collation do
   - `numeric` - `false` (default), `true` - numeric string comparison
   - `reorder` - `[]` (default), list of script codes
   - `max_variable` - `:punct` (default), `:space`, `:symbol`, `:currency`
+  - `casing` - `:sensitive`, `:insensitive` (convenience alias, compatible with `ex_cldr_collation`)
+  - `backend` - `:default` (NIF if available), `:nif`, `:elixir`
+
+  ## NIF Backend
+
+  An optional NIF backend using ICU4C is available for high-performance collation.
+  When compiled, it is used automatically for simple comparisons (root DUCET with
+  case-sensitive or case-insensitive strength). Advanced options (locale tailoring,
+  reordering, numeric, etc.) always use the pure Elixir implementation.
+
+  To enable the NIF backend:
+
+      CLDR_COLLATION_NIF=true mix compile
+
+  Requires ICU system libraries (`libicu` or `icucore` on macOS).
 
   """
 
   alias Cldr.Collation.{
     Element,
     ImplicitWeights,
+    Nif,
     Normalizer,
     Options,
     Reorder,
@@ -87,6 +103,8 @@ defmodule Cldr.Collation do
   * `:reorder` - list of script codes to reorder: `[]` (default)
   * `:max_variable` - variable weight boundary: `:punct` (default), `:space`, `:symbol`, or `:currency`
   * `:locale` - a BCP47 locale string with `-u-` extension keys (e.g., `"en-u-ks-level2"`)
+  * `:casing` - `:sensitive` or `:insensitive` (convenience alias for strength, compatible with `ex_cldr_collation`)
+  * `:backend` - `:default` (NIF if available), `:nif` (require NIF), or `:elixir` (pure Elixir)
 
   ### Returns
 
@@ -102,16 +120,24 @@ defmodule Cldr.Collation do
       iex> Cldr.Collation.compare("a", "A", strength: :secondary)
       :eq
 
+      iex> Cldr.Collation.compare("a", "A", casing: :insensitive)
+      :eq
+
   """
   def compare(string_a, string_b, options \\ []) do
     options = resolve_options(options)
-    key_a = sort_key(string_a, options)
-    key_b = sort_key(string_b, options)
 
-    cond do
-      key_a < key_b -> :lt
-      key_a > key_b -> :gt
-      true -> :eq
+    if use_nif?(options) do
+      Nif.nif_compare(string_a, string_b, Options.nif_casing(options))
+    else
+      key_a = sort_key(string_a, options)
+      key_b = sort_key(string_b, options)
+
+      cond do
+        key_a < key_b -> :lt
+        key_a > key_b -> :gt
+        true -> :eq
+      end
     end
   end
 
@@ -220,10 +246,20 @@ defmodule Cldr.Collation do
   def sort(strings, options \\ []) do
     options = resolve_options(options)
 
-    strings
-    |> Enum.map(fn s -> {sort_key(s, options), s} end)
-    |> Enum.sort_by(fn {key, _s} -> key end)
-    |> Enum.map(fn {_key, s} -> s end)
+    if use_nif?(options) do
+      comparator =
+        case Options.nif_casing(options) do
+          :sensitive -> Cldr.Collation.Sensitive
+          :insensitive -> Cldr.Collation.Insensitive
+        end
+
+      Enum.sort(strings, comparator)
+    else
+      strings
+      |> Enum.map(fn s -> {sort_key(s, options), s} end)
+      |> Enum.sort_by(fn {key, _s} -> key end)
+      |> Enum.map(fn {_key, s} -> s end)
+    end
   end
 
   @doc """
@@ -408,4 +444,34 @@ defmodule Cldr.Collation do
   end
 
   defp resolve_options(%Options{} = options), do: options
+
+  # Determine whether to use the NIF backend for the given options.
+  # Returns true when:
+  #   - backend is :nif (raises if NIF unavailable)
+  #   - backend is :default, NIF is available, and options are NIF-compatible
+  # Returns false when:
+  #   - backend is :elixir
+  #   - backend is :default and NIF is unavailable or options are incompatible
+  defp use_nif?(%Options{backend: :elixir}), do: false
+
+  defp use_nif?(%Options{backend: :nif} = options) do
+    unless Nif.available?() do
+      raise RuntimeError,
+            "NIF collation backend requested but not available. " <>
+              "Compile with CLDR_COLLATION_NIF=true and ensure ICU libraries are installed."
+    end
+
+    unless Options.nif_compatible?(options) do
+      raise ArgumentError,
+            "NIF collation backend does not support the given options. " <>
+              "Only strength (:secondary/:tertiary) is supported with the NIF backend. " <>
+              "Use backend: :elixir or backend: :default for advanced options."
+    end
+
+    true
+  end
+
+  defp use_nif?(%Options{backend: :default} = options) do
+    Nif.available?() and Options.nif_compatible?(options)
+  end
 end

@@ -15,4 +15,7 @@ defmodule Cldr.Collation.DocTest do
   doctest Cldr.Collation.Tailoring
   doctest Cldr.Collation.Tailoring.LocaleDefaults
   doctest Cldr.Collation.Variable
+  doctest Cldr.Collation.Nif
+  doctest Cldr.Collation.Sensitive
+  doctest Cldr.Collation.Insensitive
 end

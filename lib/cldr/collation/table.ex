@@ -6,7 +6,8 @@ defmodule Cldr.Collation.Table do
   `:persistent_term`, which provides zero-copy reads for data that is
   written once and never modified.
 
-  Handles both single codepoint mappings and contractions (multi-codepoint sequences).
+  Handles both single codepoint mappings and contractions
+  (multi-codepoint sequences).
 
   """
 
@@ -19,8 +20,6 @@ defmodule Cldr.Collation.Table do
 
   @all_keys "allkeys_CLDR.txt"
   @fractional_keys "FractionalUCA.txt"
-
-  # Public API
 
   @doc """
   Ensure the collation table is loaded.
@@ -50,12 +49,15 @@ defmodule Cldr.Collation.Table do
 
   ### Arguments
 
-  * `codepoint` - a single integer codepoint, or a list of integer codepoints (contraction)
+  * `codepoint` - a single integer codepoint, or a list of integer
+    codepoints (contraction).
 
   ### Returns
 
-  * `{:ok, [%Cldr.Collation.Element{}]}` - the collation elements for the entry
-  * `:unmapped` - no entry found in the table
+  * `{:ok, [%Cldr.Collation.Element{}]}` - the collation elements for
+    the entry.
+
+  * `:unmapped` - no entry found in the table.
 
   ### Examples
 
@@ -92,12 +94,12 @@ defmodule Cldr.Collation.Table do
 
   ### Arguments
 
-  * `codepoint` - an integer codepoint to check
+  * `codepoint` - an integer codepoint to check.
 
   ### Returns
 
-  A list of contraction lengths that start with this codepoint, or `[]` if
-  this codepoint does not begin any contractions.
+  * A list of contraction lengths that start with this codepoint, or `[]` if
+    this codepoint does not begin any contractions.
 
   ### Examples
 
@@ -120,14 +122,16 @@ defmodule Cldr.Collation.Table do
 
   ### Arguments
 
-  * `codepoints` - a list of integer codepoints to match against
+  * `codepoints` - a list of integer codepoints to match against.
 
   ### Returns
 
   * `{matched_cps, elements, remaining_cps}` - a successful match with the
-    matched codepoints, their collation elements, and the remaining unprocessed tail
-  * `{:unmapped, codepoint, remaining_cps}` - the first codepoint has no table entry
-  * `:done` - the input list is empty
+    matched codepoints, their collation elements, and the remaining unprocessed tail.
+
+  * `{:unmapped, codepoint, remaining_cps}` - the first codepoint has no table entry.
+
+  * `:done` - the input list is empty.
 
   ### Examples
 
@@ -194,12 +198,15 @@ defmodule Cldr.Collation.Table do
 
   ### Arguments
 
-  * `codepoints` - a single integer codepoint, or a list of integer codepoints
-  * `overlay` - a map of `%{[codepoint] => [%Cldr.Collation.Element{}]}` tailoring entries
+  * `codepoints` - a single integer codepoint, or a list of integer codepoints.
+
+  * `overlay` - a map of `%{[codepoint] => [%Cldr.Collation.Element{}]}`
+    tailoring entries.
 
   ### Returns
 
-  Same as `lookup/1`, but checks the overlay map before falling back to the root table.
+  * Same as `lookup/1`, but checks the overlay map before falling back
+    to the root table.
 
   ### Examples
 
@@ -230,8 +237,9 @@ defmodule Cldr.Collation.Table do
 
   ### Arguments
 
-  * `codepoints` - a list of integer codepoints to match
-  * `overlay` - a tailoring overlay map, or `nil` for root-only lookups
+  * `codepoints` - a list of integer codepoints to match.
+
+  * `overlay` - a tailoring overlay map, or `nil` for root-only lookups.
 
   ### Returns
 

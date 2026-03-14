@@ -10,7 +10,7 @@ by adding `collation` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:collation, "~> 0.1.0"}
+    {:cldr_collation, "~> 0.1.0"}
   ]
 end
 ```

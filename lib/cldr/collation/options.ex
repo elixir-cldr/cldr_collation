@@ -17,12 +17,14 @@ defmodule Cldr.Collation.Options do
             reorder: [],
             max_variable: :punct,
             type: :standard,
-            tailoring: nil
+            tailoring: nil,
+            backend: :default
 
   @type strength :: :primary | :secondary | :tertiary | :quaternary | :identical
   @type alternate :: :non_ignorable | :shifted
   @type case_first_opt :: :upper | :lower | false
   @type max_variable :: :space | :punct | :symbol | :currency
+  @type backend :: :default | :nif | :elixir
 
   @type t :: %__MODULE__{
           strength: strength(),
@@ -35,7 +37,8 @@ defmodule Cldr.Collation.Options do
           reorder: [String.t()],
           max_variable: max_variable(),
           type: atom(),
-          tailoring: map() | nil
+          tailoring: map() | nil,
+          backend: backend()
         }
 
   @doc """
@@ -57,6 +60,10 @@ defmodule Cldr.Collation.Options do
   * `:reorder` - list of script codes (default: `[]`)
   * `:max_variable` - `:space`, `:punct` (default), `:symbol`, or `:currency`
   * `:type` - `:standard` (default), `:search`, `:phonebook`, etc.
+  * `:casing` - `:sensitive` (default tertiary strength) or `:insensitive` (secondary strength).
+    This is a convenience option compatible with the `ex_cldr_collation` API. When provided,
+    it sets the `:strength` option accordingly.
+  * `:backend` - `:default` (use NIF if available, default), `:nif` (require NIF), or `:elixir` (pure Elixir only)
 
   ### Returns
 
@@ -72,7 +79,33 @@ defmodule Cldr.Collation.Options do
 
   """
   def new(options \\ []) do
+    options = resolve_casing(options)
     struct(__MODULE__, options)
+  end
+
+  # Map the `casing` convenience option to the equivalent `strength` setting.
+  # `casing: :insensitive` sets `strength: :secondary` (ignores case).
+  # `casing: :sensitive` leaves the default tertiary strength (case-sensitive).
+  # If both `casing` and `strength` are provided, `strength` takes precedence.
+  defp resolve_casing(options) do
+    case Keyword.pop(options, :casing) do
+      {nil, options} ->
+        options
+
+      {:insensitive, options} ->
+        if Keyword.has_key?(options, :strength) do
+          options
+        else
+          Keyword.put(options, :strength, :secondary)
+        end
+
+      {:sensitive, options} ->
+        options
+
+      {other, _options} ->
+        raise ArgumentError,
+              "invalid casing option #{inspect(other)}, expected :sensitive or :insensitive"
+    end
   end
 
   @doc """
@@ -269,4 +302,66 @@ defmodule Cldr.Collation.Options do
   def max_variable_primary(%__MODULE__{max_variable: :punct}), do: 0x0B61
   def max_variable_primary(%__MODULE__{max_variable: :symbol}), do: 0x0EE3
   def max_variable_primary(%__MODULE__{max_variable: :currency}), do: 0x0EFF
+
+  @doc """
+  Returns whether the given options can be handled by the NIF backend.
+
+  The NIF backend only supports root DUCET collation with case-sensitive
+  (tertiary) or case-insensitive (secondary) strength. Any advanced options
+  like locale tailoring, reordering, numeric collation, etc. require the
+  pure Elixir backend.
+
+  ### Arguments
+
+  * `options` - a `%Cldr.Collation.Options{}` struct
+
+  ### Returns
+
+  * `true` if the NIF backend can handle these options
+  * `false` if the pure Elixir backend is required
+
+  ### Examples
+
+      iex> Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{})
+      true
+
+      iex> Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{numeric: true})
+      false
+
+  """
+  @spec nif_compatible?(t()) :: boolean()
+  def nif_compatible?(%__MODULE__{} = options) do
+    options.strength in [:secondary, :tertiary] and
+      options.alternate == :non_ignorable and
+      options.backwards == false and
+      options.normalization == false and
+      options.case_level == false and
+      options.case_first == false and
+      options.numeric == false and
+      options.reorder == [] and
+      options.max_variable == :punct and
+      options.tailoring == nil
+  end
+
+  @doc """
+  Returns the NIF casing flag for the given options.
+
+  ### Arguments
+
+  * `options` - a `%Cldr.Collation.Options{}` struct
+
+  ### Returns
+
+  * `:sensitive` for tertiary or higher strength
+  * `:insensitive` for secondary or lower strength
+
+  """
+  @spec nif_casing(t()) :: :sensitive | :insensitive
+  def nif_casing(%__MODULE__{strength: strength}) do
+    case strength do
+      :primary -> :insensitive
+      :secondary -> :insensitive
+      _ -> :sensitive
+    end
+  end
 end

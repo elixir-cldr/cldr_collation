@@ -23,6 +23,6 @@ erl_crash.dump
 collation-*.tar
 
 # The NIF shared object
-priv/ucol.so
+/priv/ucol.so
 
 

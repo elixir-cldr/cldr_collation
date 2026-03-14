@@ -97,5 +97,4 @@ defmodule Collation.TailoringTest do
       assert {"sv", :standard} in locales
     end
   end
-
 end

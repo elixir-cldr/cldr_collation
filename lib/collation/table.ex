@@ -1,8 +1,11 @@
 defmodule Collation.Table do
   @moduledoc """
-  ETS-backed collation element table.
+  Persistent-term-backed collation element table.
 
-  Stores the CLDR allkeys table for fast concurrent lookups.
+  Stores the CLDR allkeys table for fast concurrent lookups using
+  `:persistent_term`, which provides zero-copy reads for data that is
+  written once and never modified.
+
   Handles both single codepoint mappings and contractions (multi-codepoint sequences).
   """
 
@@ -16,7 +19,7 @@ defmodule Collation.Table do
   # Public API
 
   @doc """
-  Ensure the collation table is loaded into ETS.
+  Ensure the collation table is loaded.
 
   Loads the `allkeys_CLDR.txt` and `FractionalUCA.txt` data files on first call.
   Subsequent calls are no-ops.
@@ -31,9 +34,9 @@ defmodule Collation.Table do
       :ok
   """
   def ensure_loaded do
-    case :ets.whereis(@table_name) do
-      :undefined -> GenServer.call(__MODULE__, :load, :infinity)
-      _ref -> :ok
+    case :persistent_term.get(@table_name, nil) do
+      nil -> GenServer.call(__MODULE__, :load, :infinity)
+      _map -> :ok
     end
   end
 
@@ -61,16 +64,20 @@ defmodule Collation.Table do
       :unmapped
   """
   def lookup(codepoint) when is_integer(codepoint) do
-    case :ets.lookup(@table_name, [codepoint]) do
-      [{_key, elements}] -> {:ok, elements}
-      [] -> :unmapped
+    table = :persistent_term.get(@table_name)
+
+    case Map.get(table, [codepoint]) do
+      nil -> :unmapped
+      elements -> {:ok, elements}
     end
   end
 
   def lookup(codepoints) when is_list(codepoints) do
-    case :ets.lookup(@table_name, codepoints) do
-      [{_key, elements}] -> {:ok, elements}
-      [] -> :unmapped
+    table = :persistent_term.get(@table_name)
+
+    case Map.get(table, codepoints) do
+      nil -> :unmapped
+      elements -> {:ok, elements}
     end
   end
 
@@ -94,10 +101,8 @@ defmodule Collation.Table do
       true
   """
   def contraction_starters(codepoint) do
-    case :ets.lookup(@contractions_table, codepoint) do
-      [{_key, lengths}] -> lengths
-      [] -> []
-    end
+    contractions = :persistent_term.get(@contractions_table)
+    Map.get(contractions, codepoint, [])
   end
 
   @doc """
@@ -312,11 +317,6 @@ defmodule Collation.Table do
   end
 
   defp load_table do
-    table = :ets.new(@table_name, [:named_table, :set, :public, read_concurrency: true])
-
-    contractions =
-      :ets.new(@contractions_table, [:named_table, :set, :public, read_concurrency: true])
-
     allkeys_path = data_path("allkeys_CLDR.txt")
     %{entries: entries} = Parser.parse(allkeys_path)
 
@@ -330,13 +330,9 @@ defmodule Collation.Table do
         entries
       end
 
-    # Track contraction starters
-    contraction_starters = %{}
-
-    contraction_starters =
-      Enum.reduce(all_entries, contraction_starters, fn {codepoints, elements}, acc ->
-        :ets.insert(table, {codepoints, elements})
-
+    # Build contraction starters map
+    contractions =
+      Enum.reduce(all_entries, %{}, fn {codepoints, _elements}, acc ->
         case codepoints do
           [first | _] when length(codepoints) > 1 ->
             len = length(codepoints)
@@ -348,11 +344,12 @@ defmodule Collation.Table do
         end
       end)
 
-    Enum.each(contraction_starters, fn {cp, lengths} ->
-      :ets.insert(contractions, {cp, MapSet.to_list(lengths)})
-    end)
+    contractions =
+      Map.new(contractions, fn {cp, lengths} -> {cp, MapSet.to_list(lengths)} end)
 
-    table
+    # Store atomically in persistent_term
+    :persistent_term.put(@table_name, all_entries)
+    :persistent_term.put(@contractions_table, contractions)
   end
 
   defp data_path(filename) do

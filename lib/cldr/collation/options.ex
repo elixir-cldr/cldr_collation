@@ -308,11 +308,12 @@ defmodule Cldr.Collation.Options do
 
   The NIF backend supports all ICU-configurable collation attributes:
   strength (all 5 levels), backwards, alternate, case_first, case_level,
-  normalization, and numeric collation.
+  normalization, numeric collation, and script reordering (for recognized
+  script codes).
 
-  Options that require the pure Elixir backend: `reorder` (needs ICU 4.0+),
-  `tailoring` (locale-specific rules), and non-default `max_variable`
-  (fragile across ICU versions).
+  Options that require the pure Elixir backend: `tailoring` (locale-specific
+  rules), non-default `max_variable` (fragile across ICU versions), and
+  reorder lists containing unrecognized script codes.
 
   ### Arguments
 
@@ -332,12 +333,12 @@ defmodule Cldr.Collation.Options do
       true
 
       iex> Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{reorder: ["Grek"]})
-      false
+      true
 
   """
   @spec nif_compatible?(t()) :: boolean()
   def nif_compatible?(%__MODULE__{} = options) do
-    options.reorder == [] and
+    Cldr.Collation.Nif.reorder_codes_supported?(options.reorder) and
       options.max_variable == :punct and
       options.tailoring == nil
   end

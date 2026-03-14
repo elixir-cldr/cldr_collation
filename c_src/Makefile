@@ -15,11 +15,11 @@ UNAME_ARCH := $(shell uname -p)
 ifeq ($(UNAME_SYS), Darwin)
 	ifeq ($(UNAME_ARCH), arm)
 		CC ?= cc
-		CFLAGS = -O3 -std=c99 -arch arm64 -Wall -Wmissing-prototypes
+		CFLAGS = -O3 -std=c99 -arch arm64 -Wall -Wmissing-prototypes -DDARWIN
 		LDFLAGS = -arch arm64 -flat_namespace -undefined dynamic_lookup
 	else
 		CC ?= cc
-		CFLAGS = -O3 -std=c99 -arch x86_64 -Wall -Wmissing-prototypes
+		CFLAGS = -O3 -std=c99 -arch x86_64 -Wall -Wmissing-prototypes -DDARWIN
 		LDFLAGS = -arch x86_64 -flat_namespace -undefined dynamic_lookup
 	endif
 else ifeq ($(UNAME_SYS), FreeBSD)

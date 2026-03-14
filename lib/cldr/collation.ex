@@ -60,8 +60,8 @@ defmodule Cldr.Collation do
   An optional NIF backend using ICU4C is available for high-performance collation.
   When compiled, it is used automatically for comparisons that only use
   ICU-configurable attributes (strength, backwards, alternate, case_first,
-  case_level, normalization, numeric). Options requiring locale tailoring,
-  script reordering, or non-default max_variable use the pure Elixir backend.
+  case_level, normalization, numeric, reorder). Options requiring locale
+  tailoring or non-default max_variable use the pure Elixir backend.
 
   To enable the NIF backend:
 
@@ -461,8 +461,9 @@ defmodule Cldr.Collation do
     unless Options.nif_compatible?(options) do
       raise ArgumentError,
             "NIF collation backend does not support the given options. " <>
-              "Options requiring reorder, tailoring, or non-default max_variable " <>
-              "are not supported. Use backend: :elixir or backend: :default."
+              "Options requiring tailoring, non-default max_variable, or " <>
+              "unrecognized reorder codes are not supported. " <>
+              "Use backend: :elixir or backend: :default."
     end
 
     true

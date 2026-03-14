@@ -5,7 +5,8 @@ defmodule Cldr.Collation.Nif do
   This module provides high-performance Unicode collation by wrapping ICU4C
   via a Native Interface Function (NIF). It supports all ICU-configurable
   collation attributes: strength, backwards (French), alternate handling,
-  case first, case level, normalization, and numeric collation.
+  case first, case level, normalization, numeric collation, and script
+  reordering.
 
   The NIF is opt-in and requires:
 
@@ -37,6 +38,48 @@ defmodule Cldr.Collation.Nif do
   @ucol_lower_first 24
   @ucol_upper_first 25
 
+  # ICU UScriptCode values (from uscript.h) and UColReorderCode values (from ucol.h)
+  @script_codes %{
+    # Special reorder codes (UColReorderCode)
+    "space" => 0x1000,
+    "punct" => 0x1001,
+    "punctuation" => 0x1001,
+    "symbol" => 0x1002,
+    "currency" => 0x1003,
+    "digit" => 0x1004,
+    "others" => 0,
+    "Zzzz" => 0,
+    # Common script codes (UScriptCode)
+    "Arab" => 2,
+    "Armn" => 3,
+    "Beng" => 4,
+    "Cyrl" => 8,
+    "Deva" => 10,
+    "Ethi" => 11,
+    "Geor" => 12,
+    "Grek" => 14,
+    "Gujr" => 15,
+    "Guru" => 16,
+    "Hani" => 17,
+    "Hang" => 18,
+    "Hebr" => 19,
+    "Hira" => 20,
+    "Knda" => 21,
+    "Kana" => 22,
+    "Khmr" => 23,
+    "Laoo" => 24,
+    "Latn" => 25,
+    "Mlym" => 26,
+    "Mong" => 27,
+    "Mymr" => 28,
+    "Orya" => 31,
+    "Sinh" => 33,
+    "Taml" => 35,
+    "Telu" => 36,
+    "Thai" => 38,
+    "Tibt" => 39
+  }
+
   @doc false
   def init do
     path = :code.priv_dir(:cldr_collation) ++ ~c"/ucol"
@@ -63,16 +106,21 @@ defmodule Cldr.Collation.Nif do
   """
   @spec available?() :: boolean()
   def available? do
-    function_exported?(__MODULE__, :cmp, 9) and
+    function_exported?(__MODULE__, :cmp, 10) and
       match?({:ok, _}, nif_loaded?())
   end
 
   @doc false
   defp nif_loaded? do
     try do
-      # If NIF is loaded, cmp/9 will be replaced by the native implementation.
+      # If NIF is loaded, cmp/10 will be replaced by the native implementation.
       # Calling with empty strings and all defaults is a lightweight probe.
-      cmp("", "", @opt_default, @opt_default, @opt_default, @opt_default, @opt_default, @opt_default, @opt_default)
+      cmp(
+        "", "",
+        @opt_default, @opt_default, @opt_default, @opt_default,
+        @opt_default, @opt_default, @opt_default, <<>>
+      )
+
       {:ok, true}
     rescue
       _ -> {:error, :not_loaded}
@@ -99,10 +147,14 @@ defmodule Cldr.Collation.Nif do
   """
   @spec nif_compare(String.t(), String.t(), Options.t()) :: :lt | :eq | :gt
   def nif_compare(string_a, string_b, %Options{} = options) do
-    {strength, backwards, alternate, case_first, case_level, normalization, numeric} =
-      options_to_nif_args(options)
+    {strength, backwards, alternate, case_first, case_level, normalization, numeric,
+     reorder_bin} = options_to_nif_args(options)
 
-    case cmp(string_a, string_b, strength, backwards, alternate, case_first, case_level, normalization, numeric) do
+    case cmp(
+           string_a, string_b,
+           strength, backwards, alternate, case_first,
+           case_level, normalization, numeric, reorder_bin
+         ) do
       1 -> :gt
       0 -> :eq
       -1 -> :lt
@@ -118,8 +170,38 @@ defmodule Cldr.Collation.Nif do
     case_level = encode_bool(options.case_level)
     normalization = encode_bool(options.normalization)
     numeric = encode_bool(options.numeric)
+    reorder_bin = encode_reorder_codes(options.reorder)
 
-    {strength, backwards, alternate, case_first, case_level, normalization, numeric}
+    {strength, backwards, alternate, case_first, case_level, normalization, numeric, reorder_bin}
+  end
+
+  @doc """
+  Returns whether all reorder codes in the list can be mapped to ICU values.
+
+  ### Arguments
+
+  * `reorder_codes` - a list of script code strings (e.g., `["Grek", "Latn"]`)
+
+  ### Returns
+
+  * `true` if all codes are recognized
+  * `false` if any code is unrecognized
+
+  ### Examples
+
+      iex> Cldr.Collation.Nif.reorder_codes_supported?(["Grek", "Latn"])
+      true
+
+      iex> Cldr.Collation.Nif.reorder_codes_supported?(["Unknown"])
+      false
+
+      iex> Cldr.Collation.Nif.reorder_codes_supported?([])
+      true
+
+  """
+  @spec reorder_codes_supported?([String.t()]) :: boolean()
+  def reorder_codes_supported?(reorder_codes) do
+    Enum.all?(reorder_codes, &Map.has_key?(@script_codes, &1))
   end
 
   # Encode strength to ICU enum value.
@@ -143,9 +225,19 @@ defmodule Cldr.Collation.Nif do
   defp encode_case_first(:upper), do: @ucol_upper_first
   defp encode_case_first(:lower), do: @ucol_lower_first
 
-  @dialyzer {:no_return, cmp: 9}
+  # Encode reorder codes as a binary of packed big-endian int32 values.
+  # Returns <<>> for empty list (no reordering).
+  defp encode_reorder_codes([]), do: <<>>
+
+  defp encode_reorder_codes(codes) do
+    codes
+    |> Enum.map(&Map.fetch!(@script_codes, &1))
+    |> Enum.reduce(<<>>, fn code, acc -> acc <> <<code::big-signed-32>> end)
+  end
+
+  @dialyzer {:no_return, cmp: 10}
   @doc false
-  def cmp(_a, _b, _strength, _backwards, _alternate, _case_first, _case_level, _normalization, _numeric) do
+  def cmp(_a, _b, _strength, _backwards, _alternate, _case_first, _case_level, _normalization, _numeric, _reorder_bin) do
     :erlang.nif_error(:nif_library_not_loaded)
   end
 end

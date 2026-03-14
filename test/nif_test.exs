@@ -39,8 +39,8 @@ defmodule Cldr.Collation.NifTest do
     end
 
     test "backend: :default falls back to elixir when NIF unavailable or options incompatible" do
-      # With reorder options, NIF cannot be used even if available
-      result = Cldr.Collation.sort(["b", "a"], backend: :default, reorder: ["Grek"])
+      # With tailoring options, NIF cannot be used even if available
+      result = Cldr.Collation.sort(["b", "a"], backend: :default, tailoring: %{})
       assert result == ["a", "b"]
     end
 
@@ -55,7 +55,7 @@ defmodule Cldr.Collation.NifTest do
     test "backend: :nif with incompatible options raises" do
       if Cldr.Collation.Nif.available?() do
         assert_raise ArgumentError, ~r/NIF collation backend does not support/, fn ->
-          Cldr.Collation.compare("a", "b", backend: :nif, reorder: ["Grek"])
+          Cldr.Collation.compare("a", "b", backend: :nif, tailoring: %{})
         end
       end
     end
@@ -134,8 +134,13 @@ defmodule Cldr.Collation.NifTest do
       refute Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{tailoring: %{}})
     end
 
-    test "reorder is not NIF-compatible" do
-      refute Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{reorder: ["Grek"]})
+    test "recognized reorder codes are NIF-compatible" do
+      assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{reorder: ["Grek"]})
+      assert Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{reorder: ["Grek", "Latn"]})
+    end
+
+    test "unrecognized reorder codes are not NIF-compatible" do
+      refute Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{reorder: ["Unknown"]})
     end
 
     test "non-default max_variable is not NIF-compatible" do
@@ -275,6 +280,77 @@ defmodule Cldr.Collation.NifTest do
         result = Cldr.Collation.compare("2", "10", backend: :nif, numeric: true)
         assert result == :lt
       end
+    end
+
+    @tag :nif
+    test "reorder: Greek before Latin" do
+      if Cldr.Collation.Nif.available?() do
+        # Without reorder, Latin 'a' sorts before Greek 'α'
+        assert Cldr.Collation.compare("a", "α", backend: :nif) == :lt
+
+        # With reorder, Greek should come before Latin
+        result = Cldr.Collation.compare("α", "a", backend: :nif, reorder: ["Grek"])
+        assert result == :lt
+      end
+    end
+
+    @tag :nif
+    test "reorder: sort with script reordering" do
+      if Cldr.Collation.Nif.available?() do
+        strings = ["alpha", "α", "beta", "β"]
+
+        nif_result = Cldr.Collation.sort(strings, backend: :nif, reorder: ["Grek"])
+
+        # Greek strings should sort before Latin when Grek is first in reorder
+        greek_positions = Enum.map(["α", "β"], &Enum.find_index(nif_result, fn s -> s == &1 end))
+        latin_positions = Enum.map(["alpha", "beta"], &Enum.find_index(nif_result, fn s -> s == &1 end))
+
+        assert Enum.max(greek_positions) < Enum.min(latin_positions),
+               "Expected Greek strings before Latin, got: #{inspect(nif_result)}"
+      end
+    end
+
+    @tag :nif
+    test "reorder: empty list is no-op" do
+      if Cldr.Collation.Nif.available?() do
+        assert_parity("a", "α", reorder: [])
+      end
+    end
+
+    @tag :nif
+    test "reorder: with other options combined" do
+      if Cldr.Collation.Nif.available?() do
+        # Reorder + case insensitive
+        nif_result =
+          Cldr.Collation.sort(["A", "α", "a"], backend: :nif, reorder: ["Grek"], strength: :secondary)
+
+        # Greek should still come first
+        alpha_idx = Enum.find_index(nif_result, &(&1 == "α"))
+        assert alpha_idx == 0, "Expected Greek α first, got: #{inspect(nif_result)}"
+      end
+    end
+
+    @tag :nif
+    test "unrecognized reorder codes fall back to Elixir with :default backend" do
+      # Unrecognized codes should silently fall back to Elixir
+      result = Cldr.Collation.sort(["b", "a"], backend: :default, reorder: ["Unknown"])
+      assert result == ["a", "b"]
+    end
+  end
+
+  describe "Nif.reorder_codes_supported?/1" do
+    test "returns true for empty list" do
+      assert Cldr.Collation.Nif.reorder_codes_supported?([])
+    end
+
+    test "returns true for recognized codes" do
+      assert Cldr.Collation.Nif.reorder_codes_supported?(["Grek", "Latn", "Cyrl"])
+      assert Cldr.Collation.Nif.reorder_codes_supported?(["space", "punct", "digit"])
+    end
+
+    test "returns false for unrecognized codes" do
+      refute Cldr.Collation.Nif.reorder_codes_supported?(["Unknown"])
+      refute Cldr.Collation.Nif.reorder_codes_supported?(["Grek", "BadCode"])
     end
   end
 end

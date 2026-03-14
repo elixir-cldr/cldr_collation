@@ -60,6 +60,13 @@ defmodule Cldr.Collation.Options do
   * `:reorder` - a script code atom or list of script code atoms (default: `[]`)
   * `:max_variable` - `:space`, `:punct` (default), `:symbol`, or `:currency`
   * `:type` - `:standard` (default), `:search`, `:phonebook`, etc.
+  * `:ignore_accents` - `true` to ignore accent differences (sets `strength: :primary`).
+    Explicit `:strength` takes precedence.
+  * `:ignore_case` - `true` to ignore case differences (sets `strength: :secondary`).
+    Explicit `:strength` takes precedence.
+  * `:ignore_punctuation` - `true` to ignore punctuation and whitespace
+    (sets `strength: :tertiary, alternate: :shifted`). Explicit `:strength` or
+    `:alternate` take precedence.
   * `:casing` - `:sensitive` (default tertiary strength) or `:insensitive` (secondary strength).
     This is a convenience option compatible with the `ex_cldr_collation` API. When provided,
     it sets the `:strength` option accordingly.
@@ -81,10 +88,55 @@ defmodule Cldr.Collation.Options do
   def new(options \\ []) do
     options =
       options
+      |> resolve_ignore_accents()
+      |> resolve_ignore_case()
+      |> resolve_ignore_punctuation()
       |> resolve_casing()
       |> Keyword.update(:reorder, [], &List.wrap/1)
 
     struct(__MODULE__, options)
+  end
+
+  # `ignore_accents: true` sets `strength: :primary` (ignores both accents and case).
+  # Explicit `strength` takes precedence.
+  defp resolve_ignore_accents(options) do
+    case Keyword.pop(options, :ignore_accents) do
+      {true, options} ->
+        if Keyword.has_key?(options, :strength), do: options, else: Keyword.put(options, :strength, :primary)
+
+      {_, options} ->
+        options
+    end
+  end
+
+  # `ignore_case: true` sets `strength: :secondary` (ignores case but not accents).
+  # Explicit `strength` takes precedence.
+  defp resolve_ignore_case(options) do
+    case Keyword.pop(options, :ignore_case) do
+      {true, options} ->
+        if Keyword.has_key?(options, :strength), do: options, else: Keyword.put(options, :strength, :secondary)
+
+      {_, options} ->
+        options
+    end
+  end
+
+  # `ignore_punctuation: true` sets `strength: :tertiary` and `alternate: :shifted`.
+  # Explicit `strength` or `alternate` take precedence.
+  defp resolve_ignore_punctuation(options) do
+    case Keyword.pop(options, :ignore_punctuation) do
+      {true, options} ->
+        options
+        |> then(fn opts ->
+          if Keyword.has_key?(opts, :strength), do: opts, else: Keyword.put(opts, :strength, :tertiary)
+        end)
+        |> then(fn opts ->
+          if Keyword.has_key?(opts, :alternate), do: opts, else: Keyword.put(opts, :alternate, :shifted)
+        end)
+
+      {_, options} ->
+        options
+    end
   end
 
   # Map the `casing` convenience option to the equivalent `strength` setting.

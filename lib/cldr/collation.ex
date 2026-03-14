@@ -52,6 +52,9 @@ defmodule Cldr.Collation do
   - `numeric` - `false` (default), `true` - numeric string comparison
   - `reorder` - `[]` (default), list of script code atoms
   - `max_variable` - `:punct` (default), `:space`, `:symbol`, `:currency`
+  - `ignore_accents` - `true` to ignore accent differences (sets strength to primary)
+  - `ignore_case` - `true` to ignore case differences (sets strength to secondary)
+  - `ignore_punctuation` - `true` to ignore punctuation and whitespace (sets alternate to shifted)
   - `casing` - `:sensitive`, `:insensitive` (convenience alias, compatible with `ex_cldr_collation`)
   - `backend` - `:default` (NIF if available), `:nif`, `:elixir`
 
@@ -104,6 +107,9 @@ defmodule Cldr.Collation do
   * `:reorder` - list of script code atoms to reorder: `[]` (default)
   * `:max_variable` - variable weight boundary: `:punct` (default), `:space`, `:symbol`, or `:currency`
   * `:locale` - a BCP47 locale string with `-u-` extension keys (e.g., `"en-u-ks-level2"`)
+  * `:ignore_accents` - `true` to ignore accent differences (sets `strength: :primary`). Explicit `:strength` takes precedence.
+  * `:ignore_case` - `true` to ignore case differences (sets `strength: :secondary`). Explicit `:strength` takes precedence.
+  * `:ignore_punctuation` - `true` to ignore punctuation and whitespace (sets `alternate: :shifted`). Explicit `:strength` or `:alternate` take precedence.
   * `:casing` - `:sensitive` or `:insensitive` (convenience alias for strength, compatible with `ex_cldr_collation`)
   * `:backend` - `:default` (NIF if available), `:nif` (require NIF), or `:elixir` (pure Elixir)
 

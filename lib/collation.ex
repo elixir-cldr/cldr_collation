@@ -1,31 +1,43 @@
 defmodule Collation do
   @moduledoc """
-  CLDR Collation Algorithm implementation for Elixir.
+  Implements the Unicode Collation Algorithm (UCA) as extended by CLDR.
 
-  Implements the Unicode Collation Algorithm (UCA) as extended by CLDR,
-  based on the ICU Collation Service architecture.
+  Collation is the general term for the process and function of
+  determining the sorting order of strings of characters, for example for
+  lists of strings presented to users, or in databases for sorting and selecting
+  records.
 
-  ## Usage
+  Collation varies by language, by application (some languages use special
+  phonebook sorting), and other criteria (for example, phonetic vs. visual).
+
+  CLDR provides collation data for many languages and styles. The data
+  supports not only sorting but also language-sensitive searching and grouping
+  under index headers. All CLDR collations are based on the [UCA] default order,
+  with common modifications applied in the CLDR root collation, and further
+  tailored for language and style as needed.
+
+  ## Basic Usage
 
       # Compare two strings
-      Collation.compare("café", "cafe")
-      #=> :gt
+      iex> Collation.compare("café", "cafe")
+      :gt
 
       # Sort a list of strings
-      Collation.sort(["café", "cafe", "Cafe"])
-      #=> ["cafe", "Cafe", "café"]
+      iex> Collation.sort(["café", "cafe", "Cafe"])
+      ["cafe", "Cafe", "café"]
 
       # Generate a sort key
-      Collation.sort_key("hello")
-      #=> <<...binary sort key...>>
+      iex> Collation.sort_key("hello")
+      <<36, 196, 36, 83, 37, 40, 37, 40, 37, 152, 0, 0, 0, 32, 0, 32, 0, 32, 0, 32, 0,
+        32, 0, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2>>
 
       # With options
-      Collation.compare("a", "A", strength: :secondary)
-      #=> :eq
+      iex> Collation.compare("a", "A", strength: :secondary)
+      :eq
 
       # From BCP47 locale
-      Collation.compare("a", "A", locale: "en-u-ks-level2")
-      #=> :eq
+      iex> Collation.compare("a", "A", locale: "en-u-ks-level2")
+      :eq
 
   ## Collation Options
 
@@ -147,7 +159,6 @@ defmodule Collation do
 
   def sort_key(codepoints, %Options{} = options) when is_list(codepoints) do
     ensure_loaded()
-
     codepoints =
       if options.normalization do
         codepoints
@@ -320,26 +331,24 @@ defmodule Collation do
   # Try to match the base sequence + each unblocked combining mark
   defp extend_with_combiners(base_cps, base_elements, combiners) do
     {final_elements, consumed_set, _last_ccc, _current_base} =
-      Enum.reduce(combiners, {base_elements, MapSet.new(), 0, base_cps}, fn {cp, ccc},
-                                                                            {elems, consumed,
-                                                                             last_ccc,
-                                                                             current_base} ->
-        # Check if this combining mark is blocked
-        if ccc > 0 and (last_ccc == 0 or ccc > last_ccc) do
-          # Not blocked - try to extend the match
-          candidate = current_base ++ [cp]
+      Enum.reduce(combiners, {base_elements, MapSet.new(), 0, base_cps}, fn
+        {cp, ccc}, {elems, consumed, last_ccc, current_base} ->
+          # Check if this combining mark is blocked
+          if ccc > 0 and (last_ccc == 0 or ccc > last_ccc) do
+            # Not blocked - try to extend the match
+            candidate = current_base ++ [cp]
 
-          case Table.lookup(candidate) do
-            {:ok, new_elements} ->
-              {new_elements, MapSet.put(consumed, cp), ccc, candidate}
+            case Table.lookup(candidate) do
+              {:ok, new_elements} ->
+                {new_elements, MapSet.put(consumed, cp), ccc, candidate}
 
-            :unmapped ->
-              {elems, consumed, ccc, current_base}
+              :unmapped ->
+                {elems, consumed, ccc, current_base}
+            end
+          else
+            # Blocked - skip
+            {elems, consumed, last_ccc, current_base}
           end
-        else
-          # Blocked - skip
-          {elems, consumed, last_ccc, current_base}
-        end
       end)
 
     unconsumed =

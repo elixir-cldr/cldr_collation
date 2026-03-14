@@ -123,7 +123,7 @@ defmodule Collation.Han do
   ### Examples
 
       iex> Collation.Han.compute_key(1, 0, 0, 0, 0x4E00)
-      17609365585920
+      17592186064384
 
   """
   def compute_key(radical, residual_strokes, simplification, block, codepoint) do

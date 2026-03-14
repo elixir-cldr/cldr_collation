@@ -17,13 +17,16 @@ defmodule Collation.Table do
   @table_name :collation_table
   @contractions_table :collation_contractions
 
+  @all_keys "allkeys_CLDR.txt"
+  @fractional_keys "FractionalUCA.txt"
+
   # Public API
 
   @doc """
   Ensure the collation table is loaded.
 
-  Loads the `allkeys_CLDR.txt` and `FractionalUCA.txt` data files on first call.
-  Subsequent calls are no-ops.
+  Loads the `allkeys_CLDR.txt` and `FractionalUCA.txt` data
+  files on first call. Subsequent calls are no-ops.
 
   ### Returns
 
@@ -310,7 +313,17 @@ defmodule Collation.Table do
 
   @impl true
   def init(_options) do
-    {:ok, %{loaded: false}}
+    {:ok, %{loaded: false}, {:continue, :load}}
+  end
+
+  @impl true
+  def handle_continue(:load, %{loaded: false} = state) do
+    load_table()
+    {:noreply, %{state | loaded: true}}
+  end
+
+  def handle_continue(:load, %{loaded: true} = state) do
+    {:noreply, state}
   end
 
   @impl true
@@ -324,11 +337,11 @@ defmodule Collation.Table do
   end
 
   defp load_table do
-    allkeys_path = data_path("allkeys_CLDR.txt")
+    allkeys_path = data_path(@all_keys)
     %{entries: entries} = Parser.parse(allkeys_path)
 
     # Supplement with entries from FractionalUCA.txt not in allkeys
-    fractional_path = data_path("FractionalUCA.txt")
+    fractional_path = data_path(@fractional_keys)
 
     all_entries =
       if File.exists?(fractional_path) do

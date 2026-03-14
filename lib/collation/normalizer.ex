@@ -22,11 +22,11 @@ defmodule Collation.Normalizer do
 
   ### Examples
 
-      iex> Collation.Normalizer.nfd("café")
-      "café"
+      iex> "café" |> Collation.Normalizer.nfd() |> String.to_charlist() |> length()
+      5
 
-      iex> Collation.Normalizer.nfd("e\\u0301")
-      "e\\u0301"
+      iex> Collation.Normalizer.nfd("e\u0301")
+      "e\u0301"
 
   """
   def nfd(string) when is_binary(string) do

@@ -4,7 +4,7 @@ defmodule Collation.Application do
   use Application
 
   @impl true
-  def start(_type, _args) do
+  def start(_type \\ :normal, _args \\ []) do
     children = [
       Collation.Table,
       Collation.Han

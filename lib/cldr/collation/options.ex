@@ -57,7 +57,7 @@ defmodule Cldr.Collation.Options do
   * `:case_level` - `false` (default) or `true`
   * `:case_first` - `false` (default), `:upper`, or `:lower`
   * `:numeric` - `false` (default) or `true`
-  * `:reorder` - list of script code atoms (default: `[]`)
+  * `:reorder` - a script code atom or list of script code atoms (default: `[]`)
   * `:max_variable` - `:space`, `:punct` (default), `:symbol`, or `:currency`
   * `:type` - `:standard` (default), `:search`, `:phonebook`, etc.
   * `:casing` - `:sensitive` (default tertiary strength) or `:insensitive` (secondary strength).
@@ -79,7 +79,11 @@ defmodule Cldr.Collation.Options do
 
   """
   def new(options \\ []) do
-    options = resolve_casing(options)
+    options =
+      options
+      |> resolve_casing()
+      |> Keyword.update(:reorder, [], &List.wrap/1)
+
     struct(__MODULE__, options)
   end
 

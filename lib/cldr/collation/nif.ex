@@ -83,7 +83,7 @@ defmodule Cldr.Collation.Nif do
 
   @doc false
   def init do
-    path = :code.priv_dir(:cldr_collation) ++ ~c"/ucol"
+    path = :code.priv_dir(:ex_cldr_collation) ++ ~c"/ucol"
 
     case :erlang.load_nif(path, :erlang.system_info(:schedulers)) do
       :ok -> :ok

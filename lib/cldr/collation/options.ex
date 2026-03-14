@@ -34,7 +34,7 @@ defmodule Cldr.Collation.Options do
           case_level: boolean(),
           case_first: case_first_opt(),
           numeric: boolean(),
-          reorder: [String.t()],
+          reorder: [atom()],
           max_variable: max_variable(),
           type: atom(),
           tailoring: map() | nil,
@@ -57,7 +57,7 @@ defmodule Cldr.Collation.Options do
   * `:case_level` - `false` (default) or `true`
   * `:case_first` - `false` (default), `:upper`, or `:lower`
   * `:numeric` - `false` (default) or `true`
-  * `:reorder` - list of script codes (default: `[]`)
+  * `:reorder` - list of script code atoms (default: `[]`)
   * `:max_variable` - `:space`, `:punct` (default), `:symbol`, or `:currency`
   * `:type` - `:standard` (default), `:search`, `:phonebook`, etc.
   * `:casing` - `:sensitive` (default tertiary strength) or `:insensitive` (secondary strength).
@@ -179,7 +179,7 @@ defmodule Cldr.Collation.Options do
         "kc" -> [{:case_level, parse_bool(value)} | acc]
         "kf" -> [{:case_first, parse_case_first(value)} | acc]
         "kn" -> [{:numeric, parse_bool(value)} | acc]
-        "kr" -> [{:reorder, String.split(value, "-")} | acc]
+        "kr" -> [{:reorder, value |> String.split("-") |> Enum.map(&String.to_atom/1)} | acc]
         "kv" -> [{:max_variable, parse_max_variable(value)} | acc]
         _ -> acc
       end
@@ -332,7 +332,7 @@ defmodule Cldr.Collation.Options do
       iex> Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{numeric: true})
       true
 
-      iex> Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{reorder: ["Grek"]})
+      iex> Cldr.Collation.Options.nif_compatible?(%Cldr.Collation.Options{reorder: [:Grek]})
       true
 
   """

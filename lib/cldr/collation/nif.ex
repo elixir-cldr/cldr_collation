@@ -41,43 +41,44 @@ defmodule Cldr.Collation.Nif do
   # ICU UScriptCode values (from uscript.h) and UColReorderCode values (from ucol.h)
   @script_codes %{
     # Special reorder codes (UColReorderCode)
-    "space" => 0x1000,
-    "punct" => 0x1001,
-    "punctuation" => 0x1001,
-    "symbol" => 0x1002,
-    "currency" => 0x1003,
-    "digit" => 0x1004,
-    "others" => 0,
-    "Zzzz" => 0,
+    :space =>  0x1000,
+    :punct =>  0x1001,
+    :punctuation =>  0x1001,
+    :symbol =>  0x1002,
+    :currency =>  0x1003,
+    :digit =>  0x1004,
+    :others =>  0,
+    :Zzzz =>  0,
+
     # Common script codes (UScriptCode)
-    "Arab" => 2,
-    "Armn" => 3,
-    "Beng" => 4,
-    "Cyrl" => 8,
-    "Deva" => 10,
-    "Ethi" => 11,
-    "Geor" => 12,
-    "Grek" => 14,
-    "Gujr" => 15,
-    "Guru" => 16,
-    "Hani" => 17,
-    "Hang" => 18,
-    "Hebr" => 19,
-    "Hira" => 20,
-    "Knda" => 21,
-    "Kana" => 22,
-    "Khmr" => 23,
-    "Laoo" => 24,
-    "Latn" => 25,
-    "Mlym" => 26,
-    "Mong" => 27,
-    "Mymr" => 28,
-    "Orya" => 31,
-    "Sinh" => 33,
-    "Taml" => 35,
-    "Telu" => 36,
-    "Thai" => 38,
-    "Tibt" => 39
+    :Arab => 2,
+    :Armn => 3,
+    :Beng => 4,
+    :Cyrl => 8,
+    :Deva => 10,
+    :Ethi => 11,
+    :Geor => 12,
+    :Grek => 14,
+    :Gujr => 15,
+    :Guru => 16,
+    :Hani => 17,
+    :Hang => 18,
+    :Hebr => 19,
+    :Hira => 20,
+    :Knda => 21,
+    :Kana => 22,
+    :Khmr => 23,
+    :Laoo => 24,
+    :Latn => 25,
+    :Mlym => 26,
+    :Mong => 27,
+    :Mymr => 28,
+    :Orya => 31,
+    :Sinh => 33,
+    :Taml => 35,
+    :Telu => 36,
+    :Thai => 38,
+    :Tibt => 39
   }
 
   @doc false
@@ -180,7 +181,7 @@ defmodule Cldr.Collation.Nif do
 
   ### Arguments
 
-  * `reorder_codes` - a list of script code strings (e.g., `["Grek", "Latn"]`)
+  * `reorder_codes` - a list of script code atoms (e.g., `[:Grek, :Latn]`)
 
   ### Returns
 
@@ -189,17 +190,17 @@ defmodule Cldr.Collation.Nif do
 
   ### Examples
 
-      iex> Cldr.Collation.Nif.reorder_codes_supported?(["Grek", "Latn"])
+      iex> Cldr.Collation.Nif.reorder_codes_supported?([:Grek, :Latn])
       true
 
-      iex> Cldr.Collation.Nif.reorder_codes_supported?(["Unknown"])
+      iex> Cldr.Collation.Nif.reorder_codes_supported?([:Unknown])
       false
 
       iex> Cldr.Collation.Nif.reorder_codes_supported?([])
       true
 
   """
-  @spec reorder_codes_supported?([String.t()]) :: boolean()
+  @spec reorder_codes_supported?([atom()]) :: boolean()
   def reorder_codes_supported?(reorder_codes) do
     Enum.all?(reorder_codes, &Map.has_key?(@script_codes, &1))
   end

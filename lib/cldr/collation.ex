@@ -50,7 +50,7 @@ defmodule Cldr.Collation do
   - `case_level` - `false` (default), `true` - insert case-only level
   - `case_first` - `false` (default), `:upper`, `:lower`
   - `numeric` - `false` (default), `true` - numeric string comparison
-  - `reorder` - `[]` (default), list of script codes
+  - `reorder` - `[]` (default), list of script code atoms
   - `max_variable` - `:punct` (default), `:space`, `:symbol`, `:currency`
   - `casing` - `:sensitive`, `:insensitive` (convenience alias, compatible with `ex_cldr_collation`)
   - `backend` - `:default` (NIF if available), `:nif`, `:elixir`
@@ -101,7 +101,7 @@ defmodule Cldr.Collation do
   * `:case_level` - insert case-only comparison level: `false` (default) or `true`
   * `:case_first` - case ordering: `false` (default), `:upper`, or `:lower`
   * `:numeric` - numeric string comparison: `false` (default) or `true`
-  * `:reorder` - list of script codes to reorder: `[]` (default)
+  * `:reorder` - list of script code atoms to reorder: `[]` (default)
   * `:max_variable` - variable weight boundary: `:punct` (default), `:space`, `:symbol`, or `:currency`
   * `:locale` - a BCP47 locale string with `-u-` extension keys (e.g., `"en-u-ks-level2"`)
   * `:casing` - `:sensitive` or `:insensitive` (convenience alias for strength, compatible with `ex_cldr_collation`)

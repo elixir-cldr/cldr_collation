@@ -3,7 +3,7 @@ defmodule Cldr.Collation.Reorder do
   Script reordering for collation (kr= / reorder option).
 
   Remaps primary weight lead bytes to change the relative order of scripts.
-  For example, `reorder: ["Grek", "Latn"]` would sort Greek characters
+  For example, `reorder: [:Grek, :Latn]` would sort Greek characters
   before Latin characters.
 
   The reorder groups and their lead byte ranges are parsed from FractionalUCA.txt.
@@ -21,9 +21,9 @@ defmodule Cldr.Collation.Reorder do
 
   ### Arguments
 
-  * `reorder_codes` - a list of script code strings (e.g., `["Grek", "Latn"]`).
-    Supports ISO 15924 codes (`"Latn"`, `"Grek"`, `"Cyrl"`) and special codes
-    (`"space"`, `"punct"`, `"symbol"`, `"currency"`, `"digit"`, `"others"`).
+  * `reorder_codes` - a list of script code atoms (e.g., `[:Grek, :Latn]`).
+    Supports ISO 15924 codes (`:Latn`, `:Grek`, `:Cyrl`) and special codes
+    (`:space`, `:punct`, `:symbol`, `:currency`, `:digit`, `:others`).
 
   ### Returns
 
@@ -35,7 +35,7 @@ defmodule Cldr.Collation.Reorder do
       iex> Cldr.Collation.Reorder.build_mapping([])
       nil
 
-      iex> mapping = Cldr.Collation.Reorder.build_mapping(["Grek", "Latn"])
+      iex> mapping = Cldr.Collation.Reorder.build_mapping([:Grek, :Latn])
       iex> is_function(mapping, 1)
       true
 
@@ -67,8 +67,8 @@ defmodule Cldr.Collation.Reorder do
 
     ordered_ranges = Enum.reverse(ordered_ranges)
 
-    # Check if "others"/"Zzzz" is in the list
-    has_others = Enum.any?(reorder_codes, fn c -> c in ["others", "Zzzz"] end)
+    # Check if :others/:Zzzz is in the list
+    has_others = Enum.any?(reorder_codes, fn c -> c in [:others, :Zzzz] end)
 
     # Build the final ordering
     # Missing core codes (space, punct, symbol, currency, digit) are prepended
@@ -134,7 +134,11 @@ defmodule Cldr.Collation.Reorder do
     end
   end
 
-  defp normalize_code(code) do
+  defp normalize_code(code) when is_atom(code) do
+    normalize_code(Atom.to_string(code))
+  end
+
+  defp normalize_code(code) when is_binary(code) do
     code
     |> String.downcase()
     |> case do
@@ -243,7 +247,7 @@ defmodule Cldr.Collation.Reorder do
       iex> Cldr.Collation.Reorder.apply_mapping(nil, 0x2A00)
       0x2A00
 
-      iex> mapping = Cldr.Collation.Reorder.build_mapping(["Grek", "Latn"])
+      iex> mapping = Cldr.Collation.Reorder.build_mapping([:Grek, :Latn])
       iex> remapped = Cldr.Collation.Reorder.apply_mapping(mapping, 0x2A00)
       iex> is_integer(remapped)
       true

@@ -163,6 +163,7 @@ defmodule Cldr.Collation.Tailoring do
           |> String.trim_leading("[reorder ")
           |> String.trim_trailing("]")
           |> String.split()
+          |> Enum.map(&String.to_atom/1)
 
         [{:option, :reorder, codes}]
 

@@ -15,7 +15,8 @@ defmodule Collation.Options do
             numeric: false,
             reorder: [],
             max_variable: :punct,
-            type: :standard
+            type: :standard,
+            tailoring: nil
 
   @type strength :: :primary | :secondary | :tertiary | :quaternary | :identical
   @type alternate :: :non_ignorable | :shifted
@@ -32,7 +33,8 @@ defmodule Collation.Options do
           numeric: boolean(),
           reorder: [String.t()],
           max_variable: max_variable(),
-          type: atom()
+          type: atom(),
+          tailoring: map() | nil
         }
 
   @doc """
@@ -74,8 +76,12 @@ defmodule Collation.Options do
   @doc """
   Parse collation options from a BCP47 locale string with `-u-` extension.
 
-  Extracts collation-related keys from the Unicode locale extension subtag.
-  Supported BCP47 keys: `co`, `ks`, `ka`, `kb`, `kk`, `kc`, `kf`, `kn`, `kr`, `kv`.
+  Extracts collation-related keys from the Unicode locale extension subtag and
+  applies locale-specific defaults and tailoring rules. Supported BCP47 keys:
+  `co`, `ks`, `ka`, `kb`, `kk`, `kc`, `kf`, `kn`, `kr`, `kv`.
+
+  Option precedence (highest to lowest): BCP47 `-u-` keys > locale defaults >
+  tailoring rule overrides > struct defaults.
 
   ### Arguments
 
@@ -83,22 +89,65 @@ defmodule Collation.Options do
 
   ### Returns
 
-  A `%Collation.Options{}` struct with parsed values. Unrecognized keys are ignored
+  A `%Collation.Options{}` struct with parsed values, locale defaults, and a
+  tailoring overlay (if available for the locale). Unrecognized keys are ignored
   and defaults are used for missing keys.
 
   ### Examples
 
-      iex> Collation.Options.from_locale("en-u-ks-level2")
-      %Collation.Options{strength: :secondary}
+      iex> opts = Collation.Options.from_locale("en-u-ks-level2")
+      iex> opts.strength
+      :secondary
 
-      iex> Collation.Options.from_locale("fr-u-kb-true-ka-shifted")
-      %Collation.Options{backwards: true, alternate: :shifted}
+      iex> opts = Collation.Options.from_locale("da")
+      iex> opts.case_first
+      :upper
   """
   def from_locale(locale) when is_binary(locale) do
-    case extract_u_extension(locale) do
-      nil -> new()
-      pairs -> from_u_pairs(pairs)
-    end
+    alias Collation.Tailoring
+    alias Collation.Tailoring.LocaleDefaults
+
+    language = LocaleDefaults.extract_language(locale)
+    locale_defaults = LocaleDefaults.options_for(locale)
+    u_pairs = extract_u_extension(locale)
+    bcp47_opts = if u_pairs, do: u_pairs_to_opts(u_pairs), else: []
+
+    # Determine collation type from BCP47 keys
+    type = Keyword.get(bcp47_opts, :type, LocaleDefaults.default_type(locale))
+
+    # Load tailoring overlay if available
+    {tailoring_overlay, tailoring_option_overrides} =
+      case Tailoring.get_tailoring(language, type) do
+        {overlay, overrides} -> {overlay, overrides}
+        nil -> {nil, []}
+      end
+
+    # Build options with precedence: BCP47 > locale defaults > tailoring overrides > struct defaults
+    # Apply in reverse precedence order so higher priority overwrites lower
+    new()
+    |> struct(tailoring_option_overrides)
+    |> struct(locale_defaults)
+    |> struct(bcp47_opts)
+    |> Map.put(:tailoring, tailoring_overlay)
+  end
+
+  # Convert parsed u-pairs to keyword opts
+  defp u_pairs_to_opts(pairs) do
+    Enum.reduce(pairs, [], fn {key, value}, acc ->
+      case key do
+        "co" -> [{:type, parse_type(value)} | acc]
+        "ks" -> [{:strength, parse_strength(value)} | acc]
+        "ka" -> [{:alternate, parse_alternate(value)} | acc]
+        "kb" -> [{:backwards, parse_bool(value)} | acc]
+        "kk" -> [{:normalization, parse_bool(value)} | acc]
+        "kc" -> [{:case_level, parse_bool(value)} | acc]
+        "kf" -> [{:case_first, parse_case_first(value)} | acc]
+        "kn" -> [{:numeric, parse_bool(value)} | acc]
+        "kr" -> [{:reorder, String.split(value, "-")} | acc]
+        "kv" -> [{:max_variable, parse_max_variable(value)} | acc]
+        _ -> acc
+      end
+    end)
   end
 
   defp extract_u_extension(locale) do
@@ -145,24 +194,6 @@ defmodule Collation.Options do
     end
   end
 
-  defp from_u_pairs(pairs) do
-    Enum.reduce(pairs, new(), fn {key, value}, opts ->
-      case key do
-        "co" -> %{opts | type: parse_type(value)}
-        "ks" -> %{opts | strength: parse_strength(value)}
-        "ka" -> %{opts | alternate: parse_alternate(value)}
-        "kb" -> %{opts | backwards: parse_bool(value)}
-        "kk" -> %{opts | normalization: parse_bool(value)}
-        "kc" -> %{opts | case_level: parse_bool(value)}
-        "kf" -> %{opts | case_first: parse_case_first(value)}
-        "kn" -> %{opts | numeric: parse_bool(value)}
-        "kr" -> %{opts | reorder: String.split(value, "-")}
-        "kv" -> %{opts | max_variable: parse_max_variable(value)}
-        _ -> opts
-      end
-    end)
-  end
-
   defp parse_strength("level1"), do: :primary
   defp parse_strength("level2"), do: :secondary
   defp parse_strength("level3"), do: :tertiary
@@ -198,6 +229,8 @@ defmodule Collation.Options do
   defp parse_type("zhuyin"), do: :zhuyin
   defp parse_type("searchjl"), do: :searchjl
   defp parse_type("eor"), do: :eor
+  defp parse_type("trad"), do: :traditional
+  defp parse_type("tradnl"), do: :traditional
   defp parse_type(other), do: String.to_atom(other)
 
   @doc """

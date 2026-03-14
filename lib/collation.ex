@@ -232,28 +232,30 @@ defmodule Collation do
   # Internal: produce collation elements from codepoints
 
   defp produce_collation_elements(codepoints, options) do
+    overlay = options.tailoring
+
     if options.numeric do
       produce_with_numeric(codepoints, options)
     else
-      produce_standard(codepoints)
+      produce_standard(codepoints, overlay)
     end
   end
 
-  defp produce_standard(codepoints) do
-    do_produce(codepoints, [])
+  defp produce_standard(codepoints, overlay) do
+    do_produce(codepoints, [], overlay)
   end
 
-  defp do_produce([], acc), do: Enum.reverse(acc) |> List.flatten()
+  defp do_produce([], acc, _overlay), do: Enum.reverse(acc) |> List.flatten()
 
-  defp do_produce(codepoints, acc) do
-    case Table.longest_match(codepoints) do
+  defp do_produce(codepoints, acc, overlay) do
+    case Table.longest_match_with_overlay(codepoints, overlay) do
       {matched, elements, remaining} when is_list(elements) ->
         # After matching, check for discontiguous contractions with following
         # combining marks (UCA S2.1.1)
         {final_elements, final_remaining} =
           try_discontiguous_match(matched, elements, remaining)
 
-        do_produce(final_remaining, [final_elements | acc])
+        do_produce(final_remaining, [final_elements | acc], overlay)
 
       {:unmapped, cp, remaining} ->
         elements = resolve_unmapped(cp)
@@ -261,7 +263,7 @@ defmodule Collation do
         {final_elements, final_remaining} =
           try_discontiguous_match([cp], elements, remaining)
 
-        do_produce(final_remaining, [final_elements | acc])
+        do_produce(final_remaining, [final_elements | acc], overlay)
 
       :done ->
         Enum.reverse(acc) |> List.flatten()

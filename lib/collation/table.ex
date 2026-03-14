@@ -176,6 +176,120 @@ defmodule Collation.Table do
 
   def longest_match([]), do: :done
 
+  @doc """
+  Look up collation elements with a tailoring overlay checked first.
+
+  ### Arguments
+
+  * `codepoints` - a single integer codepoint, or a list of integer codepoints
+  * `overlay` - a map of `%{[codepoint] => [%Collation.Element{}]}` tailoring entries
+
+  ### Returns
+
+  Same as `lookup/1`, but checks the overlay map before falling back to the root table.
+
+  ### Examples
+
+      iex> Collation.Table.ensure_loaded()
+      iex> overlay = %{[0x0041] => [%Collation.Element{primary: 0xFFFF}]}
+      iex> {:ok, [elem]} = Collation.Table.lookup_with_overlay([0x0041], overlay)
+      iex> elem.primary
+      0xFFFF
+  """
+  def lookup_with_overlay(codepoint, overlay) when is_integer(codepoint) do
+    lookup_with_overlay([codepoint], overlay)
+  end
+
+  def lookup_with_overlay(codepoints, overlay) when is_list(codepoints) and is_map(overlay) do
+    case Map.get(overlay, codepoints) do
+      nil -> lookup(codepoints)
+      elements -> {:ok, elements}
+    end
+  end
+
+  def lookup_with_overlay(codepoints, nil) when is_list(codepoints) do
+    lookup(codepoints)
+  end
+
+  @doc """
+  Find the longest matching entry, checking a tailoring overlay first.
+
+  ### Arguments
+
+  * `codepoints` - a list of integer codepoints to match
+  * `overlay` - a tailoring overlay map, or `nil` for root-only lookups
+
+  ### Returns
+
+  Same as `longest_match/1`.
+
+  ### Examples
+
+      iex> Collation.Table.ensure_loaded()
+      iex> {matched, _elems, rest} = Collation.Table.longest_match_with_overlay([0x0041, 0x0042], nil)
+      iex> matched
+      [65]
+      iex> rest
+      [66]
+  """
+  def longest_match_with_overlay(codepoints, nil), do: longest_match(codepoints)
+
+  def longest_match_with_overlay([cp | rest] = _codepoints, overlay) when is_map(overlay) do
+    # Check overlay contractions first (try longest possible)
+    overlay_max_len = overlay_max_contraction_length(cp, overlay)
+
+    overlay_result =
+      if overlay_max_len > 0 do
+        available = [cp | Enum.take(rest, overlay_max_len - 1)]
+
+        overlay_max_len..1//-1
+        |> Enum.reduce_while(nil, fn len, _acc ->
+          if len <= length(available) do
+            candidate = Enum.take(available, len)
+
+            case Map.get(overlay, candidate) do
+              nil ->
+                {:cont, nil}
+
+              elements ->
+                remaining = Enum.drop([cp | rest], len)
+                {:halt, {candidate, elements, remaining}}
+            end
+          else
+            {:cont, nil}
+          end
+        end)
+      else
+        nil
+      end
+
+    case overlay_result do
+      nil ->
+        # No overlay match, fall back to root table
+        longest_match([cp | rest])
+
+      match ->
+        match
+    end
+  end
+
+  def longest_match_with_overlay([], _overlay), do: :done
+
+  # Find the maximum contraction length in the overlay starting with cp
+  defp overlay_max_contraction_length(cp, overlay) do
+    overlay
+    |> Map.keys()
+    |> Enum.filter(fn
+      [first | _] -> first == cp
+      _ -> false
+    end)
+    |> Enum.map(&length/1)
+    |> case do
+      [] -> 0
+      lengths -> Enum.max(lengths)
+    end
+  end
+
   # GenServer
 
   def start_link(opts \\ []) do

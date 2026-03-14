@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1999-2008, International Business Machines
+*   Copyright (C) 1999-2013, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
 *   file name:  ubidi.h
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -20,16 +22,19 @@
 #include "unicode/utypes.h"
 #include "unicode/uchar.h"
 
+#if U_SHOW_CPLUSPLUS_API
+#include "unicode/localpointer.h"
+#endif   // U_SHOW_CPLUSPLUS_API
+
 /**
  *\file
  * \brief C API: Bidi algorithm
  *
  * <h2>Bidi algorithm for ICU</h2>
  *
- * This is an implementation of the Unicode Bidirectional algorithm.
+ * This is an implementation of the Unicode Bidirectional Algorithm.
  * The algorithm is defined in the
- * <a href="http://www.unicode.org/unicode/reports/tr9/">Unicode Standard Annex #9</a>,
- * version 13, also described in The Unicode Standard, Version 4.0 .<p>
+ * <a href="http://www.unicode.org/unicode/reports/tr9/">Unicode Standard Annex #9</a>.<p>
  *
  * Note: Libraries that perform a bidirectional algorithm and
  * reorder strings accordingly are sometimes called "Storage Layout Engines".
@@ -79,7 +84,7 @@
  *
  * <pre>
  * \code
- *#include "unicode/ubidi.h"
+ *#include <unicode/ubidi.h>
  *
  *typedef enum {
  *     styleNormal=0, styleSelected=1,
@@ -131,11 +136,11 @@
  *         int styleLimit;
  *
  *         for(i=0; i<styleRunCount; ++i) {
- *             styleLimit=styleRun[i].limit;
+ *             styleLimit=styleRuns[i].limit;
  *             if(start<styleLimit) {
  *                 if(styleLimit>limit) { styleLimit=limit; }
  *                 renderRun(text, start, styleLimit,
- *                           direction, styleRun[i].style);
+ *                           direction, styleRuns[i].style);
  *                 if(styleLimit==limit) { break; }
  *                 start=styleLimit;
  *             }
@@ -145,14 +150,14 @@
  *
  *         for(i=styleRunCount-1; i>=0; --i) {
  *             if(i>0) {
- *                 styleStart=styleRun[i-1].limit;
+ *                 styleStart=styleRuns[i-1].limit;
  *             } else {
  *                 styleStart=0;
  *             }
  *             if(limit>=styleStart) {
  *                 if(styleStart<start) { styleStart=start; }
  *                 renderRun(text, styleStart, limit,
- *                           direction, styleRun[i].style);
+ *                           direction, styleRuns[i].style);
  *                 if(styleStart==start) { break; }
  *                 limit=styleStart;
  *             }
@@ -163,7 +168,8 @@
  * // the line object represents text[start..limit-1]
  * void renderLine(UBiDi *line, const UChar *text,
  *                 int32_t start, int32_t limit,
- *                 const StyleRun *styleRuns, int styleRunCount) {
+ *                 const StyleRun *styleRuns, int styleRunCount,
+ *                 UErrorCode *pErrorCode) {
  *     UBiDiDirection direction=ubidi_getDirection(line);
  *     if(direction!=UBIDI_MIXED) {
  *         // unidirectional
@@ -178,14 +184,14 @@
  *         int32_t count, i, length;
  *         UBiDiLevel level;
  *
- *         count=ubidi_countRuns(para, pErrorCode);
+ *         count=ubidi_countRuns(line, pErrorCode);
  *         if(U_SUCCESS(*pErrorCode)) {
  *             if(styleRunCount<=1) {
  *                 Style style=styleRuns[0].style;
  *
  *                 // iterate over directional runs
  *                for(i=0; i<count; ++i) {
- *                    direction=ubidi_getVisualRun(para, i, &start, &length);
+ *                    direction=ubidi_getVisualRun(line, i, &start, &length);
  *                     renderRun(text, start, start+length, direction, style);
  *                }
  *             } else {
@@ -239,7 +245,7 @@
  *             startLine(paraLevel, width);
  *
  *             renderLine(para, text, 0, length,
- *                        styleRuns, styleRunCount);
+ *                        styleRuns, styleRunCount, pErrorCode);
  *         } else {
  *             UBiDi *line;
  *
@@ -263,7 +269,7 @@
  *
  *                         renderLine(line, text, start, limit,
  *                                    styleRuns+styleRunStart,
- *                                    styleRunLimit-styleRunStart);
+ *                                    styleRunLimit-styleRunStart, pErrorCode);
  *                     }
  *                     if(limit==length) { break; }
  *                     start=limit;
@@ -320,6 +326,10 @@
  * just like with normal LTR and RTL level values -
  * these special values are designed that way. Also, the implementation
  * assumes that UBIDI_MAX_EXPLICIT_LEVEL is odd.
+ *
+ * Note: The numeric values of the related constants will not change:
+ * They are tied to the use of 7-bit byte values (plus the override bit)
+ * and of the UBiDiLevel=uint8_t data type in this API.
  *
  * @see UBIDI_DEFAULT_LTR
  * @see UBIDI_DEFAULT_RTL
@@ -384,10 +394,12 @@ typedef uint8_t UBiDiLevel;
 
 /**
  * Maximum explicit embedding level.
+ * Same as the max_depth value in the
+ * <a href="http://www.unicode.org/reports/tr9/#BD2">Unicode Bidirectional Algorithm</a>.
  * (The maximum resolved level can be up to <code>UBIDI_MAX_EXPLICIT_LEVEL+1</code>).
  * @stable ICU 2.0
  */
-#define UBIDI_MAX_EXPLICIT_LEVEL 61
+#define UBIDI_MAX_EXPLICIT_LEVEL 125
 
 /** Bit flag for level input.
  *  Overrides directional properties.
@@ -415,12 +427,44 @@ typedef uint8_t UBiDiLevel;
  * @stable ICU 2.0
  */
 enum UBiDiDirection {
-    /** All left-to-right text. This is a 0 value. @stable ICU 2.0 */
-    UBIDI_LTR,
-    /** All right-to-left text. This is a 1 value. @stable ICU 2.0 */
-    UBIDI_RTL,
-    /** Mixed-directional text. @stable ICU 2.0 */
-    UBIDI_MIXED
+  /** Left-to-right text. This is a 0 value.
+   * <ul>
+   * <li>As return value for <code>ubidi_getDirection()</code>, it means
+   *     that the source string contains no right-to-left characters, or
+   *     that the source string is empty and the paragraph level is even.
+   * <li> As return value for <code>ubidi_getBaseDirection()</code>, it
+   *      means that the first strong character of the source string has
+   *      a left-to-right direction.
+   * </ul>
+   * @stable ICU 2.0
+   */
+  UBIDI_LTR,
+  /** Right-to-left text. This is a 1 value.
+   * <ul>
+   * <li>As return value for <code>ubidi_getDirection()</code>, it means
+   *     that the source string contains no left-to-right characters, or
+   *     that the source string is empty and the paragraph level is odd.
+   * <li> As return value for <code>ubidi_getBaseDirection()</code>, it
+   *      means that the first strong character of the source string has
+   *      a right-to-left direction.
+   * </ul>
+   * @stable ICU 2.0
+   */
+  UBIDI_RTL,
+  /** Mixed-directional text.
+   * <p>As return value for <code>ubidi_getDirection()</code>, it means
+   *    that the source string contains both left-to-right and
+   *    right-to-left characters.
+   * @stable ICU 2.0
+   */
+  UBIDI_MIXED,
+  /** No strongly directional text.
+   * <p>As return value for <code>ubidi_getBaseDirection()</code>, it means
+   *    that the source string is missing or empty, or contains neither left-to-right
+   *    nor right-to-left characters.
+   * @stable ICU 4.6
+   */
+  UBIDI_NEUTRAL
 };
 
 /** @stable ICU 2.0 */
@@ -456,7 +500,7 @@ typedef struct UBiDi UBiDi;
  * @return An empty <code>UBiDi</code> object.
  * @stable ICU 2.0
  */
-U_STABLE UBiDi * U_EXPORT2
+U_CAPI UBiDi * U_EXPORT2
 ubidi_open(void);
 
 /**
@@ -493,7 +537,7 @@ ubidi_open(void);
  * @return An empty <code>UBiDi</code> object with preallocated memory.
  * @stable ICU 2.0
  */
-U_STABLE UBiDi * U_EXPORT2
+U_CAPI UBiDi * U_EXPORT2
 ubidi_openSized(int32_t maxLength, int32_t maxRunCount, UErrorCode *pErrorCode);
 
 /**
@@ -516,8 +560,27 @@ ubidi_openSized(int32_t maxLength, int32_t maxRunCount, UErrorCode *pErrorCode);
  * @see ubidi_setLine
  * @stable ICU 2.0
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_close(UBiDi *pBiDi);
+
+#if U_SHOW_CPLUSPLUS_API
+
+U_NAMESPACE_BEGIN
+
+/**
+ * \class LocalUBiDiPointer
+ * "Smart pointer" class, closes a UBiDi via ubidi_close().
+ * For most methods see the LocalPointerBase base class.
+ *
+ * @see LocalPointerBase
+ * @see LocalPointer
+ * @stable ICU 4.4
+ */
+U_DEFINE_LOCAL_OPEN_POINTER(LocalUBiDiPointer, UBiDi, ubidi_close);
+
+U_NAMESPACE_END
+
+#endif
 
 /**
  * Modify the operation of the Bidi algorithm such that it
@@ -535,7 +598,7 @@ ubidi_close(UBiDi *pBiDi);
  * this "inverse Bidi" and that the current implementation provides only an
  * approximation of "inverse Bidi".</p>
  *
- * <p>With <code>isInverse</code> set to <code>TRUE</code>,
+ * <p>With <code>isInverse</code> set to <code>true</code>,
  * this function changes the behavior of some of the subsequent functions
  * in a way that they can be used for the inverse Bidi algorithm.
  * Specifically, runs of text with numeric characters will be treated in a
@@ -548,12 +611,12 @@ ubidi_close(UBiDi *pBiDi);
  * the runs of the logically ordered output.</p>
  *
  * <p>Calling this function with argument <code>isInverse</code> set to
- * <code>TRUE</code> is equivalent to calling
+ * <code>true</code> is equivalent to calling
  * <code>ubidi_setReorderingMode</code> with argument
  * <code>reorderingMode</code>
  * set to <code>#UBIDI_REORDER_INVERSE_NUMBERS_AS_L</code>.<br>
  * Calling this function with argument <code>isInverse</code> set to
- * <code>FALSE</code> is equivalent to calling
+ * <code>false</code> is equivalent to calling
  * <code>ubidi_setReorderingMode</code> with argument
  * <code>reorderingMode</code>
  * set to <code>#UBIDI_REORDER_DEFAULT</code>.
@@ -567,18 +630,18 @@ ubidi_close(UBiDi *pBiDi);
  * @see ubidi_setReorderingMode
  * @stable ICU 2.0
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_setInverse(UBiDi *pBiDi, UBool isInverse);
 
 /**
  * Is this Bidi object set to perform the inverse Bidi algorithm?
  * <p>Note: calling this function after setting the reordering mode with
- * <code>ubidi_setReorderingMode</code> will return <code>TRUE</code> if the
+ * <code>ubidi_setReorderingMode</code> will return <code>true</code> if the
  * reordering mode was set to <code>#UBIDI_REORDER_INVERSE_NUMBERS_AS_L</code>,
- * <code>FALSE</code> for all other values.</p>
+ * <code>false</code> for all other values.</p>
  *
  * @param pBiDi is a <code>UBiDi</code> object.
- * @return TRUE if the Bidi object is set to perform the inverse Bidi algorithm
+ * @return true if the Bidi object is set to perform the inverse Bidi algorithm
  * by handling numbers as L.
  *
  * @see ubidi_setInverse
@@ -586,7 +649,7 @@ ubidi_setInverse(UBiDi *pBiDi, UBool isInverse);
  * @stable ICU 2.0
  */
 
-U_STABLE UBool U_EXPORT2
+U_CAPI UBool U_EXPORT2
 ubidi_isInverse(UBiDi *pBiDi);
 
 /**
@@ -609,7 +672,7 @@ ubidi_isInverse(UBiDi *pBiDi);
  * @see ubidi_setPara
  * @stable ICU 3.4
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_orderParagraphsLTR(UBiDi *pBiDi, UBool orderParagraphsLTR);
 
 /**
@@ -617,13 +680,13 @@ ubidi_orderParagraphsLTR(UBiDi *pBiDi, UBool orderParagraphsLTR);
  * successive paragraphs progress from left to right?
  *
  * @param pBiDi is a <code>UBiDi</code> object.
- * @return TRUE if the Bidi object is set to allocate level 0 to block
+ * @return true if the Bidi object is set to allocate level 0 to block
  *         separators.
  *
  * @see ubidi_orderParagraphsLTR
  * @stable ICU 3.4
  */
-U_STABLE UBool U_EXPORT2
+U_CAPI UBool U_EXPORT2
 ubidi_isOrderParagraphsLTR(UBiDi *pBiDi);
 
 /**
@@ -639,7 +702,7 @@ typedef enum UBiDiReorderingMode {
       * @stable ICU 3.6 */
     UBIDI_REORDER_DEFAULT = 0,
     /** Logical to Visual algorithm which handles numbers in a way which
-      * mimicks the behavior of Windows XP.
+      * mimics the behavior of Windows XP.
       * @stable ICU 3.6 */
     UBIDI_REORDER_NUMBERS_SPECIAL,
     /** Logical to Visual algorithm grouping numbers with adjacent R characters
@@ -655,7 +718,7 @@ typedef enum UBiDiReorderingMode {
       * @stable ICU 3.6 */
     UBIDI_REORDER_RUNS_ONLY,
     /** Visual to Logical algorithm which handles numbers like L
-      * (same algorithm as selected by <code>ubidi_setInverse(TRUE)</code>.
+      * (same algorithm as selected by <code>ubidi_setInverse(true)</code>.
       * @see ubidi_setInverse
       * @stable ICU 3.6 */
     UBIDI_REORDER_INVERSE_NUMBERS_AS_L,
@@ -667,9 +730,13 @@ typedef enum UBiDiReorderingMode {
       * <code>UBIDI_REORDER_NUMBERS_SPECIAL</code> Bidi algorithm.
       * @stable ICU 3.6 */
     UBIDI_REORDER_INVERSE_FOR_NUMBERS_SPECIAL,
-    /** Number of values for reordering mode.
-      * @stable ICU 3.6 */
+#ifndef U_HIDE_DEPRECATED_API
+    /**
+     * Number of values for reordering mode.
+     * @deprecated ICU 58 The numeric value may change over time, see ICU ticket #12420.
+     */
     UBIDI_REORDER_COUNT
+#endif  // U_HIDE_DEPRECATED_API
 } UBiDiReorderingMode;
 
 /**
@@ -770,7 +837,7 @@ typedef enum UBiDiReorderingMode {
  * reordered sequence (the option <code>#UBIDI_INSERT_LRM_FOR_NUMERIC</code> can
  * be used with function <code>ubidi_writeReordered</code> to this end. This
  * mode is equivalent to calling <code>ubidi_setInverse()</code> with
- * argument <code>isInverse</code> set to <code>TRUE</code>.</li>
+ * argument <code>isInverse</code> set to <code>true</code>.</li>
  *
  * <li>When the reordering mode is set to
  * <code>#UBIDI_REORDER_INVERSE_LIKE_DIRECT</code>, the "direct" Logical to Visual
@@ -791,12 +858,10 @@ typedef enum UBiDiReorderingMode {
  *
  * <li>When the reordering mode is set to
  * <code>#UBIDI_REORDER_INVERSE_FOR_NUMBERS_SPECIAL</code>, the Logical to Visual
- * Bidi algorithm used in Windows XP is used as an approximation of an
- * "inverse Bidi" algorithm.
+ * Bidi algorithm used in Windows XP is used as an approximation of an "inverse Bidi" algorithm.
  * <br>
  * For example, an LTR paragraph with the content "abc FED123" (where
- * upper case represents RTL characters) will be transformed to
- * "abc 123DEF.</li>
+ * upper case represents RTL characters) will be transformed to "abc 123DEF."</li>
  * </ul>
  *
  * <p>In all the reordering modes specifying an "inverse Bidi" algorithm
@@ -825,7 +890,7 @@ typedef enum UBiDiReorderingMode {
  * @see ubidi_writeReordered
  * @stable ICU 3.6
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_setReorderingMode(UBiDi *pBiDi, UBiDiReorderingMode reorderingMode);
 
 /**
@@ -836,7 +901,7 @@ ubidi_setReorderingMode(UBiDi *pBiDi, UBiDiReorderingMode reorderingMode);
  * @see ubidi_setReorderingMode
  * @stable ICU 3.6
  */
-U_STABLE UBiDiReorderingMode U_EXPORT2
+U_CAPI UBiDiReorderingMode U_EXPORT2
 ubidi_getReorderingMode(UBiDi *pBiDi);
 
 /**
@@ -874,7 +939,7 @@ typedef enum UBiDiReorderingOption {
      *
      * <p>If this option is set in conjunction with reordering mode
      * <code>#UBIDI_REORDER_INVERSE_NUMBERS_AS_L</code> or with calling
-     * <code>ubidi_setInverse(TRUE)</code>, it implies
+     * <code>ubidi_setInverse(true)</code>, it implies
      * option <code>#UBIDI_INSERT_LRM_FOR_NUMERIC</code>
      * in calls to function <code>ubidi_writeReordered()</code>.</p>
      *
@@ -955,7 +1020,7 @@ typedef enum UBiDiReorderingOption {
      *
      * <p>When the <code>UBIDI_OPTION_STREAMING</code> option is used,
      * it is recommended to call <code>ubidi_orderParagraphsLTR()</code> with
-     * argument <code>orderParagraphsLTR</code> set to <code>TRUE</code> before
+     * argument <code>orderParagraphsLTR</code> set to <code>true</code> before
      * calling <code>ubidi_setPara</code> so that later paragraphs may be
      * concatenated to previous paragraphs on the right.</p>
      *
@@ -981,7 +1046,7 @@ typedef enum UBiDiReorderingOption {
  * @see ubidi_getReorderingOptions
  * @stable ICU 3.6
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_setReorderingOptions(UBiDi *pBiDi, uint32_t reorderingOptions);
 
 /**
@@ -992,12 +1057,102 @@ ubidi_setReorderingOptions(UBiDi *pBiDi, uint32_t reorderingOptions);
  * @see ubidi_setReorderingOptions
  * @stable ICU 3.6
  */
-U_STABLE uint32_t U_EXPORT2
+U_CAPI uint32_t U_EXPORT2
 ubidi_getReorderingOptions(UBiDi *pBiDi);
 
 /**
+ * Set the context before a call to ubidi_setPara().<p>
+ *
+ * ubidi_setPara() computes the left-right directionality for a given piece
+ * of text which is supplied as one of its arguments. Sometimes this piece
+ * of text (the "main text") should be considered in context, because text
+ * appearing before ("prologue") and/or after ("epilogue") the main text
+ * may affect the result of this computation.<p>
+ *
+ * This function specifies the prologue and/or the epilogue for the next
+ * call to ubidi_setPara(). The characters specified as prologue and
+ * epilogue should not be modified by the calling program until the call
+ * to ubidi_setPara() has returned. If successive calls to ubidi_setPara()
+ * all need specification of a context, ubidi_setContext() must be called
+ * before each call to ubidi_setPara(). In other words, a context is not
+ * "remembered" after the following successful call to ubidi_setPara().<p>
+ *
+ * If a call to ubidi_setPara() specifies UBIDI_DEFAULT_LTR or
+ * UBIDI_DEFAULT_RTL as paraLevel and is preceded by a call to
+ * ubidi_setContext() which specifies a prologue, the paragraph level will
+ * be computed taking in consideration the text in the prologue.<p>
+ *
+ * When ubidi_setPara() is called without a previous call to
+ * ubidi_setContext, the main text is handled as if preceded and followed
+ * by strong directional characters at the current paragraph level.
+ * Calling ubidi_setContext() with specification of a prologue will change
+ * this behavior by handling the main text as if preceded by the last
+ * strong character appearing in the prologue, if any.
+ * Calling ubidi_setContext() with specification of an epilogue will change
+ * the behavior of ubidi_setPara() by handling the main text as if followed
+ * by the first strong character or digit appearing in the epilogue, if any.<p>
+ *
+ * Note 1: if <code>ubidi_setContext</code> is called repeatedly without
+ *         calling <code>ubidi_setPara</code>, the earlier calls have no effect,
+ *         only the last call will be remembered for the next call to
+ *         <code>ubidi_setPara</code>.<p>
+ *
+ * Note 2: calling <code>ubidi_setContext(pBiDi, NULL, 0, NULL, 0, &errorCode)</code>
+ *         cancels any previous setting of non-empty prologue or epilogue.
+ *         The next call to <code>ubidi_setPara()</code> will process no
+ *         prologue or epilogue.<p>
+ *
+ * Note 3: users must be aware that even after setting the context
+ *         before a call to ubidi_setPara() to perform e.g. a logical to visual
+ *         transformation, the resulting string may not be identical to what it
+ *         would have been if all the text, including prologue and epilogue, had
+ *         been processed together.<br>
+ * Example (upper case letters represent RTL characters):<br>
+ * &nbsp;&nbsp;prologue = "<code>abc DE</code>"<br>
+ * &nbsp;&nbsp;epilogue = none<br>
+ * &nbsp;&nbsp;main text = "<code>FGH xyz</code>"<br>
+ * &nbsp;&nbsp;paraLevel = UBIDI_LTR<br>
+ * &nbsp;&nbsp;display without prologue = "<code>HGF xyz</code>"
+ *             ("HGF" is adjacent to "xyz")<br>
+ * &nbsp;&nbsp;display with prologue = "<code>abc HGFED xyz</code>"
+ *             ("HGF" is not adjacent to "xyz")<br>
+ *
+ * @param pBiDi is a paragraph <code>UBiDi</code> object.
+ *
+ * @param prologue is a pointer to the text which precedes the text that
+ *        will be specified in a coming call to ubidi_setPara().
+ *        If there is no prologue to consider, then <code>proLength</code>
+ *        must be zero and this pointer can be NULL.
+ *
+ * @param proLength is the length of the prologue; if <code>proLength==-1</code>
+ *        then the prologue must be zero-terminated.
+ *        Otherwise proLength must be >= 0. If <code>proLength==0</code>, it means
+ *        that there is no prologue to consider.
+ *
+ * @param epilogue is a pointer to the text which follows the text that
+ *        will be specified in a coming call to ubidi_setPara().
+ *        If there is no epilogue to consider, then <code>epiLength</code>
+ *        must be zero and this pointer can be NULL.
+ *
+ * @param epiLength is the length of the epilogue; if <code>epiLength==-1</code>
+ *        then the epilogue must be zero-terminated.
+ *        Otherwise epiLength must be >= 0. If <code>epiLength==0</code>, it means
+ *        that there is no epilogue to consider.
+ *
+ * @param pErrorCode must be a valid pointer to an error code value.
+ *
+ * @see ubidi_setPara
+ * @stable ICU 4.8
+ */
+U_CAPI void U_EXPORT2
+ubidi_setContext(UBiDi *pBiDi,
+                 const UChar *prologue, int32_t proLength,
+                 const UChar *epilogue, int32_t epiLength,
+                 UErrorCode *pErrorCode);
+
+/**
  * Perform the Unicode Bidi algorithm. It is defined in the
- * <a href="http://www.unicode.org/unicode/reports/tr9/">Unicode Standard Anned #9</a>,
+ * <a href="http://www.unicode.org/unicode/reports/tr9/">Unicode Standard Annex #9</a>,
  * version 13,
  * also described in The Unicode Standard, Version 4.0 .<p>
  *
@@ -1051,11 +1206,14 @@ ubidi_getReorderingOptions(UBiDi *pBiDi);
  *        A level overrides the directional property of its corresponding
  *        (same index) character if the level has the
  *        <code>#UBIDI_LEVEL_OVERRIDE</code> bit set.<br><br>
- *        Except for that bit, it must be
+ *        Aside from that bit, it must be
  *        <code>paraLevel<=embeddingLevels[]<=UBIDI_MAX_EXPLICIT_LEVEL</code>,
- *        with one exception: a level of zero may be specified for a paragraph
- *        separator even if <code>paraLevel>0</code> when multiple paragraphs
- *        are submitted in the same call to <code>ubidi_setPara()</code>.<br><br>
+ *        except that level 0 is always allowed.
+ *        Level 0 for a paragraph separator prevents reordering of paragraphs;
+ *        this only works reliably if <code>#UBIDI_LEVEL_OVERRIDE</code>
+ *        is also set for paragraph separators.
+ *        Level 0 for other characters is treated as a wildcard
+ *        and is lifted up to the resolved level of the surrounding paragraph.<br><br>
  *        <strong>Caution: </strong>A copy of this pointer, not of the levels,
  *        will be stored in the <code>UBiDi</code> object;
  *        the <code>embeddingLevels</code> array must not be
@@ -1068,11 +1226,13 @@ ubidi_getReorderingOptions(UBiDi *pBiDi);
  *        must take care of the deallocation of the <code>embeddingLevels</code> array.<br><br>
  *        <strong>Note:</strong> the <code>embeddingLevels</code> array must be
  *        at least <code>length</code> long.
+ *        This pointer can be <code>NULL</code> if this
+ *        value is not necessary.
  *
  * @param pErrorCode must be a valid pointer to an error code value.
  * @stable ICU 2.0
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_setPara(UBiDi *pBiDi, const UChar *text, int32_t length,
               UBiDiLevel paraLevel, UBiDiLevel *embeddingLevels,
               UErrorCode *pErrorCode);
@@ -1123,7 +1283,7 @@ ubidi_setPara(UBiDi *pBiDi, const UChar *text, int32_t length,
  * @see ubidi_getProcessedLength
  * @stable ICU 2.0
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_setLine(const UBiDi *pParaBiDi,
               int32_t start, int32_t limit,
               UBiDi *pLineBiDi,
@@ -1139,12 +1299,43 @@ ubidi_setLine(const UBiDi *pParaBiDi,
  *         that indicates if the entire text
  *         represented by this object is unidirectional,
  *         and which direction, or if it is mixed-directional.
+ * Note -  The value <code>UBIDI_NEUTRAL</code> is never returned from this method.
  *
  * @see UBiDiDirection
  * @stable ICU 2.0
  */
-U_STABLE UBiDiDirection U_EXPORT2
+U_CAPI UBiDiDirection U_EXPORT2
 ubidi_getDirection(const UBiDi *pBiDi);
+
+/**
+ * Gets the base direction of the text provided according
+ * to the Unicode Bidirectional Algorithm. The base direction
+ * is derived from the first character in the string with bidirectional
+ * character type L, R, or AL. If the first such character has type L,
+ * <code>UBIDI_LTR</code> is returned. If the first such character has
+ * type R or AL, <code>UBIDI_RTL</code> is returned. If the string does
+ * not contain any character of these types, then
+ * <code>UBIDI_NEUTRAL</code> is returned.
+ *
+ * This is a lightweight function for use when only the base direction
+ * is needed and no further bidi processing of the text is needed.
+ *
+ * @param text is a pointer to the text whose base
+ *             direction is needed.
+ * Note: the text must be (at least) @c length long.
+ *
+ * @param length is the length of the text;
+ *               if <code>length==-1</code> then the text
+ *               must be zero-terminated.
+ *
+ * @return  <code>UBIDI_LTR</code>, <code>UBIDI_RTL</code>,
+ *          <code>UBIDI_NEUTRAL</code>
+ *
+ * @see UBiDiDirection
+ * @stable ICU 4.6
+ */
+U_CAPI UBiDiDirection U_EXPORT2
+ubidi_getBaseDirection(const UChar *text,  int32_t length );
 
 /**
  * Get the pointer to the text.
@@ -1157,7 +1348,7 @@ ubidi_getDirection(const UBiDi *pBiDi);
  * @see ubidi_setLine
  * @stable ICU 2.0
  */
-U_STABLE const UChar * U_EXPORT2
+U_CAPI const UChar * U_EXPORT2
 ubidi_getText(const UBiDi *pBiDi);
 
 /**
@@ -1168,7 +1359,7 @@ ubidi_getText(const UBiDi *pBiDi);
  * @return The length of the text that the UBiDi object was created for.
  * @stable ICU 2.0
  */
-U_STABLE int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ubidi_getLength(const UBiDi *pBiDi);
 
 /**
@@ -1186,7 +1377,7 @@ ubidi_getLength(const UBiDi *pBiDi);
  * @see ubidi_getParagraphByIndex
  * @stable ICU 2.0
  */
-U_STABLE UBiDiLevel U_EXPORT2
+U_CAPI UBiDiLevel U_EXPORT2
 ubidi_getParaLevel(const UBiDi *pBiDi);
 
 /**
@@ -1197,7 +1388,7 @@ ubidi_getParaLevel(const UBiDi *pBiDi);
  * @return The number of paragraphs.
  * @stable ICU 3.4
  */
-U_STABLE int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ubidi_countParagraphs(UBiDi *pBiDi);
 
 /**
@@ -1234,7 +1425,7 @@ ubidi_countParagraphs(UBiDi *pBiDi);
  * @see ubidi_getProcessedLength
  * @stable ICU 3.4
  */
-U_STABLE int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ubidi_getParagraph(const UBiDi *pBiDi, int32_t charIndex, int32_t *pParaStart,
                    int32_t *pParaLimit, UBiDiLevel *pParaLevel,
                    UErrorCode *pErrorCode);
@@ -1266,7 +1457,7 @@ ubidi_getParagraph(const UBiDi *pBiDi, int32_t charIndex, int32_t *pParaStart,
  *
  * @stable ICU 3.4
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_getParagraphByIndex(const UBiDi *pBiDi, int32_t paraIndex,
                           int32_t *pParaStart, int32_t *pParaLimit,
                           UBiDiLevel *pParaLevel, UErrorCode *pErrorCode);
@@ -1286,7 +1477,7 @@ ubidi_getParagraphByIndex(const UBiDi *pBiDi, int32_t paraIndex,
  * @see ubidi_getProcessedLength
  * @stable ICU 2.0
  */
-U_STABLE UBiDiLevel U_EXPORT2
+U_CAPI UBiDiLevel U_EXPORT2
 ubidi_getLevelAt(const UBiDi *pBiDi, int32_t charIndex);
 
 /**
@@ -1307,7 +1498,7 @@ ubidi_getLevelAt(const UBiDi *pBiDi, int32_t charIndex);
  * @see ubidi_getProcessedLength
  * @stable ICU 2.0
  */
-U_STABLE const UBiDiLevel * U_EXPORT2
+U_CAPI const UBiDiLevel * U_EXPORT2
 ubidi_getLevels(UBiDi *pBiDi, UErrorCode *pErrorCode);
 
 /**
@@ -1334,7 +1525,7 @@ ubidi_getLevels(UBiDi *pBiDi, UErrorCode *pErrorCode);
  * @see ubidi_getProcessedLength
  * @stable ICU 2.0
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_getLogicalRun(const UBiDi *pBiDi, int32_t logicalPosition,
                     int32_t *pLogicalLimit, UBiDiLevel *pLevel);
 
@@ -1353,7 +1544,7 @@ ubidi_getLogicalRun(const UBiDi *pBiDi, int32_t logicalPosition,
  * @return The number of runs.
  * @stable ICU 2.0
  */
-U_STABLE int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ubidi_countRuns(UBiDi *pBiDi, UErrorCode *pErrorCode);
 
 /**
@@ -1378,7 +1569,8 @@ ubidi_countRuns(UBiDi *pBiDi, UErrorCode *pErrorCode);
  *
  * @return the directionality of the run,
  *         <code>UBIDI_LTR==0</code> or <code>UBIDI_RTL==1</code>,
- *         never <code>UBIDI_MIXED</code>.
+ *         never <code>UBIDI_MIXED</code>,
+ *         never <code>UBIDI_NEUTRAL</code>.
  *
  * @see ubidi_countRuns
  *
@@ -1411,7 +1603,7 @@ ubidi_countRuns(UBiDi *pBiDi, UErrorCode *pErrorCode);
  * to avoid these issues.
  * @stable ICU 2.0
  */
-U_STABLE UBiDiDirection U_EXPORT2
+U_CAPI UBiDiDirection U_EXPORT2
 ubidi_getVisualRun(UBiDi *pBiDi, int32_t runIndex,
                    int32_t *pLogicalStart, int32_t *pLength);
 
@@ -1452,7 +1644,7 @@ ubidi_getVisualRun(UBiDi *pBiDi, int32_t runIndex,
  * @see ubidi_getProcessedLength
  * @stable ICU 2.0
  */
-U_STABLE int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ubidi_getVisualIndex(UBiDi *pBiDi, int32_t logicalIndex, UErrorCode *pErrorCode);
 
 /**
@@ -1487,7 +1679,7 @@ ubidi_getVisualIndex(UBiDi *pBiDi, int32_t logicalIndex, UErrorCode *pErrorCode)
  * @see ubidi_getResultLength
  * @stable ICU 2.0
  */
-U_STABLE int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ubidi_getLogicalIndex(UBiDi *pBiDi, int32_t visualIndex, UErrorCode *pErrorCode);
 
 /**
@@ -1530,7 +1722,7 @@ ubidi_getLogicalIndex(UBiDi *pBiDi, int32_t visualIndex, UErrorCode *pErrorCode)
  * @see ubidi_getResultLength
  * @stable ICU 2.0
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_getLogicalMap(UBiDi *pBiDi, int32_t *indexMap, UErrorCode *pErrorCode);
 
 /**
@@ -1566,7 +1758,7 @@ ubidi_getLogicalMap(UBiDi *pBiDi, int32_t *indexMap, UErrorCode *pErrorCode);
  * @see ubidi_getResultLength
  * @stable ICU 2.0
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_getVisualMap(UBiDi *pBiDi, int32_t *indexMap, UErrorCode *pErrorCode);
 
 /**
@@ -1589,7 +1781,7 @@ ubidi_getVisualMap(UBiDi *pBiDi, int32_t *indexMap, UErrorCode *pErrorCode);
  *        The index map will result in <code>indexMap[logicalIndex]==visualIndex</code>.
  * @stable ICU 2.0
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_reorderLogical(const UBiDiLevel *levels, int32_t length, int32_t *indexMap);
 
 /**
@@ -1612,7 +1804,7 @@ ubidi_reorderLogical(const UBiDiLevel *levels, int32_t length, int32_t *indexMap
  *        The index map will result in <code>indexMap[visualIndex]==logicalIndex</code>.
  * @stable ICU 2.0
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_reorderVisual(const UBiDiLevel *levels, int32_t length, int32_t *indexMap);
 
 /**
@@ -1647,7 +1839,7 @@ ubidi_reorderVisual(const UBiDiLevel *levels, int32_t length, int32_t *indexMap)
  * @see UBIDI_MAP_NOWHERE
  * @stable ICU 2.0
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
 
 /** option flags for ubidi_writeReordered() */
@@ -1752,7 +1944,7 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length);
  * @see UBIDI_OPTION_STREAMING
  * @stable ICU 3.6
  */
-U_STABLE int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ubidi_getProcessedLength(const UBiDi *pBiDi);
 
 /**
@@ -1782,17 +1974,23 @@ ubidi_getProcessedLength(const UBiDi *pBiDi);
  * @see UBIDI_OPTION_REMOVE_CONTROLS
  * @stable ICU 3.6
  */
-U_STABLE int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ubidi_getResultLength(const UBiDi *pBiDi);
 
 U_CDECL_BEGIN
+
+#ifndef U_HIDE_DEPRECATED_API
 /**
- * value returned by <code>UBiDiClassCallback</code> callbacks when
+ * Value returned by <code>UBiDiClassCallback</code> callbacks when
  * there is no need to override the standard Bidi class for a given code point.
+ *
+ * This constant is deprecated; use u_getIntPropertyMaxValue(UCHAR_BIDI_CLASS)+1 instead.
+ *
  * @see UBiDiClassCallback
- * @stable ICU 3.6
+ * @deprecated ICU 58 The numeric value may change over time, see ICU ticket #12420.
  */
 #define U_BIDI_CLASS_DEFAULT  U_CHAR_DIRECTION_COUNT
+#endif  // U_HIDE_DEPRECATED_API
 
 /**
  * Callback type declaration for overriding default Bidi class values with
@@ -1808,8 +2006,8 @@ U_CDECL_BEGIN
  *
  * @return The directional property / Bidi class for the given code point
  *         <code>c</code> if the default class has been overridden, or
- *         <code>#U_BIDI_CLASS_DEFAULT</code> if the standard Bidi class value
- *         for <code>c</code> is to be used.
+ *         <code>u_getIntPropertyMaxValue(UCHAR_BIDI_CLASS)+1</code>
+ *         if the standard Bidi class value for <code>c</code> is to be used.
  * @see ubidi_setClassCallback
  * @see ubidi_getClassCallback
  * @stable ICU 3.6
@@ -1822,8 +2020,8 @@ U_CDECL_END
 /**
  * Retrieve the Bidi class for a given code point.
  * <p>If a <code>#UBiDiClassCallback</code> callback is defined and returns a
- * value other than <code>#U_BIDI_CLASS_DEFAULT</code>, that value is used;
- * otherwise the default class determination mechanism is invoked.</p>
+ * value other than <code>u_getIntPropertyMaxValue(UCHAR_BIDI_CLASS)+1</code>,
+ * that value is used; otherwise the default class determination mechanism is invoked.</p>
  *
  * @param pBiDi is the paragraph <code>UBiDi</code> object.
  *
@@ -1834,7 +2032,7 @@ U_CDECL_END
  * @see UBiDiClassCallback
  * @stable ICU 3.6
  */
-U_STABLE UCharDirection U_EXPORT2
+U_CAPI UCharDirection U_EXPORT2
 ubidi_getCustomizedClass(UBiDi *pBiDi, UChar32 c);
 
 /**
@@ -1864,7 +2062,7 @@ ubidi_getCustomizedClass(UBiDi *pBiDi, UChar32 c);
  * @see ubidi_getClassCallback
  * @stable ICU 3.6
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_setClassCallback(UBiDi *pBiDi, UBiDiClassCallback *newFn,
                        const void *newContext, UBiDiClassCallback **oldFn,
                        const void **oldContext, UErrorCode *pErrorCode);
@@ -1881,7 +2079,7 @@ ubidi_setClassCallback(UBiDi *pBiDi, UBiDiClassCallback *newFn,
  * @see ubidi_setClassCallback
  * @stable ICU 3.6
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 ubidi_getClassCallback(UBiDi *pBiDi, UBiDiClassCallback **fn, const void **context);
 
 /**
@@ -1949,7 +2147,7 @@ ubidi_getClassCallback(UBiDi *pBiDi, UBiDiClassCallback **fn, const void **conte
  * @see ubidi_getProcessedLength
  * @stable ICU 2.0
  */
-U_STABLE int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ubidi_writeReordered(UBiDi *pBiDi,
                      UChar *dest, int32_t destSize,
                      uint16_t options,
@@ -2001,7 +2199,7 @@ ubidi_writeReordered(UBiDi *pBiDi,
  * @return The length of the output string.
  * @stable ICU 2.0
  */
-U_STABLE int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ubidi_writeReverse(const UChar *src, int32_t srcLength,
                    UChar *dest, int32_t destSize,
                    uint16_t options,

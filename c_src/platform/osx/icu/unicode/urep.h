@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
-*   Copyright (C) 1997-2005, International Business Machines
+*   Copyright (C) 1997-2010, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ******************************************************************************
 *   Date        Name        Description
@@ -30,7 +32,7 @@ U_CDECL_BEGIN
  ********************************************************************/
 /**
  * \file
- * \brief C API: Callbacks for UReplacebale
+ * \brief C API: Callbacks for UReplaceable
  */
 /**
  * An opaque replaceable text object.  This will be manipulated only

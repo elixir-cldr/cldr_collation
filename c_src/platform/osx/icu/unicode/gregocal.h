@@ -1,5 +1,7 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
-* Copyright (C) 1997-2006, International Business Machines Corporation and others.
+* Copyright (C) 1997-2013, International Business Machines Corporation and others.
 * All Rights Reserved.
 ********************************************************************************
 *
@@ -25,6 +27,8 @@
 #define GREGOCAL_H
 
 #include "unicode/utypes.h"
+
+#if U_SHOW_CPLUSPLUS_API
 
 #if !UCONFIG_NO_FORMATTING
 
@@ -74,9 +78,9 @@ U_NAMESPACE_BEGIN
  * \code
  *     // get the supported ids for GMT-08:00 (Pacific Standard Time)
  *     UErrorCode success = U_ZERO_ERROR;
- *     const StringEnumeration *ids = TimeZone::createEnumeration(-8 * 60 * 60 * 1000);
+ *     const StringEnumeration *ids = TimeZone::createEnumeration(-8 * 60 * 60 * 1000, success);
  *     // if no ids were returned, something is wrong. get out.
- *     if (ids == 0 || ids->count(success) == 0) {
+ *     if (U_FAILURE(success)) {
  *         return;
  *     }
  *
@@ -84,60 +88,60 @@ U_NAMESPACE_BEGIN
  *     cout << "Current Time" << endl;
  *
  *     // create a Pacific Standard Time time zone
- *     SimpleTimeZone* pdt = new SimpleTimeZone(-8 * 60 * 60 * 1000, ids->unext(NULL, success)));
+ *     SimpleTimeZone* pdt = new SimpleTimeZone(-8 * 60 * 60 * 1000, ids->unext(nullptr, success)));
  *
  *     // set up rules for daylight savings time
- *     pdt->setStartRule(Calendar::APRIL, 1, Calendar::SUNDAY, 2 * 60 * 60 * 1000);
- *     pdt->setEndRule(Calendar::OCTOBER, -1, Calendar::SUNDAY, 2 * 60 * 60 * 1000);
+ *     pdt->setStartRule(UCAL_MARCH, 1, UCAL_SUNDAY, 2 * 60 * 60 * 1000);
+ *     pdt->setEndRule(UCAL_NOVEMBER, 2, UCAL_SUNDAY, 2 * 60 * 60 * 1000);
  *
  *     // create a GregorianCalendar with the Pacific Daylight time zone
  *     // and the current date and time
  *     Calendar* calendar = new GregorianCalendar( pdt, success );
  *
  *     // print out a bunch of interesting things
- *     cout << "ERA: " << calendar->get( Calendar::ERA, success ) << endl;
- *     cout << "YEAR: " << calendar->get( Calendar::YEAR, success ) << endl;
- *     cout << "MONTH: " << calendar->get( Calendar::MONTH, success ) << endl;
- *     cout << "WEEK_OF_YEAR: " << calendar->get( Calendar::WEEK_OF_YEAR, success ) << endl;
- *     cout << "WEEK_OF_MONTH: " << calendar->get( Calendar::WEEK_OF_MONTH, success ) << endl;
- *     cout << "DATE: " << calendar->get( Calendar::DATE, success ) << endl;
- *     cout << "DAY_OF_MONTH: " << calendar->get( Calendar::DAY_OF_MONTH, success ) << endl;
- *     cout << "DAY_OF_YEAR: " << calendar->get( Calendar::DAY_OF_YEAR, success ) << endl;
- *     cout << "DAY_OF_WEEK: " << calendar->get( Calendar::DAY_OF_WEEK, success ) << endl;
- *     cout << "DAY_OF_WEEK_IN_MONTH: " << calendar->get( Calendar::DAY_OF_WEEK_IN_MONTH, success ) << endl;
- *     cout << "AM_PM: " << calendar->get( Calendar::AM_PM, success ) << endl;
- *     cout << "HOUR: " << calendar->get( Calendar::HOUR, success ) << endl;
- *     cout << "HOUR_OF_DAY: " << calendar->get( Calendar::HOUR_OF_DAY, success ) << endl;
- *     cout << "MINUTE: " << calendar->get( Calendar::MINUTE, success ) << endl;
- *     cout << "SECOND: " << calendar->get( Calendar::SECOND, success ) << endl;
- *     cout << "MILLISECOND: " << calendar->get( Calendar::MILLISECOND, success ) << endl;
- *     cout << "ZONE_OFFSET: " << (calendar->get( Calendar::ZONE_OFFSET, success )/(60*60*1000)) << endl;
- *     cout << "DST_OFFSET: " << (calendar->get( Calendar::DST_OFFSET, success )/(60*60*1000)) << endl;
+ *     cout << "ERA: " << calendar->get( UCAL_ERA, success ) << endl;
+ *     cout << "YEAR: " << calendar->get( UCAL_YEAR, success ) << endl;
+ *     cout << "MONTH: " << calendar->get( UCAL_MONTH, success ) << endl;
+ *     cout << "WEEK_OF_YEAR: " << calendar->get( UCAL_WEEK_OF_YEAR, success ) << endl;
+ *     cout << "WEEK_OF_MONTH: " << calendar->get( UCAL_WEEK_OF_MONTH, success ) << endl;
+ *     cout << "DATE: " << calendar->get( UCAL_DATE, success ) << endl;
+ *     cout << "DAY_OF_MONTH: " << calendar->get( UCAL_DAY_OF_MONTH, success ) << endl;
+ *     cout << "DAY_OF_YEAR: " << calendar->get( UCAL_DAY_OF_YEAR, success ) << endl;
+ *     cout << "DAY_OF_WEEK: " << calendar->get( UCAL_DAY_OF_WEEK, success ) << endl;
+ *     cout << "DAY_OF_WEEK_IN_MONTH: " << calendar->get( UCAL_DAY_OF_WEEK_IN_MONTH, success ) << endl;
+ *     cout << "AM_PM: " << calendar->get( UCAL_AM_PM, success ) << endl;
+ *     cout << "HOUR: " << calendar->get( UCAL_HOUR, success ) << endl;
+ *     cout << "HOUR_OF_DAY: " << calendar->get( UCAL_HOUR_OF_DAY, success ) << endl;
+ *     cout << "MINUTE: " << calendar->get( UCAL_MINUTE, success ) << endl;
+ *     cout << "SECOND: " << calendar->get( UCAL_SECOND, success ) << endl;
+ *     cout << "MILLISECOND: " << calendar->get( UCAL_MILLISECOND, success ) << endl;
+ *     cout << "ZONE_OFFSET: " << (calendar->get( UCAL_ZONE_OFFSET, success )/(60*60*1000)) << endl;
+ *     cout << "DST_OFFSET: " << (calendar->get( UCAL_DST_OFFSET, success )/(60*60*1000)) << endl;
  *
  *     cout << "Current Time, with hour reset to 3" << endl;
- *     calendar->clear(Calendar::HOUR_OF_DAY); // so doesn't override
- *     calendar->set(Calendar::HOUR, 3);
- *     cout << "ERA: " << calendar->get( Calendar::ERA, success ) << endl;
- *     cout << "YEAR: " << calendar->get( Calendar::YEAR, success ) << endl;
- *     cout << "MONTH: " << calendar->get( Calendar::MONTH, success ) << endl;
- *     cout << "WEEK_OF_YEAR: " << calendar->get( Calendar::WEEK_OF_YEAR, success ) << endl;
- *     cout << "WEEK_OF_MONTH: " << calendar->get( Calendar::WEEK_OF_MONTH, success ) << endl;
- *     cout << "DATE: " << calendar->get( Calendar::DATE, success ) << endl;
- *     cout << "DAY_OF_MONTH: " << calendar->get( Calendar::DAY_OF_MONTH, success ) << endl;
- *     cout << "DAY_OF_YEAR: " << calendar->get( Calendar::DAY_OF_YEAR, success ) << endl;
- *     cout << "DAY_OF_WEEK: " << calendar->get( Calendar::DAY_OF_WEEK, success ) << endl;
- *     cout << "DAY_OF_WEEK_IN_MONTH: " << calendar->get( Calendar::DAY_OF_WEEK_IN_MONTH, success ) << endl;
- *     cout << "AM_PM: " << calendar->get( Calendar::AM_PM, success ) << endl;
- *     cout << "HOUR: " << calendar->get( Calendar::HOUR, success ) << endl;
- *     cout << "HOUR_OF_DAY: " << calendar->get( Calendar::HOUR_OF_DAY, success ) << endl;
- *     cout << "MINUTE: " << calendar->get( Calendar::MINUTE, success ) << endl;
- *     cout << "SECOND: " << calendar->get( Calendar::SECOND, success ) << endl;
- *     cout << "MILLISECOND: " << calendar->get( Calendar::MILLISECOND, success ) << endl;
- *     cout << "ZONE_OFFSET: " << (calendar->get( Calendar::ZONE_OFFSET, success )/(60*60*1000)) << endl; // in hours
- *     cout << "DST_OFFSET: " << (calendar->get( Calendar::DST_OFFSET, success )/(60*60*1000)) << endl; // in hours
+ *     calendar->clear(UCAL_HOUR_OF_DAY); // so doesn't override
+ *     calendar->set(UCAL_HOUR, 3);
+ *     cout << "ERA: " << calendar->get( UCAL_ERA, success ) << endl;
+ *     cout << "YEAR: " << calendar->get( UCAL_YEAR, success ) << endl;
+ *     cout << "MONTH: " << calendar->get( UCAL_MONTH, success ) << endl;
+ *     cout << "WEEK_OF_YEAR: " << calendar->get( UCAL_WEEK_OF_YEAR, success ) << endl;
+ *     cout << "WEEK_OF_MONTH: " << calendar->get( UCAL_WEEK_OF_MONTH, success ) << endl;
+ *     cout << "DATE: " << calendar->get( UCAL_DATE, success ) << endl;
+ *     cout << "DAY_OF_MONTH: " << calendar->get( UCAL_DAY_OF_MONTH, success ) << endl;
+ *     cout << "DAY_OF_YEAR: " << calendar->get( UCAL_DAY_OF_YEAR, success ) << endl;
+ *     cout << "DAY_OF_WEEK: " << calendar->get( UCAL_DAY_OF_WEEK, success ) << endl;
+ *     cout << "DAY_OF_WEEK_IN_MONTH: " << calendar->get( UCAL_DAY_OF_WEEK_IN_MONTH, success ) << endl;
+ *     cout << "AM_PM: " << calendar->get( UCAL_AM_PM, success ) << endl;
+ *     cout << "HOUR: " << calendar->get( UCAL_HOUR, success ) << endl;
+ *     cout << "HOUR_OF_DAY: " << calendar->get( UCAL_HOUR_OF_DAY, success ) << endl;
+ *     cout << "MINUTE: " << calendar->get( UCAL_MINUTE, success ) << endl;
+ *     cout << "SECOND: " << calendar->get( UCAL_SECOND, success ) << endl;
+ *     cout << "MILLISECOND: " << calendar->get( UCAL_MILLISECOND, success ) << endl;
+ *     cout << "ZONE_OFFSET: " << (calendar->get( UCAL_ZONE_OFFSET, success )/(60*60*1000)) << endl; // in hours
+ *     cout << "DST_OFFSET: " << (calendar->get( UCAL_DST_OFFSET, success )/(60*60*1000)) << endl; // in hours
  *
  *     if (U_FAILURE(success)) {
- *         cout << "An error occured. success=" << u_errorName(success) << endl;
+ *         cout << "An error occurred. success=" << u_errorName(success) << endl;
  *     }
  *
  *     delete ids;
@@ -299,7 +303,7 @@ public:
      * @return    return a polymorphic copy of this calendar.
      * @stable ICU 2.0
      */
-    virtual Calendar* clone(void) const;
+    virtual GregorianCalendar* clone() const override;
 
     /**
      * Sets the GregorianCalendar change date. This is the point when the switch from
@@ -340,14 +344,15 @@ public:
     UBool isLeapYear(int32_t year) const;
 
     /**
-     * Returns TRUE if the given Calendar object is equivalent to this
+     * Returns true if the given Calendar object is equivalent to this
      * one.  Calendar override.
      *
      * @param other the Calendar to be compared with this Calendar   
      * @stable ICU 2.4
      */
-    virtual UBool isEquivalentTo(const Calendar& other) const;
+    virtual UBool isEquivalentTo(const Calendar& other) const override;
 
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * (Overrides Calendar) Rolls up or down by the given amount in the specified field.
      * For more information, see the documentation for Calendar::roll().
@@ -359,7 +364,8 @@ public:
      *                an error status.
      * @deprecated ICU 2.6. Use roll(UCalendarDateFields field, int32_t amount, UErrorCode& status) instead.
      */
-    virtual void roll(EDateFields field, int32_t amount, UErrorCode& status);
+    virtual void roll(EDateFields field, int32_t amount, UErrorCode& status) override;
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 
     /**
      * (Overrides Calendar) Rolls up or down by the given amount in the specified field.
@@ -372,8 +378,9 @@ public:
      *                an error status.
      * @stable ICU 2.6.
      */
-    virtual void roll(UCalendarDateFields field, int32_t amount, UErrorCode& status);
+    virtual void roll(UCalendarDateFields field, int32_t amount, UErrorCode& status) override;
 
+#ifndef U_HIDE_DEPRECATED_API
     /**
      * Return the minimum value that this field could have, given the current date.
      * For the Gregorian calendar, this is the same as getMinimum() and getGreatestMinimum().
@@ -392,6 +399,7 @@ public:
      * @deprecated ICU 2.6. Use getActualMinimum(UCalendarDateFields field) instead. (Added to ICU 3.0 for signature consistency)
      */
     int32_t getActualMinimum(EDateFields field, UErrorCode& status) const;
+#endif  /* U_HIDE_DEPRECATED_API */
 
     /**
      * Return the minimum value that this field could have, given the current date.
@@ -401,18 +409,7 @@ public:
      * @return         the minimum value that this field could have, given the current date.
      * @stable ICU 3.0
      */
-    int32_t getActualMinimum(UCalendarDateFields field, UErrorCode &status) const;
-
-    /**
-     * Return the maximum value that this field could have, given the current date.
-     * For example, with the date "Feb 3, 1997" and the DAY_OF_MONTH field, the actual
-     * maximum would be 28; for "Feb 3, 1996" it s 29.  Similarly for a Hebrew calendar,
-     * for some years the actual maximum for MONTH is 12, and for others 13.
-     * @param field    the time field.
-     * @return         the maximum value that this field could have, given the current date.
-     * @deprecated ICU 2.6. Use getActualMaximum(UCalendarDateFields field) instead.
-     */
-    int32_t getActualMaximum(EDateFields field) const;
+    int32_t getActualMinimum(UCalendarDateFields field, UErrorCode &status) const override;
 
     /**
      * Return the maximum value that this field could have, given the current date.
@@ -424,18 +421,7 @@ public:
      * @return         the maximum value that this field could have, given the current date.
      * @stable ICU 2.6
      */
-    virtual int32_t getActualMaximum(UCalendarDateFields field, UErrorCode& status) const;
-
-    /**
-     * (Overrides Calendar) Return true if the current date for this Calendar is in
-     * Daylight Savings Time. Recognizes DST_OFFSET, if it is set.
-     *
-     * @param status Fill-in parameter which receives the status of this operation.
-     * @return   True if the current date for this Calendar is in Daylight Savings Time,
-     *           false, otherwise.
-     * @stable ICU 2.0
-     */
-    virtual UBool inDaylightTime(UErrorCode& status) const;
+    virtual int32_t getActualMaximum(UCalendarDateFields field, UErrorCode& status) const override;
 
 public:
 
@@ -449,7 +435,7 @@ public:
      *           same class ID. Objects of other classes have different class IDs.
      * @stable ICU 2.0
      */
-    virtual UClassID getDynamicClassID(void) const;
+    virtual UClassID getDynamicClassID(void) const override;
 
     /**
      * Return the class ID for this class. This is useful only for comparing to a return
@@ -465,23 +451,19 @@ public:
     static UClassID U_EXPORT2 getStaticClassID(void);
 
     /**
-     * Get the calendar type, "gregorian", for use in DateFormatSymbols.
+     * Returns the calendar type name string for this Calendar object.
+     * The returned string is the legacy ICU calendar attribute value,
+     * for example, "gregorian" or "japanese".
      *
-     * @return calendar type
-     * @internal
+     * For more details see the Calendar::getType() documentation.
+     *
+     * @return legacy calendar type name string
+     * @stable ICU 49
      */
-    virtual const char * getType() const;
-
-protected:
-
-    /**
-     * (Overrides Calendar) Converts GMT as milliseconds to time field values.
-     * @param status Fill-in parameter which receives the status of this operation.
-     * @stable ICU 2.0
-     */
+    virtual const char * getType() const override;
 
  private:
-    GregorianCalendar(); // default constructor not implemented
+    GregorianCalendar() = delete; // default constructor not implemented
 
  protected:
     /**
@@ -506,7 +488,7 @@ protected:
      * @internal
      */
     virtual int32_t handleComputeMonthStart(int32_t eyear, int32_t month,
-                                                   UBool useMonth) const;
+                                                   UBool useMonth) const override;
 
     /**
      * Subclasses may override this.  This method calls
@@ -516,7 +498,7 @@ protected:
      * @return julian day specified by calendar fields.
      * @internal
      */
-    virtual int32_t handleComputeJulianDay(UCalendarDateFields bestField)  ;
+    virtual int32_t handleComputeJulianDay(UCalendarDateFields bestField) override;
 
     /**
      * Return the number of days in the given month of the given extended
@@ -525,7 +507,7 @@ protected:
      * implementation than the default implementation in Calendar.
      * @internal
      */
-    virtual int32_t handleGetMonthLength(int32_t extendedYear, int32_t month) const;
+    virtual int32_t handleGetMonthLength(int32_t extendedYear, int32_t month) const override;
 
     /**
      * Return the number of days in the given extended year of this
@@ -534,7 +516,7 @@ protected:
      * default implementation in Calendar.
      * @stable ICU 2.0
      */
-    virtual int32_t handleGetYearLength(int32_t eyear) const;
+    virtual int32_t handleGetYearLength(int32_t eyear) const override;
 
     /**
      * return the length of the given month.
@@ -552,15 +534,8 @@ protected:
      * @internal
      */
     virtual int32_t monthLength(int32_t month, int32_t year) const;
-    
-    /**
-     * return the length of the given year.
-     * @param year    the given year.
-     * @return        the length of the given year.
-     * @internal
-     */
-    int32_t yearLength(int32_t year) const;
-    
+
+#ifndef U_HIDE_INTERNAL_API
     /**
      * return the length of the year field.
      * @return    the length of the year field
@@ -568,14 +543,7 @@ protected:
      */
     int32_t yearLength(void) const;
 
-    /**
-     * After adjustments such as add(MONTH), add(YEAR), we don't want the
-     * month to jump around.  E.g., we don't want Jan 31 + 1 month to go to Mar
-     * 3, we want it to go to Feb 28.  Adjustments which might run into this
-     * problem call this method to retain the proper month.
-     * @internal
-     */
-    void pinDayOfMonth(void);
+#endif  /* U_HIDE_INTERNAL_API */
 
     /**
      * Return the day number with respect to the epoch.  January 1, 1970 (Gregorian)
@@ -607,7 +575,7 @@ protected:
      * <code>LEAST_MAXIMUM</code>, or <code>MAXIMUM</code>
      * @internal
      */
-    virtual int32_t handleGetLimit(UCalendarDateFields field, ELimitType limitType) const;
+    virtual int32_t handleGetLimit(UCalendarDateFields field, ELimitType limitType) const override;
 
     /**
      * Return the extended year defined by the current fields.  This will
@@ -617,7 +585,7 @@ protected:
      * @return the extended year
      * @internal
      */
-    virtual int32_t handleGetExtendedYear();
+    virtual int32_t handleGetExtendedYear() override;
 
     /** 
      * Subclasses may override this to convert from week fields 
@@ -627,7 +595,7 @@ protected:
      * @return the extended year, UCAL_EXTENDED_YEAR
      * @internal
      */
-    virtual int32_t handleGetExtendedYearFromWeekFields(int32_t yearWoy, int32_t woy);
+    virtual int32_t handleGetExtendedYearFromWeekFields(int32_t yearWoy, int32_t woy) override;
 
 
     /**
@@ -645,7 +613,7 @@ protected:
      * a calendar with the specified Julian/Gregorian cutover date.
      * @internal
      */
-    virtual void handleComputeFields(int32_t julianDay, UErrorCode &status);
+    virtual void handleComputeFields(int32_t julianDay, UErrorCode &status) override;
 
  private:
     /**
@@ -686,7 +654,6 @@ protected:
      * (Gregorian) 00:00:00 UTC, that is, October 4, 1582 (Julian) is followed
      * by October 15, 1582 (Gregorian).  This corresponds to Julian day number
      * 2299161. This is measured from the standard epoch, not in Julian Days.
-     * @internal
      */
     UDate                fGregorianCutover;
 
@@ -707,12 +674,6 @@ protected:
      * 1 BC, -1 representing 2 BC, etc.
      */
     int32_t fGregorianCutoverYear;// = 1582;
-
-    /**
-     * The year of the gregorianCutover, with 0 representing
-     * 1 BC, -1 representing 2 BC, etc.
-     */
-    int32_t fGregorianCutoverJulianDay;// = 2299161;
 
     /**
      * Converts time as milliseconds to Julian date. The Julian date used here is not a
@@ -749,74 +710,29 @@ protected:
  public: // internal implementation
 
     /**
+     * @return true if this calendar has the notion of a default century
      * @internal 
-     * @return TRUE if this calendar has the notion of a default century
      */
-    virtual UBool haveDefaultCentury() const;
+    virtual UBool haveDefaultCentury() const override;
 
     /**
-     * @internal
      * @return the start of the default century
+     * @internal
      */
-    virtual UDate defaultCenturyStart() const;
+    virtual UDate defaultCenturyStart() const override;
 
     /**
-     * @internal 
      * @return the beginning year of the default century
+     * @internal 
      */
-    virtual int32_t defaultCenturyStartYear() const;
-
- private:
-    /**
-     * The system maintains a static default century start date.  This is initialized
-     * the first time it is used.  Before then, it is set to SYSTEM_DEFAULT_CENTURY to
-     * indicate an uninitialized state.  Once the system default century date and year
-     * are set, they do not change.
-     */
-    static UDate         fgSystemDefaultCenturyStart;
-
-    /**
-     * See documentation for systemDefaultCenturyStart.
-     */
-    static int32_t          fgSystemDefaultCenturyStartYear;
-
-    /**
-     * Default value that indicates the defaultCenturyStartYear is unitialized
-     */
-    static const int32_t    fgSystemDefaultCenturyYear;
-
-    /**
-     * Default value that indicates the UDate of the beginning of the system default century
-     */
-    static const UDate        fgSystemDefaultCentury;
-
-    /**
-     * Returns the beginning date of the 100-year window that dates with 2-digit years
-     * are considered to fall within.
-     * @return    the beginning date of the 100-year window that dates with 2-digit years
-     *            are considered to fall within.
-     */
-    UDate         internalGetDefaultCenturyStart(void) const;
-
-    /**
-     * Returns the first year of the 100-year window that dates with 2-digit years
-     * are considered to fall within.
-     * @return    the first year of the 100-year window that dates with 2-digit years
-     *            are considered to fall within.
-     */
-    int32_t          internalGetDefaultCenturyStartYear(void) const;
-
-    /**
-     * Initializes the 100-year window that dates with 2-digit years are considered
-     * to fall within so that its start date is 80 years before the current time.
-     */
-    static void  initializeSystemDefaultCentury(void);
-
+    virtual int32_t defaultCenturyStartYear() const override;
 };
 
 U_NAMESPACE_END
 
 #endif /* #if !UCONFIG_NO_FORMATTING */
+
+#endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif // _GREGOCAL
 //eof

@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 **********************************************************************
-* Copyright (C) 1999-2006, International Business Machines Corporation and others.
+* Copyright (C) 1999-2010, International Business Machines Corporation and others.
 * All Rights Reserved.
 **********************************************************************
 *   Date        Name        Description
@@ -9,6 +11,10 @@
 */
 #ifndef UNIFILT_H
 #define UNIFILT_H
+
+#include "unicode/utypes.h"
+
+#if U_SHOW_CPLUSPLUS_API
 
 #include "unicode/unifunct.h"
 #include "unicode/unimatch.h"
@@ -28,14 +34,14 @@ U_NAMESPACE_BEGIN
  * defined range.
  * @stable ICU 3.0
  */
-#define U_ETHER ((UChar)0xFFFF)
+#define U_ETHER ((char16_t)0xFFFF)
 
 /**
  *
  * <code>UnicodeFilter</code> defines a protocol for selecting a
  * subset of the full range (U+0000 to U+10FFFF) of Unicode characters.
- * Currently, filters are used in conjunction with classes like {@link
- * Transliterator} to only process selected characters through a
+ * Currently, filters are used in conjunction with classes like
+ * {@link Transliterator} to only process selected characters through a
  * transformation.
  *
  * <p>Note: UnicodeFilter currently stubs out two pure virtual methods
@@ -66,6 +72,14 @@ public:
     virtual ~UnicodeFilter();
 
     /**
+     * Clones this object polymorphically.
+     * The caller owns the result and should delete it when done.
+     * @return clone, or nullptr if an error occurred
+     * @stable ICU 2.4
+     */
+    virtual UnicodeFilter* clone() const override = 0;
+
+    /**
      * Returns <tt>true</tt> for characters that are in the selected
      * subset.  In other words, if a character is <b>to be
      * filtered</b>, then <tt>contains()</tt> returns
@@ -79,7 +93,7 @@ public:
      * and return the pointer.
      * @stable ICU 2.4
      */
-    virtual UnicodeMatcher* toMatcher() const;
+    virtual UnicodeMatcher* toMatcher() const override;
 
     /**
      * Implement UnicodeMatcher API.
@@ -88,20 +102,13 @@ public:
     virtual UMatchDegree matches(const Replaceable& text,
                                  int32_t& offset,
                                  int32_t limit,
-                                 UBool incremental);
+                                 UBool incremental) override;
 
     /**
      * UnicodeFunctor API.  Nothing to do.
      * @stable ICU 2.4
      */
-    virtual void setData(const TransliterationRuleData*);
-
-    /**
-     * ICU "poor man's RTTI", returns a UClassID for the actual class.
-     *
-     * @stable ICU 2.2
-     */
-    virtual UClassID getDynamicClassID() const = 0;
+    virtual void setData(const TransliterationRuleData*) override;
 
     /**
      * ICU "poor man's RTTI", returns a UClassID for this class.
@@ -123,5 +130,7 @@ protected:
 /*inline UnicodeFilter::UnicodeFilter() {}*/
 
 U_NAMESPACE_END
+
+#endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif

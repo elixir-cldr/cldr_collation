@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
-* Copyright (c) 1996-2007, International Business Machines Corporation
+* Copyright (c) 1996-2016, International Business Machines Corporation
 *               and others. All Rights Reserved.
 *******************************************************************************
 * File unorm.h
@@ -20,12 +22,19 @@
 #if !UCONFIG_NO_NORMALIZATION
 
 #include "unicode/uiter.h"
+#include "unicode/unorm2.h"
 
 /**
  * \file
- * \brief C API: Unicode Normalization 
+ * \brief C API: Unicode Normalization
  *
- * <h2>Unicode normalization API</h2>
+ * Old Unicode normalization API.
+ *
+ * This API has been replaced by the unorm2.h API and is only available
+ * for backward compatibility. The functions here simply delegate to the
+ * unorm2.h functions, for example unorm2_getInstance() and unorm2_normalize().
+ * There is one exception: The new API does not provide a replacement for unorm_compare().
+ * Its declaration has been moved to unorm2.h.
  *
  * <code>unorm_normalize</code> transforms Unicode text into an equivalent composed or
  * decomposed form, allowing for easier sorting and searching of text.
@@ -51,7 +60,7 @@
  *
  * To a user of your program, however, both of these sequences should be
  * treated as the same "user-level" character "A with acute accent".  When you are searching or
- * comparing text, you must ensure that these two sequences are treated 
+ * comparing text, you must ensure that these two sequences are treated
  * equivalently.  In addition, you must handle characters with more than one
  * accent.  Sometimes the order of a character's combining accents is
  * significant, while in other cases accent sequences in different orders are
@@ -79,8 +88,8 @@
  * will often want to use these mappings.
  *
  * <code>unorm_normalize</code> helps solve these problems by transforming text into the
- * canonical composed and decomposed forms as shown in the first example above.  
- * In addition, you can have it perform compatibility decompositions so that 
+ * canonical composed and decomposed forms as shown in the first example above.
+ * In addition, you can have it perform compatibility decompositions so that
  * you can treat compatibility characters the same as their equivalents.
  * Finally, <code>unorm_normalize</code> rearranges accents into the proper canonical
  * order, so that you do not have to worry about accent rearrangement on your
@@ -106,7 +115,7 @@
  * unorm_normalize(UNORM_FCD) may be implemented with UNORM_NFD.
  *
  * For more details on FCD see the collation design document:
- * http://source.icu-project.org/repos/icu/icuhtml/trunk/design/collation/ICU_collation_design.htm
+ * https://htmlpreview.github.io/?https://github.com/unicode-org/icu-docs/blob/main/design/collation/ICU_collation_design.htm
  *
  * ICU collation performs either NFD or FCD normalization automatically if normalization
  * is turned on for the collator object.
@@ -120,43 +129,51 @@
  * For more usage examples, see the Unicode Standard Annex.
  */
 
+// Do not conditionalize the following enum with #ifndef U_HIDE_DEPRECATED_API,
+// it is needed for layout of Normalizer object.
+#ifndef U_FORCE_HIDE_DEPRECATED_API
+
 /**
  * Constants for normalization modes.
- * @stable ICU 2.0
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
 typedef enum {
-  /** No decomposition/composition. @stable ICU 2.0 */
-  UNORM_NONE = 1, 
-  /** Canonical decomposition. @stable ICU 2.0 */
+  /** No decomposition/composition. @deprecated ICU 56 Use unorm2.h instead. */
+  UNORM_NONE = 1,
+  /** Canonical decomposition. @deprecated ICU 56 Use unorm2.h instead. */
   UNORM_NFD = 2,
-  /** Compatibility decomposition. @stable ICU 2.0 */
+  /** Compatibility decomposition. @deprecated ICU 56 Use unorm2.h instead. */
   UNORM_NFKD = 3,
-  /** Canonical decomposition followed by canonical composition. @stable ICU 2.0 */
+  /** Canonical decomposition followed by canonical composition. @deprecated ICU 56 Use unorm2.h instead. */
   UNORM_NFC = 4,
-  /** Default normalization. @stable ICU 2.0 */
-  UNORM_DEFAULT = UNORM_NFC, 
-  /** Compatibility decomposition followed by canonical composition. @stable ICU 2.0 */
+  /** Default normalization. @deprecated ICU 56 Use unorm2.h instead. */
+  UNORM_DEFAULT = UNORM_NFC,
+  /** Compatibility decomposition followed by canonical composition. @deprecated ICU 56 Use unorm2.h instead. */
   UNORM_NFKC =5,
-  /** "Fast C or D" form. @stable ICU 2.0 */
+  /** "Fast C or D" form. @deprecated ICU 56 Use unorm2.h instead. */
   UNORM_FCD = 6,
 
-  /** One more than the highest normalization mode constant. @stable ICU 2.0 */
+  /** One more than the highest normalization mode constant. @deprecated ICU 56 Use unorm2.h instead. */
   UNORM_MODE_COUNT
 } UNormalizationMode;
+
+#endif  // U_FORCE_HIDE_DEPRECATED_API
+
+#ifndef U_HIDE_DEPRECATED_API
 
 /**
  * Constants for options flags for normalization.
  * Use 0 for default options,
  * including normalization according to the Unicode version
  * that is currently supported by ICU (see u_getUnicodeVersion).
- * @stable ICU 2.6
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
 enum {
     /**
      * Options bit set value to select Unicode 3.2 normalization
      * (except NormalizationCorrections).
      * At most one Unicode version can be selected at a time.
-     * @stable ICU 2.6
+     * @deprecated ICU 56 Use unorm2.h instead.
      */
     UNORM_UNICODE_3_2=0x20
 };
@@ -174,7 +191,7 @@ enum {
  * internal normalization functions.)
  *
  * @see unorm_compare
- * @stable ICU 2.6
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
 #define UNORM_COMPARE_NORM_OPTIONS_SHIFT 20
 
@@ -186,7 +203,7 @@ enum {
  *
  * @param source The string to normalize.
  * @param sourceLength The length of source, or -1 if NUL-terminated.
- * @param mode The normalization mode; one of UNORM_NONE, 
+ * @param mode The normalization mode; one of UNORM_NONE,
  *             UNORM_NFD, UNORM_NFC, UNORM_NFKC, UNORM_NFKD, UNORM_DEFAULT.
  * @param options The normalization options, ORed together (0 for no options).
  * @param result A pointer to a buffer to receive the result string.
@@ -195,44 +212,23 @@ enum {
  * @param status A pointer to a UErrorCode to receive any errors.
  * @return The total buffer size needed; if greater than resultLength,
  *         the output was truncated, and the error code is set to U_BUFFER_OVERFLOW_ERROR.
- * @stable ICU 2.0
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
-U_STABLE int32_t U_EXPORT2 
+U_DEPRECATED int32_t U_EXPORT2
 unorm_normalize(const UChar *source, int32_t sourceLength,
                 UNormalizationMode mode, int32_t options,
                 UChar *result, int32_t resultLength,
                 UErrorCode *status);
-#endif
+
 /**
- * Result values for unorm_quickCheck().
- * For details see Unicode Technical Report 15.
- * @stable ICU 2.0
- */
-typedef enum UNormalizationCheckResult {
-  /** 
-   * Indicates that string is not in the normalized format
-   */
-  UNORM_NO,
-  /** 
-   * Indicates that string is in the normalized format
-   */
-  UNORM_YES,
-  /** 
-   * Indicates that string cannot be determined if it is in the normalized 
-   * format without further thorough checks.
-   */
-  UNORM_MAYBE
-} UNormalizationCheckResult;
-#if !UCONFIG_NO_NORMALIZATION
-/**
- * Performing quick check on a string, to quickly determine if the string is 
+ * Performing quick check on a string, to quickly determine if the string is
  * in a particular normalization format.
  * Three types of result can be returned UNORM_YES, UNORM_NO or
  * UNORM_MAYBE. Result UNORM_YES indicates that the argument
  * string is in the desired normalized format, UNORM_NO determines that
- * argument string is not in the desired normalized format. A 
- * UNORM_MAYBE result indicates that a more thorough check is required, 
- * the user may have to put the string in its normalized form and compare the 
+ * argument string is not in the desired normalized format. A
+ * UNORM_MAYBE result indicates that a more thorough check is required,
+ * the user may have to put the string in its normalized form and compare the
  * results.
  *
  * @param source       string for determining if it is in a normalized format
@@ -242,9 +238,9 @@ typedef enum UNormalizationCheckResult {
  * @return UNORM_YES, UNORM_NO or UNORM_MAYBE
  *
  * @see unorm_isNormalized
- * @stable ICU 2.0
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
-U_STABLE UNormalizationCheckResult U_EXPORT2
+U_DEPRECATED UNormalizationCheckResult U_EXPORT2
 unorm_quickCheck(const UChar *source, int32_t sourcelength,
                  UNormalizationMode mode,
                  UErrorCode *status);
@@ -263,10 +259,10 @@ unorm_quickCheck(const UChar *source, int32_t sourcelength,
  *
  * @see unorm_quickCheck
  * @see unorm_isNormalized
- * @stable ICU 2.6
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
-U_STABLE UNormalizationCheckResult U_EXPORT2
-unorm_quickCheckWithOptions(const UChar *src, int32_t srcLength, 
+U_DEPRECATED UNormalizationCheckResult U_EXPORT2
+unorm_quickCheckWithOptions(const UChar *src, int32_t srcLength,
                             UNormalizationMode mode, int32_t options,
                             UErrorCode *pErrorCode);
 
@@ -278,7 +274,7 @@ unorm_quickCheckWithOptions(const UChar *src, int32_t srcLength,
  * never a "maybe".
  * For NFD, NFKD, and FCD, both functions work exactly the same.
  * For NFC and NFKC where quickCheck may return "maybe", this function will
- * perform further tests to arrive at a TRUE/FALSE result.
+ * perform further tests to arrive at a true/false result.
  *
  * @param src        String that is to be tested if it is in a normalization format.
  * @param srcLength  Length of source to test, or -1 if NUL-terminated.
@@ -289,9 +285,9 @@ unorm_quickCheckWithOptions(const UChar *src, int32_t srcLength,
  *         "mode" normalization form.
  *
  * @see unorm_quickCheck
- * @stable ICU 2.2
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
-U_STABLE UBool U_EXPORT2
+U_DEPRECATED UBool U_EXPORT2
 unorm_isNormalized(const UChar *src, int32_t srcLength,
                    UNormalizationMode mode,
                    UErrorCode *pErrorCode);
@@ -311,9 +307,9 @@ unorm_isNormalized(const UChar *src, int32_t srcLength,
  *
  * @see unorm_quickCheck
  * @see unorm_isNormalized
- * @stable ICU 2.6
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
-U_STABLE UBool U_EXPORT2
+U_DEPRECATED UBool U_EXPORT2
 unorm_isNormalizedWithOptions(const UChar *src, int32_t srcLength,
                               UNormalizationMode mode, int32_t options,
                               UErrorCode *pErrorCode);
@@ -362,10 +358,10 @@ unorm_isNormalizedWithOptions(const UChar *src, int32_t srcLength,
  * It is useful for operations like a normalizing transliterator, where one would
  * not want to replace a piece of text if it is not modified.
  *
- * If doNormalize==TRUE and pNeededToNormalize!=NULL then *pNeeded... is set TRUE
+ * If doNormalize==true and pNeededToNormalize!=NULL then *pNeeded... is set true
  * if the normalization was necessary.
  *
- * If doNormalize==FALSE then *pNeededToNormalize will be set to FALSE.
+ * If doNormalize==false then *pNeededToNormalize will be set to false.
  *
  * If the buffer overflows, then *pNeededToNormalize will be undefined;
  * essentially, whenever U_FAILURE is true (like in buffer overflows), this result
@@ -377,11 +373,11 @@ unorm_isNormalizedWithOptions(const UChar *src, int32_t srcLength,
  * @param mode The normalization mode.
  * @param options The normalization options, ORed together (0 for no options).
  * @param doNormalize Indicates if the source text up to the next boundary
- *                    is to be normalized (TRUE) or just copied (FALSE).
+ *                    is to be normalized (true) or just copied (false).
  * @param pNeededToNormalize Output flag indicating if the normalization resulted in
  *                           different text from the input.
  *                           Not defined if an error occurs including buffer overflow.
- *                           Always FALSE if !doNormalize.
+ *                           Always false if !doNormalize.
  * @param pErrorCode ICU error code in/out parameter.
  *                   Must fulfill U_SUCCESS before the function call.
  * @return Length of output (number of UChars) when successful or buffer overflow.
@@ -389,9 +385,9 @@ unorm_isNormalizedWithOptions(const UChar *src, int32_t srcLength,
  * @see unorm_previous
  * @see unorm_normalize
  *
- * @stable ICU 2.1
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
-U_STABLE int32_t U_EXPORT2
+U_DEPRECATED int32_t U_EXPORT2
 unorm_next(UCharIterator *src,
            UChar *dest, int32_t destCapacity,
            UNormalizationMode mode, int32_t options,
@@ -410,11 +406,11 @@ unorm_next(UCharIterator *src,
  * @param mode The normalization mode.
  * @param options The normalization options, ORed together (0 for no options).
  * @param doNormalize Indicates if the source text up to the next boundary
- *                    is to be normalized (TRUE) or just copied (FALSE).
+ *                    is to be normalized (true) or just copied (false).
  * @param pNeededToNormalize Output flag indicating if the normalization resulted in
  *                           different text from the input.
  *                           Not defined if an error occurs including buffer overflow.
- *                           Always FALSE if !doNormalize.
+ *                           Always false if !doNormalize.
  * @param pErrorCode ICU error code in/out parameter.
  *                   Must fulfill U_SUCCESS before the function call.
  * @return Length of output (number of UChars) when successful or buffer overflow.
@@ -422,9 +418,9 @@ unorm_next(UCharIterator *src,
  * @see unorm_next
  * @see unorm_normalize
  *
- * @stable ICU 2.1
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
-U_STABLE int32_t U_EXPORT2
+U_DEPRECATED int32_t U_EXPORT2
 unorm_previous(UCharIterator *src,
                UChar *dest, int32_t destCapacity,
                UNormalizationMode mode, int32_t options,
@@ -466,111 +462,15 @@ unorm_previous(UCharIterator *src,
  * @see unorm_next
  * @see unorm_previous
  *
- * @stable ICU 2.1
+ * @deprecated ICU 56 Use unorm2.h instead.
  */
-U_STABLE int32_t U_EXPORT2
+U_DEPRECATED int32_t U_EXPORT2
 unorm_concatenate(const UChar *left, int32_t leftLength,
                   const UChar *right, int32_t rightLength,
                   UChar *dest, int32_t destCapacity,
                   UNormalizationMode mode, int32_t options,
                   UErrorCode *pErrorCode);
 
-/**
- * Option bit for unorm_compare:
- * Both input strings are assumed to fulfill FCD conditions.
- * @stable ICU 2.2
- */
-#define UNORM_INPUT_IS_FCD          0x20000
-
-/**
- * Option bit for unorm_compare:
- * Perform case-insensitive comparison.
- * @stable ICU 2.2
- */
-#define U_COMPARE_IGNORE_CASE       0x10000
-
-#ifndef U_COMPARE_CODE_POINT_ORDER
-/* see also unistr.h and ustring.h */
-/**
- * Option bit for u_strCaseCompare, u_strcasecmp, unorm_compare, etc:
- * Compare strings in code point order instead of code unit order.
- * @stable ICU 2.2
- */
-#define U_COMPARE_CODE_POINT_ORDER  0x8000
-#endif
-
-/**
- * Compare two strings for canonical equivalence.
- * Further options include case-insensitive comparison and
- * code point order (as opposed to code unit order).
- *
- * Canonical equivalence between two strings is defined as their normalized
- * forms (NFD or NFC) being identical.
- * This function compares strings incrementally instead of normalizing
- * (and optionally case-folding) both strings entirely,
- * improving performance significantly.
- *
- * Bulk normalization is only necessary if the strings do not fulfill the FCD
- * conditions. Only in this case, and only if the strings are relatively long,
- * is memory allocated temporarily.
- * For FCD strings and short non-FCD strings there is no memory allocation.
- *
- * Semantically, this is equivalent to
- *   strcmp[CodePointOrder](NFD(foldCase(NFD(s1))), NFD(foldCase(NFD(s2))))
- * where code point order and foldCase are all optional.
- *
- * UAX 21 2.5 Caseless Matching specifies that for a canonical caseless match
- * the case folding must be performed first, then the normalization.
- *
- * @param s1 First source string.
- * @param length1 Length of first source string, or -1 if NUL-terminated.
- *
- * @param s2 Second source string.
- * @param length2 Length of second source string, or -1 if NUL-terminated.
- *
- * @param options A bit set of options:
- *   - U_FOLD_CASE_DEFAULT or 0 is used for default options:
- *     Case-sensitive comparison in code unit order, and the input strings
- *     are quick-checked for FCD.
- *
- *   - UNORM_INPUT_IS_FCD
- *     Set if the caller knows that both s1 and s2 fulfill the FCD conditions.
- *     If not set, the function will quickCheck for FCD
- *     and normalize if necessary.
- *
- *   - U_COMPARE_CODE_POINT_ORDER
- *     Set to choose code point order instead of code unit order
- *     (see u_strCompare for details).
- *
- *   - U_COMPARE_IGNORE_CASE
- *     Set to compare strings case-insensitively using case folding,
- *     instead of case-sensitively.
- *     If set, then the following case folding options are used.
- *
- *   - Options as used with case-insensitive comparisons, currently:
- *
- *   - U_FOLD_CASE_EXCLUDE_SPECIAL_I
- *    (see u_strCaseCompare for details)
- *
- *   - regular normalization options shifted left by UNORM_COMPARE_NORM_OPTIONS_SHIFT
- *
- * @param pErrorCode ICU error code in/out parameter.
- *                   Must fulfill U_SUCCESS before the function call.
- * @return <0 or 0 or >0 as usual for string comparisons
- *
- * @see unorm_normalize
- * @see UNORM_FCD
- * @see u_strCompare
- * @see u_strCaseCompare
- *
- * @stable ICU 2.2
- */
-U_STABLE int32_t U_EXPORT2
-unorm_compare(const UChar *s1, int32_t length1,
-              const UChar *s2, int32_t length2,
-              uint32_t options,
-              UErrorCode *pErrorCode);
-
+#endif  /* U_HIDE_DEPRECATED_API */
 #endif /* #if !UCONFIG_NO_NORMALIZATION */
-
 #endif

@@ -1,19 +1,21 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1999-2006, International Business Machines
+*   Copyright (C) 1999-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
 *   file name:  umachine.h
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
 *   created on: 1999sep13
 *   created by: Markus W. Scherer
 *
-*   This file defines basic types and constants for utf.h to be
+*   This file defines basic types and constants for ICU to be
 *   platform-independent. umachine.h and utf.h are included into
 *   utypes.h to provide all the general definitions for ICU.
 *   All of these definitions used to be in utypes.h before
@@ -26,52 +28,34 @@
 
 /**
  * \file
- * \brief Basic types and constants for UTF 
- * 
+ * \brief Basic types and constants for UTF
+ *
  * <h2> Basic types and constants for UTF </h2>
  *   This file defines basic types and constants for utf.h to be
  *   platform-independent. umachine.h and utf.h are included into
  *   utypes.h to provide all the general definitions for ICU.
  *   All of these definitions used to be in utypes.h before
  *   the UTF-handling macros made this unmaintainable.
- * 
+ *
  */
 /*==========================================================================*/
 /* Include platform-dependent definitions                                   */
 /* which are contained in the platform-specific file platform.h             */
 /*==========================================================================*/
 
-#if defined(U_PALMOS)
-#   include "unicode/ppalmos.h"
-#elif defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
-#   include "unicode/pwin32.h"
-#else
-#   include "unicode/platform.h"
-#endif
+#include "unicode/ptypes.h" /* platform.h is included in ptypes.h */
 
 /*
  * ANSI C headers:
  * stddef.h defines wchar_t
  */
+#include <stdbool.h>
 #include <stddef.h>
 
 /*==========================================================================*/
-/* XP_CPLUSPLUS is a cross-platform symbol which should be defined when     */
-/* using C++.  It should not be defined when compiling under C.             */
-/*==========================================================================*/
-
-#ifdef __cplusplus
-#   ifndef XP_CPLUSPLUS
-#       define XP_CPLUSPLUS
-#   endif
-#else
-#   undef XP_CPLUSPLUS
-#endif
-
-/*==========================================================================*/
-/* For C wrappers, we use the symbol U_STABLE.                                */
+/* For C wrappers, we use the symbol U_CAPI.                                */
 /* This works properly if the includer is C or C++.                         */
-/* Functions are declared   U_STABLE return-type U_EXPORT2 function-name()... */
+/* Functions are declared   U_CAPI return-type U_EXPORT2 function-name()... */
 /*==========================================================================*/
 
 /**
@@ -88,11 +72,11 @@
 
 /**
  * \def U_CDECL_END
- * This is used to end a declaration of a library private ICU C API 
+ * This is used to end a declaration of a library private ICU C API
  * @stable ICU 2.4
  */
 
-#ifdef XP_CPLUSPLUS
+#ifdef __cplusplus
 #   define U_CFUNC extern "C"
 #   define U_CDECL_BEGIN extern "C" {
 #   define U_CDECL_END   }
@@ -102,13 +86,75 @@
 #   define U_CDECL_END
 #endif
 
+#ifndef U_ATTRIBUTE_DEPRECATED
+/**
+ * \def U_ATTRIBUTE_DEPRECATED
+ *  This is used for GCC specific attributes
+ * @internal
+ */
+#if U_GCC_MAJOR_MINOR >= 302
+#    define U_ATTRIBUTE_DEPRECATED __attribute__ ((deprecated))
+/**
+ * \def U_ATTRIBUTE_DEPRECATED
+ * This is used for Visual C++ specific attributes 
+ * @internal
+ */
+#elif defined(_MSC_VER) && (_MSC_VER >= 1400)
+#    define U_ATTRIBUTE_DEPRECATED __declspec(deprecated)
+#else
+#    define U_ATTRIBUTE_DEPRECATED
+#endif
+#endif
+
 /** This is used to declare a function as a public ICU C API @stable ICU 2.0*/
 #define U_CAPI U_CFUNC U_EXPORT
+/** Obsolete/same as U_CAPI; was used to declare a function as a stable public ICU C API*/
 #define U_STABLE U_CAPI
+/** Obsolete/same as U_CAPI; was used to declare a function as a draft public ICU C API  */
 #define U_DRAFT  U_CAPI
-#define U_DEPRECATED U_CAPI
+/** This is used to declare a function as a deprecated public ICU C API  */
+#define U_DEPRECATED U_CAPI U_ATTRIBUTE_DEPRECATED
+/** Obsolete/same as U_CAPI; was used to declare a function as an obsolete public ICU C API  */
 #define U_OBSOLETE U_CAPI
+/** Obsolete/same as U_CAPI; was used to declare a function as an internal ICU C API  */
 #define U_INTERNAL U_CAPI
+
+// Before ICU 65, function-like, multi-statement ICU macros were just defined as
+// series of statements wrapped in { } blocks and the caller could choose to
+// either treat them as if they were actual functions and end the invocation
+// with a trailing ; creating an empty statement after the block or else omit
+// this trailing ; using the knowledge that the macro would expand to { }.
+//
+// But doing so doesn't work well with macros that look like functions and
+// compiler warnings about empty statements (ICU-20601) and ICU 65 therefore
+// switches to the standard solution of wrapping such macros in do { } while.
+//
+// This will however break existing code that depends on being able to invoke
+// these macros without a trailing ; so to be able to remain compatible with
+// such code the wrapper is itself defined as macros so that it's possible to
+// build ICU 65 and later with the old macro behaviour, like this:
+//
+// export CPPFLAGS='-DUPRV_BLOCK_MACRO_BEGIN="" -DUPRV_BLOCK_MACRO_END=""'
+// runConfigureICU ...
+//
+
+/**
+ * \def UPRV_BLOCK_MACRO_BEGIN
+ * Defined as the "do" keyword by default.
+ * @internal
+ */
+#ifndef UPRV_BLOCK_MACRO_BEGIN
+#define UPRV_BLOCK_MACRO_BEGIN do
+#endif
+
+/**
+ * \def UPRV_BLOCK_MACRO_END
+ * Defined as "while (false)" by default.
+ * @internal
+ */
+#ifndef UPRV_BLOCK_MACRO_END
+#define UPRV_BLOCK_MACRO_END while (false)
+#endif
 
 /*==========================================================================*/
 /* limits for int32_t etc., like in POSIX inttypes.h                        */
@@ -190,45 +236,59 @@
 /* Boolean data type                                                        */
 /*==========================================================================*/
 
-/** The ICU boolean type @stable ICU 2.0 */
+/**
+ * The ICU boolean type, a signed-byte integer.
+ * ICU-specific for historical reasons: The C and C++ standards used to not define type bool.
+ * Also provides a fixed type definition, as opposed to
+ * type bool whose details (e.g., sizeof) may vary by compiler and between C and C++.
+ *
+ * @stable ICU 2.0
+ */
 typedef int8_t UBool;
 
+/**
+ * \def U_DEFINE_FALSE_AND_TRUE
+ * Normally turns off defining macros FALSE=0 & TRUE=1 in public ICU headers.
+ * These obsolete macros sometimes break compilation of other code that
+ * defines enum constants or similar with these names.
+ * C++ has long defined bool/false/true.
+ * C99 also added definitions for these, although as macros; see stdbool.h.
+ *
+ * You may transitionally define U_DEFINE_FALSE_AND_TRUE=1 if you need time to migrate code.
+ *
+ * @internal ICU 68
+ */
+#ifdef U_DEFINE_FALSE_AND_TRUE
+    // Use the predefined value.
+#else
+    // Default to avoiding collision with non-macro definitions of FALSE & TRUE.
+#   define U_DEFINE_FALSE_AND_TRUE 0
+#endif
+
+#if U_DEFINE_FALSE_AND_TRUE || defined(U_IN_DOXYGEN)
 #ifndef TRUE
-/** The TRUE value of a UBool @stable ICU 2.0 */
+/**
+ * The TRUE value of a UBool.
+ *
+ * @deprecated ICU 68 Use standard "true" instead.
+ */
 #   define TRUE  1
 #endif
 #ifndef FALSE
-/** The FALSE value of a UBool @stable ICU 2.0 */
+/**
+ * The FALSE value of a UBool.
+ *
+ * @deprecated ICU 68 Use standard "false" instead.
+ */
 #   define FALSE 0
 #endif
-
+#endif  // U_DEFINE_FALSE_AND_TRUE
 
 /*==========================================================================*/
 /* Unicode data types                                                       */
 /*==========================================================================*/
 
 /* wchar_t-related definitions -------------------------------------------- */
-
-/**
- * \def U_HAVE_WCHAR_H
- * Indicates whether <wchar.h> is available (1) or not (0). Set to 1 by default.
- *
- * @stable ICU 2.0
- */
-#ifndef U_HAVE_WCHAR_H
-#   define U_HAVE_WCHAR_H 1
-#endif
-
-/**
- * \def U_SIZEOF_WCHAR_T
- * U_SIZEOF_WCHAR_T==sizeof(wchar_t) (0 means it is not defined or autoconf could not set it)
- *
- * @stable ICU 2.0
- */
-#if U_SIZEOF_WCHAR_T==0
-#   undef U_SIZEOF_WCHAR_T
-#   define U_SIZEOF_WCHAR_T 4
-#endif
 
 /*
  * \def U_WCHAR_IS_UTF16
@@ -243,46 +303,116 @@ typedef int8_t UBool;
  * @stable ICU 2.0
  */
 #if !defined(U_WCHAR_IS_UTF16) && !defined(U_WCHAR_IS_UTF32)
-#   ifdef __STDC_ISO_10646__ 
+#   ifdef __STDC_ISO_10646__
 #       if (U_SIZEOF_WCHAR_T==2)
 #           define U_WCHAR_IS_UTF16
 #       elif (U_SIZEOF_WCHAR_T==4)
 #           define  U_WCHAR_IS_UTF32
 #       endif
 #   elif defined __UCS2__
-#       if (__OS390__ || __OS400__) && (U_SIZEOF_WCHAR_T==2)
+#       if (U_PF_OS390 <= U_PLATFORM && U_PLATFORM <= U_PF_OS400) && (U_SIZEOF_WCHAR_T==2)
 #           define U_WCHAR_IS_UTF16
 #       endif
-#   elif defined __UCS4__
+#   elif defined(__UCS4__) || (U_PLATFORM == U_PF_OS400 && defined(__UTF32__))
 #       if (U_SIZEOF_WCHAR_T==4)
 #           define U_WCHAR_IS_UTF32
 #       endif
-#   elif defined(U_WINDOWS)
-#       define U_WCHAR_IS_UTF16    
+#   elif U_PLATFORM_IS_DARWIN_BASED || (U_SIZEOF_WCHAR_T==4 && U_PLATFORM_IS_LINUX_BASED)
+#       define U_WCHAR_IS_UTF32
+#   elif U_PLATFORM_HAS_WIN32_API
+#       define U_WCHAR_IS_UTF16
 #   endif
 #endif
 
 /* UChar and UChar32 definitions -------------------------------------------- */
 
-/** Number of bytes in a UChar. @stable ICU 2.0 */
+/** Number of bytes in a UChar (always 2). @stable ICU 2.0 */
 #define U_SIZEOF_UCHAR 2
 
 /**
+ * \def U_CHAR16_IS_TYPEDEF
+ * If 1, then char16_t is a typedef and not a real type (yet)
+ * @internal
+ */
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+// Versions of Visual Studio/MSVC below 2015 do not support char16_t as a real type,
+// and instead use a typedef.  https://msdn.microsoft.com/library/bb531344.aspx
+# define U_CHAR16_IS_TYPEDEF 1
+#else
+# define U_CHAR16_IS_TYPEDEF 0
+#endif
+
+
+/**
  * \var UChar
- * Define UChar to be wchar_t if that is 16 bits wide; always assumed to be unsigned.
+ *
+ * The base type for UTF-16 code units and pointers.
+ * Unsigned 16-bit integer.
+ * Starting with ICU 59, C++ API uses char16_t directly, while C API continues to use UChar.
+ *
+ * UChar is configurable by defining the macro UCHAR_TYPE
+ * on the preprocessor or compiler command line:
+ * -DUCHAR_TYPE=uint16_t or -DUCHAR_TYPE=wchar_t (if U_SIZEOF_WCHAR_T==2) etc.
+ * (The UCHAR_TYPE can also be \#defined earlier in this file, for outside the ICU library code.)
+ * This is for transitional use from application code that uses uint16_t or wchar_t for UTF-16.
+ *
+ * The default is UChar=char16_t.
+ *
+ * C++11 defines char16_t as bit-compatible with uint16_t, but as a distinct type.
+ *
+ * In C, char16_t is a simple typedef of uint_least16_t.
+ * ICU requires uint_least16_t=uint16_t for data memory mapping.
+ * On macOS, char16_t is not available because the uchar.h standard header is missing.
+ *
+ * @stable ICU 4.4
+ */
+
+#if 1
+    // #if 1 is normal. UChar defaults to char16_t in C++.
+    // For configuration testing of UChar=uint16_t temporarily change this to #if 0.
+    // The intltest Makefile #defines UCHAR_TYPE=char16_t,
+    // so we only #define it to uint16_t if it is undefined so far.
+#elif !defined(UCHAR_TYPE)
+#   define UCHAR_TYPE uint16_t
+#endif
+
+#if defined(U_COMBINED_IMPLEMENTATION) || defined(U_COMMON_IMPLEMENTATION) || \
+        defined(U_I18N_IMPLEMENTATION) || defined(U_IO_IMPLEMENTATION)
+    // Inside the ICU library code, never configurable.
+    typedef char16_t UChar;
+#elif defined(UCHAR_TYPE)
+    typedef UCHAR_TYPE UChar;
+#elif U_CPLUSPLUS_VERSION != 0
+    typedef char16_t UChar;  // C++
+#else
+    typedef uint16_t UChar;  // C
+#endif
+
+/**
+ * \var OldUChar
+ * Default ICU 58 definition of UChar.
+ * A base type for UTF-16 code units and pointers.
+ * Unsigned 16-bit integer.
+ *
+ * Define OldUChar to be wchar_t if that is 16 bits wide.
  * If wchar_t is not 16 bits wide, then define UChar to be uint16_t.
- * This makes the definition of UChar platform-dependent
+ *
+ * This makes the definition of OldUChar platform-dependent
  * but allows direct string type compatibility with platforms with
  * 16-bit wchar_t types.
  *
- * @stable ICU 2.0
+ * This is how UChar was defined in ICU 58, for transition convenience.
+ * Exception: ICU 58 UChar was defined to UCHAR_TYPE if that macro was defined.
+ * The current UChar responds to UCHAR_TYPE but OldUChar does not.
+ *
+ * @stable ICU 59
  */
-
-/* Define UChar to be compatible with wchar_t if possible. */
 #if U_SIZEOF_WCHAR_T==2
-    typedef wchar_t UChar;
+    typedef wchar_t OldUChar;
+#elif defined(__CHAR16_TYPE__)
+    typedef __CHAR16_TYPE__ OldUChar;
 #else
-    typedef uint16_t UChar;
+    typedef uint16_t OldUChar;
 #endif
 
 /**
@@ -304,34 +434,25 @@ typedef int8_t UBool;
  */
 typedef int32_t UChar32;
 
-/*==========================================================================*/
-/* U_INLINE and U_ALIGN_CODE   Set default values if these are not already  */
-/*                             defined.  Definitions normally are in        */
-/*                             platform.h or the corresponding file for     */
-/*                             the OS in use.                               */
-/*==========================================================================*/
-
-#ifndef U_HIDE_INTERNAL_API
-
 /**
- * \def U_ALIGN_CODE
- * This is used to align code fragments to a specific byte boundary.
- * This is useful for getting consistent performance test results.
- * @internal
+ * This value is intended for sentinel values for APIs that
+ * (take or) return single code points (UChar32).
+ * It is outside of the Unicode code point range 0..0x10ffff.
+ * 
+ * For example, a "done" or "error" value in a new API
+ * could be indicated with U_SENTINEL.
+ *
+ * ICU APIs designed before ICU 2.4 usually define service-specific "done"
+ * values, mostly 0xffff.
+ * Those may need to be distinguished from
+ * actual U+ffff text contents by calling functions like
+ * CharacterIterator::hasNext() or UnicodeString::length().
+ *
+ * @return -1
+ * @see UChar32
+ * @stable ICU 2.4
  */
-#ifndef U_ALIGN_CODE
-#   define U_ALIGN_CODE(n)
-#endif
-
-#endif /* U_HIDE_INTERNAL_API */
-
-#ifndef U_INLINE
-#   ifdef XP_CPLUSPLUS
-#       define U_INLINE inline
-#   else
-#       define U_INLINE
-#   endif
-#endif
+#define U_SENTINEL (-1)
 
 #include "unicode/urename.h"
 

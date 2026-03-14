@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2002-2006, International Business Machines
+*   Copyright (C) 2002-2011 International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
 *   file name:  uiter.h
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -26,7 +28,7 @@
 
 #include "unicode/utypes.h"
 
-#ifdef XP_CPLUSPLUS
+#if U_SHOW_CPLUSPLUS_API
     U_NAMESPACE_BEGIN
 
     class CharacterIterator;
@@ -490,7 +492,7 @@ struct UCharIterator {
  * @see UnicodeString::char32At()
  * @stable ICU 2.1
  */
-U_STABLE UChar32 U_EXPORT2
+U_CAPI UChar32 U_EXPORT2
 uiter_current32(UCharIterator *iter);
 
 /**
@@ -507,7 +509,7 @@ uiter_current32(UCharIterator *iter);
  * @see U16_NEXT
  * @stable ICU 2.1
  */
-U_STABLE UChar32 U_EXPORT2
+U_CAPI UChar32 U_EXPORT2
 uiter_next32(UCharIterator *iter);
 
 /**
@@ -524,7 +526,7 @@ uiter_next32(UCharIterator *iter);
  * @see U16_PREV
  * @stable ICU 2.1
  */
-U_STABLE UChar32 U_EXPORT2
+U_CAPI UChar32 U_EXPORT2
 uiter_previous32(UCharIterator *iter);
 
 /**
@@ -545,7 +547,7 @@ uiter_previous32(UCharIterator *iter);
  * @see UITER_NO_STATE
  * @stable ICU 2.6
  */
-U_STABLE uint32_t U_EXPORT2
+U_CAPI uint32_t U_EXPORT2
 uiter_getState(const UCharIterator *iter);
 
 /**
@@ -563,7 +565,7 @@ uiter_getState(const UCharIterator *iter);
  * @see UCharIteratorSetState
  * @stable ICU 2.6
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 uiter_setState(UCharIterator *iter, uint32_t state, UErrorCode *pErrorCode);
 
 /**
@@ -588,7 +590,7 @@ uiter_setState(UCharIterator *iter, uint32_t state, UErrorCode *pErrorCode);
  * @see UCharIterator
  * @stable ICU 2.1
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 uiter_setString(UCharIterator *iter, const UChar *s, int32_t length);
 
 /**
@@ -611,7 +613,7 @@ uiter_setString(UCharIterator *iter, const UChar *s, int32_t length);
  * @see uiter_setString
  * @stable ICU 2.6
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 uiter_setUTF16BE(UCharIterator *iter, const char *s, int32_t length);
 
 /**
@@ -647,10 +649,10 @@ uiter_setUTF16BE(UCharIterator *iter, const char *s, int32_t length);
  * @see UCharIterator
  * @stable ICU 2.6
  */
-U_STABLE void U_EXPORT2
+U_CAPI void U_EXPORT2
 uiter_setUTF8(UCharIterator *iter, const char *s, int32_t length);
 
-#ifdef XP_CPLUSPLUS
+#if U_SHOW_CPLUSPLUS_API
 
 /**
  * Set up a UCharIterator to wrap around a C++ CharacterIterator.
@@ -672,8 +674,8 @@ uiter_setUTF8(UCharIterator *iter, const char *s, int32_t length);
  * @see UCharIterator
  * @stable ICU 2.1
  */
-U_STABLE void U_EXPORT2
-uiter_setCharacterIterator(UCharIterator *iter, U_NAMESPACE_QUALIFIER CharacterIterator *charIter);
+U_CAPI void U_EXPORT2
+uiter_setCharacterIterator(UCharIterator *iter, icu::CharacterIterator *charIter);
 
 /**
  * Set up a UCharIterator to iterate over a C++ Replaceable.
@@ -697,8 +699,8 @@ uiter_setCharacterIterator(UCharIterator *iter, U_NAMESPACE_QUALIFIER CharacterI
  * @see UCharIterator
  * @stable ICU 2.1
  */
-U_STABLE void U_EXPORT2
-uiter_setReplaceable(UCharIterator *iter, const U_NAMESPACE_QUALIFIER Replaceable *rep);
+U_CAPI void U_EXPORT2
+uiter_setReplaceable(UCharIterator *iter, const icu::Replaceable *rep);
 
 #endif
 

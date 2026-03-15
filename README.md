@@ -257,6 +257,39 @@ CLDR_COLLATION_NIF=true mix compile && mix run bench/sort_benchmark.exs
 - **Elixir is faster for uncased strings** up to 20 characters due to lower per-call overhead and the fast Latin lookup path.
 - **NIF uses ~54 KB constant memory** regardless of string length, while Elixir allocates 186 KB to 1.9 MB per sort (generating intermediate sort keys and collation elements).
 
+### Possible Future Optimizations
+
+Two additional optimizations from ICU could further improve the Elixir backend:
+
+**Incremental comparison** — ICU's `ucol_strcoll` compares two strings by
+processing collation elements from both strings simultaneously, stopping at
+the first primary-level difference. Since 90%+ of comparisons resolve at the
+primary level, secondary and tertiary weights are never computed. The current
+Elixir `compare/3` generates complete sort keys for both strings before
+comparing. An incremental comparator would avoid redundant work, especially
+for strings that share a long common prefix (common during sorting). However,
+this requires restructuring the pipeline from batch (produce all elements,
+process variable weights, build key) to streaming (produce element-by-element,
+compare as we go), which is a significant refactor. The
+[Schwartzian transform](https://en.wikipedia.org/wiki/Schwartzian_transform)
+used by `sort/2` would also need rethinking, since it relies on pre-computed
+sort keys. The tradeoff: lower memory and faster `compare/3`, but pairwise
+comparison in `sort/2` would perform O(n log n) collation walks instead of
+O(n) key generations followed by cheap binary comparisons.
+
+**Sort key compression** — In the collation table, 80.5% of secondary weights
+are `0x0020` and 70.1% of tertiary weights are `0x0002`. The current sort key
+format encodes every weight as 16 bits, wasting a byte on these common values.
+ICU uses a common-weight compression scheme
+([UTS #10 Section 7.3](https://www.unicode.org/reports/tr10/#Run-Length_Compression))
+that encodes the most frequent secondary/tertiary value as a single byte,
+roughly halving the L2 and L3 sections. This would reduce sort key size from
+~6x to ~4x input string length, lowering memory allocation during sorting.
+The tradeoff: compressed keys are a format change — any user persisting sort
+keys (e.g., in database indexes) would need to regenerate them. The
+performance benefit is primarily reduced memory allocation rather than reduced
+CPU, since binary comparison is already fast regardless of key length.
+
 ## License
 
 Apache-2.0

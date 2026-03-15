@@ -6,8 +6,9 @@ defmodule Cldr.Collation.Variable do
   and optionally symbols and currency signs. The `alternate` setting controls
   how these are handled:
 
-  - `:non_ignorable` - Variable CEs keep all their weights (default for CLDR)
-  - `:shifted` - Variable CEs have L1/L2/L3 zeroed, original L1 moves to L4
+  * `:non_ignorable` - Variable CEs keep all their weights (default for CLDR).
+
+  * `:shifted` - Variable CEs have L1/L2/L3 zeroed, original L1 moves to L4.
 
   """
 
@@ -18,9 +19,9 @@ defmodule Cldr.Collation.Variable do
 
   ### Arguments
 
-  * `elements` - a list of collation element tuples
-  * `alternate` - the variable handling mode: `:non_ignorable` or `:shifted`
-  * `max_variable_primary` - the maximum primary weight for variable elements
+  * `elements` - a list of collation element tuples.
+  * `alternate` - the variable handling mode: `:non_ignorable` or `:shifted`.
+  * `max_variable_primary` - the maximum primary weight for variable elements.
 
   ### Returns
 
@@ -28,10 +29,14 @@ defmodule Cldr.Collation.Variable do
 
   For `:non_ignorable`, quaternary is always `0`.
   For `:shifted`:
-  - Variable CEs: L1/L2/L3 become 0, L4 = original L1
-  - Ignorable CEs following a variable: all weights become 0, L4 = 0
-  - Regular CEs with primary > 0: L4 = `0xFFFF`
-  - Primary-ignorable CEs not after a variable: L4 = `0`
+
+  * Variable CEs: L1/L2/L3 become 0, L4 = original L1.
+
+  * Ignorable CEs following a variable: all weights become 0, L4 = 0.
+
+  * Regular CEs with primary > 0: L4 = `0xFFFF`.
+
+  * Primary-ignorable CEs not after a variable: L4 = `0`.
 
   ### Examples
 

@@ -3,9 +3,12 @@ defmodule Cldr.Collation.Table.Parser do
   Parses the allkeys_CLDR.txt file into a map of codepoint sequences to collation elements.
 
   Format: `CODEPOINTS ; [.PPPP.SSSS.TTTT]... # comment`
-  - Single codepoint: `0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A`
-  - Multi-CE: `00E9 ; [.2453.0020.0002][.0000.0024.0002] # LATIN SMALL LETTER E WITH ACUTE`
-  - Contraction: `006C 00B7 ; [.2528.0020.0002][.0000.011F.0002] # LATIN SMALL LETTER L, MIDDLE DOT`
+
+  * Single codepoint: `0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A`.
+
+  * Multi-CE: `00E9 ; [.2453.0020.0002][.0000.0024.0002] # LATIN SMALL LETTER E WITH ACUTE`.
+
+  * Contraction: `006C 00B7 ; [.2528.0020.0002][.0000.011F.0002] # LATIN SMALL LETTER L, MIDDLE DOT`.
 
   """
 
@@ -16,14 +19,14 @@ defmodule Cldr.Collation.Table.Parser do
 
   ### Arguments
 
-  * `path` - file path to the allkeys_CLDR.txt data file
+  * `path` - file path to the allkeys_CLDR.txt data file.
 
   ### Returns
 
   A map with two keys:
 
-  * `:entries` - `%{integer() | tuple() => [%Cldr.Collation.Element{}]}` mapping codepoints (integers for single, tuples for contractions) to collation elements
-  * `:version` - the UCA version string from the file header, or `nil`
+  * `:entries` - `%{integer() | tuple() => [%Cldr.Collation.Element{}]}` mapping codepoints (integers for single, tuples for contractions) to collation elements.
+  * `:version` - the UCA version string from the file header, or `nil`.
 
   ### Examples
 
@@ -64,12 +67,12 @@ defmodule Cldr.Collation.Table.Parser do
 
   ### Arguments
 
-  * `line` - a single line from the allkeys file (e.g., `"0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A"`)
+  * `line` - a single line from the allkeys file (e.g., `"0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A"`).
 
   ### Returns
 
-  * `{:ok, codepoints, elements}` - the parsed codepoint list and collation elements
-  * `:skip` - the line could not be parsed
+  * `{:ok, codepoints, elements}` - the parsed codepoint list and collation elements.
+  * `:skip` - the line could not be parsed.
 
   ### Examples
 
@@ -113,7 +116,7 @@ defmodule Cldr.Collation.Table.Parser do
 
   ### Arguments
 
-  * `codepoints` - a list of integer codepoints
+  * `codepoints` - a list of integer codepoints.
 
   ### Returns
 
@@ -140,7 +143,7 @@ defmodule Cldr.Collation.Table.Parser do
 
   ### Arguments
 
-  * `str` - the weight portion of an allkeys line (e.g., `"[.23EC.0020.0008]"`)
+  * `str` - the weight portion of an allkeys line (e.g., `"[.23EC.0020.0008]"`).
 
   ### Returns
 
@@ -177,8 +180,8 @@ defmodule Cldr.Collation.Table.Parser do
 
   ### Arguments
 
-  * `path` - file path to the FractionalUCA.txt data file
-  * `existing_entries` - the map of entries already parsed from allkeys_CLDR.txt
+  * `path` - file path to the FractionalUCA.txt data file.
+  * `existing_entries` - the map of entries already parsed from allkeys_CLDR.txt.
 
   ### Returns
 
@@ -237,12 +240,12 @@ defmodule Cldr.Collation.Table.Parser do
 
   ### Arguments
 
-  * `line` - a single data line from FractionalUCA.txt
+  * `line` - a single data line from FractionalUCA.txt.
 
   ### Returns
 
-  * `{:ok, codepoints, elements}` - the parsed codepoint list and collation elements
-  * `:skip` - the line could not be parsed or is a context entry
+  * `{:ok, codepoints, elements}` - the parsed codepoint list and collation elements.
+  * `:skip` - the line could not be parsed or is a context entry.
 
   ### Examples
 

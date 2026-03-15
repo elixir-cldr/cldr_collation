@@ -23,9 +23,9 @@ defmodule Cldr.Collation.SortKey do
 
   ### Arguments
 
-  * `processed_elements` - a list of `{element, quaternary}` tuples as returned by `Cldr.Collation.Variable.process/3`
-  * `options` - a `%Cldr.Collation.Options{}` struct controlling which levels to include
-  * `original_string` - the original input string, used for the identical level (default: `nil`)
+  * `processed_elements` - a list of `{element, quaternary}` tuples as returned by `Cldr.Collation.Variable.process/3`.
+  * `options` - a `%Cldr.Collation.Options{}` struct controlling which levels to include.
+  * `original_string` - the original input string, used for the identical level (default: `nil`).
 
   ### Returns
 

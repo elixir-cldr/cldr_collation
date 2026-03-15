@@ -28,3 +28,6 @@ All public functions ahould have a standard template format:
 * A section with heading ### Returns that describes the alternative return values from the function
 * A section with heading ### Examples that includes one or two doctest examples
 * A blank line before the closing `"""`
+* Bulleted lists use `*` as the bullet marker (not `-`)
+* Each bullet item is followed by a blank line
+* Each bullet item ends with a period

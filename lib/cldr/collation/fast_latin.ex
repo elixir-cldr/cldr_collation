@@ -28,7 +28,7 @@ defmodule Cldr.Collation.FastLatin do
 
   ### Returns
 
-  * `:ok`
+  * `:ok`.
 
   """
   def build do
@@ -62,12 +62,12 @@ defmodule Cldr.Collation.FastLatin do
 
   ### Arguments
 
-  * `cp` - an integer codepoint less than `0x0180`
+  * `cp` - an integer codepoint less than `0x0180`.
 
   ### Returns
 
-  * A list of collation element tuples — the codepoint has a direct mapping
-  * `nil` — the codepoint is a contraction starter, combining mark, or unmapped;
+  * A list of collation element tuples — the codepoint has a direct mapping.
+  * `nil` — the codepoint is a contraction starter, combining mark, or unmapped;.
     use the full lookup path
 
   ### Examples

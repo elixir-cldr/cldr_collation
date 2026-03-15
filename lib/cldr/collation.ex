@@ -43,20 +43,33 @@ defmodule Cldr.Collation do
 
   All BCP47 -u- extension collation keys are supported:
 
-  - `strength` - `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`, `:identical`
-  - `alternate` - `:non_ignorable` (default), `:shifted`
-  - `backwards` - `false` (default), `true` - reverse secondary weights (French)
-  - `normalization` - `false` (default), `true` - NFD normalize input
-  - `case_level` - `false` (default), `true` - insert case-only level
-  - `case_first` - `false` (default), `:upper`, `:lower`
-  - `numeric` - `false` (default), `true` - numeric string comparison
-  - `reorder` - `[]` (default), list of script code atoms
-  - `max_variable` - `:punct` (default), `:space`, `:symbol`, `:currency`
-  - `ignore_accents` - `true` to ignore accent differences (sets strength to primary)
-  - `ignore_case` - `true` to ignore case differences (sets strength to secondary)
-  - `ignore_punctuation` - `true` to ignore punctuation and whitespace (sets alternate to shifted)
-  - `casing` - `:sensitive`, `:insensitive` (convenience alias, compatible with `ex_cldr_collation`)
-  - `backend` - `:default` (NIF if available), `:nif`, `:elixir`
+  * `strength` - `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`, `:identical`.
+
+  * `alternate` - `:non_ignorable` (default), `:shifted`.
+
+  * `backwards` - `false` (default), `true` - reverse secondary weights (French).
+
+  * `normalization` - `false` (default), `true` - NFD normalize input.
+
+  * `case_level` - `false` (default), `true` - insert case-only level.
+
+  * `case_first` - `false` (default), `:upper`, `:lower`.
+
+  * `numeric` - `false` (default), `true` - numeric string comparison.
+
+  * `reorder` - `[]` (default), list of script code atoms.
+
+  * `max_variable` - `:punct` (default), `:space`, `:symbol`, `:currency`.
+
+  * `ignore_accents` - `true` to ignore accent differences (sets strength to primary).
+
+  * `ignore_case` - `true` to ignore case differences (sets strength to secondary).
+
+  * `ignore_punctuation` - `true` to ignore punctuation and whitespace (sets alternate to shifted).
+
+  * `casing` - `:sensitive`, `:insensitive` (convenience alias, compatible with `ex_cldr_collation`).
+
+  * `backend` - `:default` (NIF if available), `:nif`, `:elixir`.
 
   ## NIF Backend
 
@@ -96,34 +109,34 @@ defmodule Cldr.Collation do
 
   ### Arguments
 
-  * `string_a` - the first string to compare
-  * `string_b` - the second string to compare
-  * `options` - a keyword list of collation options
+  * `string_a` - the first string to compare.
+  * `string_b` - the second string to compare.
+  * `options` - a keyword list of collation options.
 
   ### Options
 
-  * `:strength` - comparison level: `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`, or `:identical`
-  * `:alternate` - variable weight handling: `:non_ignorable` (default) or `:shifted`
-  * `:backwards` - reverse secondary weights for French sorting: `false` (default) or `true`
-  * `:normalization` - NFD normalize input: `false` (default) or `true`
-  * `:case_level` - insert case-only comparison level: `false` (default) or `true`
-  * `:case_first` - case ordering: `false` (default), `:upper`, or `:lower`
-  * `:numeric` - numeric string comparison: `false` (default) or `true`
-  * `:reorder` - list of script code atoms to reorder: `[]` (default)
-  * `:max_variable` - variable weight boundary: `:punct` (default), `:space`, `:symbol`, or `:currency`
+  * `:strength` - comparison level: `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`, or `:identical`.
+  * `:alternate` - variable weight handling: `:non_ignorable` (default) or `:shifted`.
+  * `:backwards` - reverse secondary weights for French sorting: `false` (default) or `true`.
+  * `:normalization` - NFD normalize input: `false` (default) or `true`.
+  * `:case_level` - insert case-only comparison level: `false` (default) or `true`.
+  * `:case_first` - case ordering: `false` (default), `:upper`, or `:lower`.
+  * `:numeric` - numeric string comparison: `false` (default) or `true`.
+  * `:reorder` - list of script code atoms to reorder: `[]` (default).
+  * `:max_variable` - variable weight boundary: `:punct` (default), `:space`, `:symbol`, or `:currency`.
   * `:locale` - a BCP47 locale string (e.g., `"en-u-ks-level2"`) or a `Cldr.LanguageTag` struct (when `ex_cldr` is available). When `ex_cldr` is loaded and a string is provided, it is parsed via `Cldr.Locale.canonical_language_tag/2` using the default CLDR backend.
   * `:cldr_backend` - a CLDR backend module to use for locale parsing (e.g., `MyApp.Cldr`). Only used when `:locale` is a string. Defaults to `Cldr.default_backend!()`.
   * `:ignore_accents` - `true` to ignore accent differences (sets `strength: :primary`). Explicit `:strength` takes precedence.
   * `:ignore_case` - `true` to ignore case differences (sets `strength: :secondary`). Explicit `:strength` takes precedence.
   * `:ignore_punctuation` - `true` to ignore punctuation and whitespace (sets `alternate: :shifted`). Explicit `:strength` or `:alternate` take precedence.
-  * `:casing` - `:sensitive` or `:insensitive` (convenience alias for strength, compatible with `ex_cldr_collation`)
-  * `:backend` - `:default` (NIF if available), `:nif` (require NIF), or `:elixir` (pure Elixir)
+  * `:casing` - `:sensitive` or `:insensitive` (convenience alias for strength, compatible with `ex_cldr_collation`).
+  * `:backend` - `:default` (NIF if available), `:nif` (require NIF), or `:elixir` (pure Elixir).
 
   ### Returns
 
-  * `:lt` - if `string_a` sorts before `string_b`
-  * `:eq` - if `string_a` and `string_b` are equal at the given strength
-  * `:gt` - if `string_a` sorts after `string_b`
+  * `:lt` - if `string_a` sorts before `string_b`.
+  * `:eq` - if `string_a` and `string_b` are equal at the given strength.
+  * `:gt` - if `string_a` sorts after `string_b`.
 
   ### Examples
 
@@ -162,8 +175,8 @@ defmodule Cldr.Collation do
 
   ### Arguments
 
-  * `input` - a UTF-8 string or a list of integer codepoints
-  * `options` - a keyword list of collation options, or a `%Cldr.Collation.Options{}` struct
+  * `input` - a UTF-8 string or a list of integer codepoints.
+  * `options` - a keyword list of collation options, or a `%Cldr.Collation.Options{}` struct.
 
   ### Options
 
@@ -236,8 +249,8 @@ defmodule Cldr.Collation do
 
   ### Arguments
 
-  * `strings` - a list of UTF-8 strings to sort
-  * `options` - a keyword list of collation options
+  * `strings` - a list of UTF-8 strings to sort.
+  * `options` - a keyword list of collation options.
 
   ### Options
 
@@ -285,7 +298,7 @@ defmodule Cldr.Collation do
 
   ### Returns
 
-  * `:ok` - tables are loaded and ready
+  * `:ok` - tables are loaded and ready.
 
   ### Examples
 

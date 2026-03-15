@@ -22,7 +22,7 @@ defmodule Cldr.Collation.Numeric do
 
   ### Arguments
 
-  * `ce_pairs` - a list of `{codepoints, [%Cldr.Collation.Element{}]}` pairs
+  * `ce_pairs` - a list of `{codepoints, [%Cldr.Collation.Element{}]}` pairs.
 
   ### Returns
 
@@ -98,7 +98,7 @@ defmodule Cldr.Collation.Numeric do
 
   ### Arguments
 
-  * `codepoints` - a list of integer codepoints representing decimal digits
+  * `codepoints` - a list of integer codepoints representing decimal digits.
 
   ### Returns
 

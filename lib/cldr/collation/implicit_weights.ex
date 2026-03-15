@@ -77,12 +77,12 @@ defmodule Cldr.Collation.ImplicitWeights do
 
   ### Arguments
 
-  * `cp` - an integer codepoint
+  * `cp` - an integer codepoint.
 
   ### Returns
 
-  * `true` if the codepoint is a CJK Unified Ideograph
-  * `false` otherwise
+  * `true` if the codepoint is a CJK Unified Ideograph.
+  * `false` otherwise.
 
   ### Examples
 
@@ -127,12 +127,12 @@ defmodule Cldr.Collation.ImplicitWeights do
 
   ### Arguments
 
-  * `cp` - an integer codepoint
+  * `cp` - an integer codepoint.
 
   ### Returns
 
-  * `true` if the codepoint is a Hangul syllable
-  * `false` otherwise
+  * `true` if the codepoint is a Hangul syllable.
+  * `false` otherwise.
 
   ### Examples
 
@@ -155,12 +155,12 @@ defmodule Cldr.Collation.ImplicitWeights do
 
   ### Arguments
 
-  * `cp` - an integer codepoint
+  * `cp` - an integer codepoint.
 
   ### Returns
 
-  * `{:hangul_decompose, jamo}` - for Hangul syllables, returns the constituent jamo for table lookup
-  * `[%Cldr.Collation.Element{}, %Cldr.Collation.Element{}]` - two implicit CEs for CJK or unassigned codepoints
+  * `{:hangul_decompose, jamo}` - for Hangul syllables, returns the constituent jamo for table lookup.
+  * `[%Cldr.Collation.Element{}, %Cldr.Collation.Element{}]` - two implicit CEs for CJK or unassigned codepoints.
 
   ### Examples
 
@@ -195,7 +195,7 @@ defmodule Cldr.Collation.ImplicitWeights do
 
   ### Arguments
 
-  * `cp` - an integer codepoint for a Hangul syllable (U+AC00..U+D7A3)
+  * `cp` - an integer codepoint for a Hangul syllable (U+AC00..U+D7A3).
 
   ### Returns
 

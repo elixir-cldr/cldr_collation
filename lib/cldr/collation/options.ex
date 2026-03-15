@@ -46,31 +46,31 @@ defmodule Cldr.Collation.Options do
 
   ### Arguments
 
-  * `options` - a keyword list of collation options (default: `[]`)
+  * `options` - a keyword list of collation options (default: `[]`).
 
   ### Options
 
-  * `:strength` - `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`, or `:identical`
-  * `:alternate` - `:non_ignorable` (default) or `:shifted`
-  * `:backwards` - `false` (default) or `true`
-  * `:normalization` - `false` (default) or `true`
-  * `:case_level` - `false` (default) or `true`
-  * `:case_first` - `false` (default), `:upper`, or `:lower`
-  * `:numeric` - `false` (default) or `true`
-  * `:reorder` - a script code atom or list of script code atoms (default: `[]`)
-  * `:max_variable` - `:space`, `:punct` (default), `:symbol`, or `:currency`
+  * `:strength` - `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`, or `:identical`.
+  * `:alternate` - `:non_ignorable` (default) or `:shifted`.
+  * `:backwards` - `false` (default) or `true`.
+  * `:normalization` - `false` (default) or `true`.
+  * `:case_level` - `false` (default) or `true`.
+  * `:case_first` - `false` (default), `:upper`, or `:lower`.
+  * `:numeric` - `false` (default) or `true`.
+  * `:reorder` - a script code atom or list of script code atoms (default: `[]`).
+  * `:max_variable` - `:space`, `:punct` (default), `:symbol`, or `:currency`.
   * `:type` - `:standard` (default), `:search`, `:phonebook`, etc.
   * `:ignore_accents` - `true` to ignore accent differences (sets `strength: :primary`).
     Explicit `:strength` takes precedence.
   * `:ignore_case` - `true` to ignore case differences (sets `strength: :secondary`).
     Explicit `:strength` takes precedence.
-  * `:ignore_punctuation` - `true` to ignore punctuation and whitespace
+  * `:ignore_punctuation` - `true` to ignore punctuation and whitespace.
     (sets `strength: :tertiary, alternate: :shifted`). Explicit `:strength` or
     `:alternate` take precedence.
   * `:casing` - `:sensitive` (default tertiary strength) or `:insensitive` (secondary strength).
     This is a convenience option compatible with the `ex_cldr_collation` API. When provided,
     it sets the `:strength` option accordingly.
-  * `:backend` - `:default` (use NIF if available, default), `:nif` (require NIF), or `:elixir` (pure Elixir only)
+  * `:backend` - `:default` (use NIF if available, default), `:nif` (require NIF), or `:elixir` (pure Elixir only).
 
   ### Returns
 
@@ -184,7 +184,7 @@ defmodule Cldr.Collation.Options do
 
   ### Arguments
 
-  * `locale` - a BCP47 locale string (e.g., `"en-u-co-phonebk-ks-level2-ka-shifted"`)
+  * `locale` - a BCP47 locale string (e.g., `"en-u-co-phonebk-ks-level2-ka-shifted"`).
 
   ### Returns
 
@@ -342,16 +342,16 @@ defmodule Cldr.Collation.Options do
 
   ### Arguments
 
-  * `options` - a `%Cldr.Collation.Options{}` struct
+  * `options` - a `%Cldr.Collation.Options{}` struct.
 
   ### Returns
 
   A non-negative integer representing the maximum primary weight boundary:
 
-  * `:space` - `0x0209`
-  * `:punct` - `0x0B61`
-  * `:symbol` - `0x0EE3`
-  * `:currency` - `0x0EFF`
+  * `:space` - `0x0209`.
+  * `:punct` - `0x0B61`.
+  * `:symbol` - `0x0EE3`.
+  * `:currency` - `0x0EFF`.
 
   ### Examples
 
@@ -381,12 +381,12 @@ defmodule Cldr.Collation.Options do
 
   ### Arguments
 
-  * `options` - a `%Cldr.Collation.Options{}` struct
+  * `options` - a `%Cldr.Collation.Options{}` struct.
 
   ### Returns
 
-  * `true` if the NIF backend can handle these options
-  * `false` if the pure Elixir backend is required
+  * `true` if the NIF backend can handle these options.
+  * `false` if the pure Elixir backend is required.
 
   ### Examples
 

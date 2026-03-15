@@ -29,7 +29,7 @@ defmodule Cldr.Collation.Table do
 
   ### Returns
 
-  * `:ok` - the table is loaded and ready for lookups
+  * `:ok` - the table is loaded and ready for lookups.
 
   ### Examples
 
@@ -49,13 +49,13 @@ defmodule Cldr.Collation.Table do
 
   ### Arguments
 
-  * `codepoint` - a single integer codepoint, or a list of integer
+  * `codepoint` - a single integer codepoint, or a list of integer.
     codepoints (contraction). Lists are internally converted to the
     compact key format (integer for single, tuple for multi).
 
   ### Returns
 
-  * `{:ok, [%Cldr.Collation.Element{}]}` - the collation elements for
+  * `{:ok, [%Cldr.Collation.Element{}]}` - the collation elements for.
     the entry.
 
   * `:unmapped` - no entry found in the table.
@@ -100,7 +100,7 @@ defmodule Cldr.Collation.Table do
 
   ### Returns
 
-  * A list of contraction lengths that start with this codepoint, or `[]` if
+  * A list of contraction lengths that start with this codepoint, or `[]` if.
     this codepoint does not begin any contractions.
 
   ### Examples
@@ -128,7 +128,7 @@ defmodule Cldr.Collation.Table do
 
   ### Returns
 
-  * `{matched_cps, elements, remaining_cps}` - a successful match with the
+  * `{matched_cps, elements, remaining_cps}` - a successful match with the.
     matched codepoints, their collation elements, and the remaining unprocessed tail.
 
   * `{:unmapped, codepoint, remaining_cps}` - the first codepoint has no table entry.
@@ -205,12 +205,12 @@ defmodule Cldr.Collation.Table do
 
   * `codepoints` - a single integer codepoint, or a list of integer codepoints.
 
-  * `overlay` - a map of `%{key => [%Cldr.Collation.Element{}]}` tailoring
+  * `overlay` - a map of `%{key => [%Cldr.Collation.Element{}]}` tailoring.
     entries, where keys are integers (single CP) or tuples (contractions).
 
   ### Returns
 
-  * Same as `lookup/1`, but checks the overlay map before falling back
+  * Same as `lookup/1`, but checks the overlay map before falling back.
     to the root table.
 
   ### Examples

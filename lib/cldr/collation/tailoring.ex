@@ -5,12 +5,17 @@ defmodule Cldr.Collation.Tailoring do
   Parses and applies CLDR tailoring rules that modify the root collation order
   for specific locales. Rules use the ICU/CLDR syntax defined in UTS #35:
 
-  - `&X` — reset position to after character X
-  - `&[before N]X` — reset to just before X at level N
-  - `<` — primary difference (new letter)
-  - `<<` — secondary difference (accent variant)
-  - `<<<` — tertiary difference (case variant)
-  - `[caseFirst upper]` — option overrides
+  * `&X` — reset position to after character X.
+
+  * `&[before N]X` — reset to just before X at level N.
+
+  * `<` — primary difference (new letter).
+
+  * `<<` — secondary difference (accent variant).
+
+  * `<<<` — tertiary difference (case variant).
+
+  * `[caseFirst upper]` — option overrides.
 
   Tailoring data is embedded directly from CLDR XML sources, covering common
   European and Asian locales.
@@ -51,14 +56,14 @@ defmodule Cldr.Collation.Tailoring do
 
   ### Arguments
 
-  * `language` - ISO 639 language code (e.g., `"sv"`, `"de"`, `"es"`)
-  * `type` - collation type atom (e.g., `:standard`, `:phonebook`, `:traditional`)
+  * `language` - ISO 639 language code (e.g., `"sv"`, `"de"`, `"es"`).
+  * `type` - collation type atom (e.g., `:standard`, `:phonebook`, `:traditional`).
 
   ### Returns
 
-  * `{overlay, option_overrides}` - a map of `%{[codepoint] => [%Element{}]}` overlay entries
+  * `{overlay, option_overrides}` - a map of `%{[codepoint] => [%Element{}]}` overlay entries.
     and a keyword list of option overrides (e.g., `[case_first: :upper]`)
-  * `nil` - if no tailoring exists for the given locale and type
+  * `nil` - if no tailoring exists for the given locale and type.
 
   ### Examples
 
@@ -98,17 +103,17 @@ defmodule Cldr.Collation.Tailoring do
 
   ### Arguments
 
-  * `rules_str` - a CLDR/ICU tailoring rule string
+  * `rules_str` - a CLDR/ICU tailoring rule string.
 
   ### Returns
 
   A list of operation tuples:
-  * `{:reset, codepoints}` — reset position to after the given character(s)
-  * `{:reset_before, level, codepoints}` — reset to before at the given level
-  * `{:primary, codepoints}` — primary difference (`<`)
-  * `{:secondary, codepoints}` — secondary difference (`<<`)
-  * `{:tertiary, codepoints}` — tertiary difference (`<<<`)
-  * `{:option, key, value}` — option override
+  * `{:reset, codepoints}` — reset position to after the given character(s).
+  * `{:reset_before, level, codepoints}` — reset to before at the given level.
+  * `{:primary, codepoints}` — primary difference (`<`).
+  * `{:secondary, codepoints}` — secondary difference (`<<`).
+  * `{:tertiary, codepoints}` — tertiary difference (`<<<`).
+  * `{:option, key, value}` — option override.
 
   ### Examples
 

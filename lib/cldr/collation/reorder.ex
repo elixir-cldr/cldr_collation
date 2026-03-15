@@ -27,8 +27,8 @@ defmodule Cldr.Collation.Reorder do
 
   ### Returns
 
-  * A function `(primary :: integer()) -> integer()` that remaps primary weights
-  * `nil` if the list is empty or no valid mappings were found
+  * A function `(primary :: integer()) -> integer()` that remaps primary weights.
+  * `nil` if the list is empty or no valid mappings were found.
 
   ### Examples
 
@@ -235,8 +235,8 @@ defmodule Cldr.Collation.Reorder do
 
   ### Arguments
 
-  * `mapping_fn` - a reorder mapping function from `build_mapping/1`, or `nil`
-  * `primary` - the primary weight to remap
+  * `mapping_fn` - a reorder mapping function from `build_mapping/1`, or `nil`.
+  * `primary` - the primary weight to remap.
 
   ### Returns
 

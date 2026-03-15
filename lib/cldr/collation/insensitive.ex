@@ -18,14 +18,14 @@ defmodule Cldr.Collation.Insensitive do
 
   ### Arguments
 
-  * `string_a` - the first string to compare
-  * `string_b` - the second string to compare
+  * `string_a` - the first string to compare.
+  * `string_b` - the second string to compare.
 
   ### Returns
 
-  * `:lt` if `string_a` sorts before `string_b`
-  * `:eq` if `string_a` and `string_b` are collation-equal (ignoring case)
-  * `:gt` if `string_a` sorts after `string_b`
+  * `:lt` if `string_a` sorts before `string_b`.
+  * `:eq` if `string_a` and `string_b` are collation-equal (ignoring case).
+  * `:gt` if `string_a` sorts after `string_b`.
 
   ### Examples
 

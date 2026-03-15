@@ -14,7 +14,7 @@ defmodule Cldr.Collation.Normalizer do
 
   ### Arguments
 
-  * `string` - a UTF-8 binary string
+  * `string` - a UTF-8 binary string.
 
   ### Returns
 
@@ -42,7 +42,7 @@ defmodule Cldr.Collation.Normalizer do
 
   ### Arguments
 
-  * `string` - a UTF-8 binary string
+  * `string` - a UTF-8 binary string.
 
   ### Returns
 
@@ -67,8 +67,8 @@ defmodule Cldr.Collation.Normalizer do
 
   ### Arguments
 
-  * `string` - a UTF-8 binary string
-  * `normalize?` - whether to apply NFD normalization first (default: `false`)
+  * `string` - a UTF-8 binary string.
+  * `normalize?` - whether to apply NFD normalization first (default: `false`).
 
   ### Returns
 

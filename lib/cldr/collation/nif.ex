@@ -101,8 +101,8 @@ defmodule Cldr.Collation.Nif do
 
   ### Returns
 
-  * `true` if the NIF shared library was loaded successfully
-  * `false` if the NIF is not compiled or ICU libraries are missing
+  * `true` if the NIF shared library was loaded successfully.
+  * `false` if the NIF is not compiled or ICU libraries are missing.
 
   ### Examples
 
@@ -147,15 +147,15 @@ defmodule Cldr.Collation.Nif do
 
   ### Arguments
 
-  * `string_a` - the first string to compare
-  * `string_b` - the second string to compare
-  * `options` - a `%Cldr.Collation.Options{}` struct
+  * `string_a` - the first string to compare.
+  * `string_b` - the second string to compare.
+  * `options` - a `%Cldr.Collation.Options{}` struct.
 
   ### Returns
 
-  * `:lt` if `string_a` sorts before `string_b`
-  * `:eq` if `string_a` and `string_b` are collation-equal
-  * `:gt` if `string_a` sorts after `string_b`
+  * `:lt` if `string_a` sorts before `string_b`.
+  * `:eq` if `string_a` and `string_b` are collation-equal.
+  * `:gt` if `string_a` sorts after `string_b`.
 
   """
   @spec nif_compare(String.t(), String.t(), Options.t()) :: :lt | :eq | :gt
@@ -200,12 +200,12 @@ defmodule Cldr.Collation.Nif do
 
   ### Arguments
 
-  * `reorder_codes` - a list of script code atoms (e.g., `[:Grek, :Latn]`)
+  * `reorder_codes` - a list of script code atoms (e.g., `[:Grek, :Latn]`).
 
   ### Returns
 
-  * `true` if all codes are recognized
-  * `false` if any code is unrecognized
+  * `true` if all codes are recognized.
+  * `false` if any code is unrecognized.
 
   ### Examples
 

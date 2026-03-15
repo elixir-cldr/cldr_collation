@@ -46,7 +46,7 @@ defmodule Cldr.Collation.Han do
 
   ### Returns
 
-  * `:ok` - the radical data is loaded and ready
+  * `:ok` - the radical data is loaded and ready.
 
   ### Examples
 
@@ -66,12 +66,12 @@ defmodule Cldr.Collation.Han do
 
   ### Arguments
 
-  * `codepoint` - an integer codepoint for a CJK Unified Ideograph
+  * `codepoint` - an integer codepoint for a CJK Unified Ideograph.
 
   ### Returns
 
-  * `[%Cldr.Collation.Element{}, %Cldr.Collation.Element{}]` - two CEs encoding the radical-stroke key
-  * `nil` - if the character has no radical data (falls back to implicit weights)
+  * `[%Cldr.Collation.Element{}, %Cldr.Collation.Element{}]` - two CEs encoding the radical-stroke key.
+  * `nil` - if the character has no radical data (falls back to implicit weights).
 
   ### Examples
 
@@ -100,21 +100,28 @@ defmodule Cldr.Collation.Han do
   Compute the 64-bit sorting key per UAX #38.
 
   Bit layout:
-  - bits 52-63: unused (0)
-  - bits 44-51: radical number (1-214)
-  - bits 36-43: residual strokes
-  - bits 32-35: reserved (0)
-  - bits 28-31: simplification level
-  - bits 20-27: block index
-  - bits 0-19: code point
+
+  * bits 52-63: unused (0).
+
+  * bits 44-51: radical number (1-214).
+
+  * bits 36-43: residual strokes.
+
+  * bits 32-35: reserved (0).
+
+  * bits 28-31: simplification level.
+
+  * bits 20-27: block index.
+
+  * bits 0-19: code point.
 
   ### Arguments
 
-  * `radical` - the Kangxi radical number (1-214)
-  * `residual_strokes` - the residual stroke count after removing the radical
-  * `simplification` - the simplification level (0 for traditional)
-  * `block` - the CJK block index (see `block_index/1`)
-  * `codepoint` - the Unicode codepoint
+  * `radical` - the Kangxi radical number (1-214).
+  * `residual_strokes` - the residual stroke count after removing the radical.
+  * `simplification` - the simplification level (0 for traditional).
+  * `block` - the CJK block index (see `block_index/1`).
+  * `codepoint` - the Unicode codepoint.
 
   ### Returns
 
@@ -145,7 +152,7 @@ defmodule Cldr.Collation.Han do
 
   ### Arguments
 
-  * `key` - a 64-bit integer radical-stroke key from `compute_key/5`
+  * `key` - a 64-bit integer radical-stroke key from `compute_key/5`.
 
   ### Returns
 
@@ -180,17 +187,17 @@ defmodule Cldr.Collation.Han do
 
   ### Arguments
 
-  * `cp` - an integer codepoint
+  * `cp` - an integer codepoint.
 
   ### Returns
 
   An integer block index:
 
-  * `0` - CJK Unified Ideographs (U+4E00..U+9FFF)
-  * `1` - Extension A (U+3400..U+4DBF)
-  * `2` - Extension B (U+20000..U+2A6DF)
-  * `3`..`8` - Extensions C through H
-  * `254` - CJK Compatibility Ideographs (U+F900..U+FAFF)
+  * `0` - CJK Unified Ideographs (U+4E00..U+9FFF).
+  * `1` - Extension A (U+3400..U+4DBF).
+  * `2` - Extension B (U+20000..U+2A6DF).
+  * `3`..`8` - Extensions C through H.
+  * `254` - CJK Compatibility Ideographs (U+F900..U+FAFF).
 
   ### Examples
 
@@ -265,12 +272,12 @@ defmodule Cldr.Collation.Han do
 
   ### Arguments
 
-  * `line` - a trimmed line from FractionalUCA.txt in the format `[radical N=CANONICAL:MEMBER_LIST]`
+  * `line` - a trimmed line from FractionalUCA.txt in the format `[radical N=CANONICAL:MEMBER_LIST]`.
 
   ### Returns
 
-  * `{:ok, radical_num, members}` - the radical number and a list of `{codepoint, simplification, strokes}` tuples
-  * `:skip` - the line is not a radical definition
+  * `{:ok, radical_num, members}` - the radical number and a list of `{codepoint, simplification, strokes}` tuples.
+  * `:skip` - the line is not a radical definition.
 
   ### Examples
 

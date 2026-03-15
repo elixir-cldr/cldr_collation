@@ -20,10 +20,10 @@ defmodule Cldr.Collation.Element do
 
   ### Arguments
 
-  * `primary` - the primary weight (default: `0`)
-  * `secondary` - the secondary weight (default: `0`)
-  * `tertiary` - the tertiary weight (default: `0`)
-  * `variable` - whether this is a variable element (default: `false`)
+  * `primary` - the primary weight (default: `0`).
+  * `secondary` - the secondary weight (default: `0`).
+  * `tertiary` - the tertiary weight (default: `0`).
+  * `variable` - whether this is a variable element (default: `false`).
 
   ### Returns
 
@@ -44,7 +44,7 @@ defmodule Cldr.Collation.Element do
 
   ### Arguments
 
-  * `element` - a collation element tuple
+  * `element` - a collation element tuple.
 
   ### Returns
 
@@ -63,7 +63,7 @@ defmodule Cldr.Collation.Element do
 
   ### Arguments
 
-  * `element` - a collation element tuple
+  * `element` - a collation element tuple.
 
   ### Returns
 
@@ -82,7 +82,7 @@ defmodule Cldr.Collation.Element do
 
   ### Arguments
 
-  * `element` - a collation element tuple
+  * `element` - a collation element tuple.
 
   ### Returns
 
@@ -104,12 +104,12 @@ defmodule Cldr.Collation.Element do
 
   ### Arguments
 
-  * `element` - a collation element tuple
+  * `element` - a collation element tuple.
 
   ### Returns
 
-  * `true` if all weights are zero
-  * `false` otherwise
+  * `true` if all weights are zero.
+  * `false` otherwise.
 
   ### Examples
 
@@ -131,12 +131,12 @@ defmodule Cldr.Collation.Element do
 
   ### Arguments
 
-  * `element` - a collation element tuple
+  * `element` - a collation element tuple.
 
   ### Returns
 
-  * `true` if the primary weight is zero
-  * `false` otherwise
+  * `true` if the primary weight is zero.
+  * `false` otherwise.
 
   ### Examples
 
@@ -159,13 +159,13 @@ defmodule Cldr.Collation.Element do
 
   ### Arguments
 
-  * `element` - a collation element tuple
-  * `max_variable_primary` - the maximum primary weight for variable elements (unused, retained for API compatibility)
+  * `element` - a collation element tuple.
+  * `max_variable_primary` - the maximum primary weight for variable elements (unused, retained for API compatibility).
 
   ### Returns
 
-  * `true` if the element is marked as variable and has a non-zero primary weight
-  * `false` otherwise
+  * `true` if the element is marked as variable and has a non-zero primary weight.
+  * `false` otherwise.
 
   ### Examples
 

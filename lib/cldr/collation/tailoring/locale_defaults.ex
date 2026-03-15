@@ -31,7 +31,7 @@ defmodule Cldr.Collation.Tailoring.LocaleDefaults do
 
   ### Arguments
 
-  * `locale` - a BCP47 locale string (e.g., `"da"`, `"de-AT"`, `"sv-SE"`)
+  * `locale` - a BCP47 locale string (e.g., `"da"`, `"de-AT"`, `"sv-SE"`).
 
   ### Returns
 
@@ -56,7 +56,7 @@ defmodule Cldr.Collation.Tailoring.LocaleDefaults do
 
   ### Arguments
 
-  * `locale` - a BCP47 locale string
+  * `locale` - a BCP47 locale string.
 
   ### Returns
 
@@ -81,7 +81,7 @@ defmodule Cldr.Collation.Tailoring.LocaleDefaults do
 
   ### Arguments
 
-  * `locale` - a BCP47 locale string (e.g., `"de-AT-u-co-phonebk"`)
+  * `locale` - a BCP47 locale string (e.g., `"de-AT-u-co-phonebk"`).
 
   ### Returns
 

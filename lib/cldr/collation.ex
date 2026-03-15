@@ -506,6 +506,12 @@ defmodule Cldr.Collation do
   # Extract collation options from a Cldr.LanguageTag struct.
   # The tag's `locale` field contains the parsed -u- extension data
   # as a %Cldr.LanguageTag.U{} struct with atom keys and validated values.
+  #
+  # Locale resolution uses `cldr_locale_name` first, falling back to
+  # `language`, to derive locale defaults and tailoring rules.
+  #
+  # When the tag has a populated `:backend` field, it is used as the CLDR
+  # backend; otherwise the `:cldr_backend` keyword option is consulted.
   defp options_from_language_tag(tag, extra_options) do
     unless Code.ensure_loaded?(Cldr.LanguageTag) and is_struct(tag, Cldr.LanguageTag) do
       raise ArgumentError,
@@ -513,9 +519,13 @@ defmodule Cldr.Collation do
               if(Code.ensure_loaded?(Cldr.LanguageTag), do: " or a Cldr.LanguageTag struct", else: "")
     end
 
+    alias Cldr.Collation.Tailoring
+    alias Cldr.Collation.Tailoring.LocaleDefaults
+
     u = tag.locale
 
-    tag_options =
+    # Extract U extension options from the tag
+    u_options =
       []
       |> maybe_put(:strength, u_strength(u))
       |> maybe_put(:alternate, u_alternate(u))
@@ -528,8 +538,53 @@ defmodule Cldr.Collation do
       |> maybe_put(:max_variable, u_max_variable(u))
       |> maybe_put(:type, u_collation_type(u))
 
-    # Extra keyword options override tag options
-    Options.new(Keyword.merge(tag_options, extra_options))
+    # Resolve the language for locale defaults and tailoring.
+    # Prefer cldr_locale_name (e.g. :da), fall back to language (e.g. "da").
+    language = tag_language(tag)
+    locale_defaults = LocaleDefaults.options_for(language)
+
+    # Determine collation type: U extension > extra options > locale default
+    type =
+      Keyword.get(u_options, :type) ||
+        Keyword.get(extra_options, :type) ||
+        LocaleDefaults.default_type(language)
+
+    # Load tailoring overlay if available
+    {tailoring_overlay, tailoring_option_overrides} =
+      case Tailoring.get_tailoring(language, type) do
+        {overlay, overrides} -> {overlay, overrides}
+        nil -> {nil, []}
+      end
+
+    # Strip :cldr_backend from extra options — not an Options struct field
+    extra_options = Keyword.delete(extra_options, :cldr_backend)
+
+    # Build options with precedence:
+    # extra keyword options > U extension > locale defaults > tailoring overrides > struct defaults
+    Options.new()
+    |> struct(tailoring_option_overrides)
+    |> struct(locale_defaults)
+    |> struct(u_options)
+    |> struct(Keyword.delete(extra_options, :type))
+    |> Map.put(:type, type)
+    |> Map.put(:tailoring, tailoring_overlay)
+  end
+
+  # Resolve a language string from a Cldr.LanguageTag for locale defaults
+  # and tailoring lookup. Prefers cldr_locale_name, falls back to language.
+  defp tag_language(tag) do
+    alias Cldr.Collation.Tailoring.LocaleDefaults
+
+    cond do
+      is_atom(tag.cldr_locale_name) and not is_nil(tag.cldr_locale_name) ->
+        tag.cldr_locale_name |> to_string() |> LocaleDefaults.extract_language()
+
+      is_binary(tag.language) ->
+        LocaleDefaults.extract_language(tag.language)
+
+      true ->
+        "und"
+    end
   end
 
   defp maybe_put(opts, _key, nil), do: opts

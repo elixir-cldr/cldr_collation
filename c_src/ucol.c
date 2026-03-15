@@ -11,10 +11,7 @@
 #include "erl_nif.h"
 #include "unicode/ucol.h"
 #include "unicode/ucasemap.h"
-<<<<<<< HEAD
-=======
 #include "unicode/uscript.h"
->>>>>>> c/main
 #include <stdio.h>
 #include <assert.h>
 
@@ -35,15 +32,10 @@ typedef struct {
     ErlNifMutex* collMutex;
 } priv_data_t;
 
-<<<<<<< HEAD
-static ERL_NIF_TERM ucol(ErlNifEnv*, int, const ERL_NIF_TERM []);
-static int collate_binary(priv_data_t*, ctx_t*, ERL_NIF_TERM, ERL_NIF_TERM, ERL_NIF_TERM);
-=======
 /* Use -1 as sentinel for "use default / no change" */
 #define OPT_DEFAULT (-1)
 
 static ERL_NIF_TERM ucol(ErlNifEnv*, int, const ERL_NIF_TERM []);
->>>>>>> c/main
 static int on_load(ErlNifEnv*, void**, ERL_NIF_TERM);
 static void on_unload(ErlNifEnv*, void*);
 static __inline void reserve_coll(priv_data_t*, ctx_t*);
@@ -77,17 +69,6 @@ release_coll(priv_data_t* pData, ctx_t *ctx)
 
 /* ------------------------------------------------------------------------- */
 
-<<<<<<< HEAD
-static ERL_NIF_TERM
-ucol(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
-    ERL_NIF_TERM term_a          = argv[0];
-    ERL_NIF_TERM term_b          = argv[1];
-    ERL_NIF_TERM term_has_nocase = argv[2];
-
-    ctx_t ctx;
-    int result;
-    priv_data_t* pData;
-=======
 /*
  * cmp(string_a, string_b, strength, backwards, alternate, case_first,
  *     case_level, normalization, numeric, reorder_bin)
@@ -109,7 +90,6 @@ ucol(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
     UErrorCode status = U_ZERO_ERROR;
     UCharIterator iterA, iterB;
     int response;
->>>>>>> c/main
 
     ctx.env = env;
     ctx.error = 0;
@@ -117,64 +97,6 @@ ucol(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 
     pData = (priv_data_t*) enif_priv_data(env);
 
-<<<<<<< HEAD
-    result = collate_binary(pData, &ctx, term_a, term_b, term_has_nocase);
-    release_coll(pData, &ctx);
-
-    return enif_make_int(env, result);
-}
-
-int
-collate_binary(priv_data_t* pData, ctx_t* ctx, ERL_NIF_TERM term_a, ERL_NIF_TERM term_b, ERL_NIF_TERM term_has_nocase)
-{
-    ErlNifBinary binA, binB;
-    int has_nocase, response;
-
-    if(!enif_get_int(ctx->env, term_has_nocase, &has_nocase)) {
-        ctx->error = 1;
-        return 0;
-    }
-    if(!enif_inspect_binary(ctx->env, term_a, &binA)) {
-        ctx->error = 1;
-        return 0;
-    }
-    if(!enif_inspect_binary(ctx->env, term_b, &binB)) {
-        ctx->error = 1;
-        return 0;
-    }
-
-    switch(has_nocase) {
-    case 0: /* COLLATE */
-    case 1: /* COLLATE_NO_CASE: */
-        {
-        UErrorCode status = U_ZERO_ERROR;
-        UCharIterator iterA;
-        UCharIterator iterB;
-
-        uiter_setUTF8(&iterA, (const char *) binA.data, (uint32_t) binA.size);
-        uiter_setUTF8(&iterB, (const char *) binB.data, (uint32_t) binB.size);
-
-        /* grab a collator */
-        reserve_coll(pData, ctx);
-
-        if (has_nocase == 1) /* switching this collator to case insensitive */
-          ucol_setAttribute(ctx->coll, UCOL_STRENGTH, UCOL_PRIMARY, &status);
-
-        /* by default, it will collate case sensitive */
-        response = ucol_strcollIter(ctx->coll, &iterA, &iterB, &status);
-
-        if (has_nocase == 1) /* puting back this collator to case sensitive */
-          ucol_setAttribute(ctx->coll, UCOL_STRENGTH, UCOL_DEFAULT, &status);
-
-        break;
-        }
-
-    default:
-        response = -1;
-    }
-
-    return response;
-=======
     /* Extract binary arguments */
     if (!enif_inspect_binary(env, argv[0], &binA) ||
         !enif_inspect_binary(env, argv[1], &binB)) {
@@ -289,7 +211,6 @@ collate_binary(priv_data_t* pData, ctx_t* ctx, ERL_NIF_TERM term_a, ERL_NIF_TERM
     release_coll(pData, &ctx);
 
     return enif_make_int(env, response);
->>>>>>> c/main
 }
 
 /* ------------------------------------------------------------------------- */
@@ -417,14 +338,7 @@ on_upgrade(ErlNifEnv* env, void** priv_data, void** old_data, ERL_NIF_TERM info)
 static ErlNifFunc
 nif_funcs[] =
 {
-<<<<<<< HEAD
-    {"cmp", 3, ucol}
-};
-
-ERL_NIF_INIT(Elixir.Cldr.Collation, nif_funcs, &on_load, &on_reload, &on_upgrade, &on_unload)
-=======
     {"cmp", 10, ucol}
 };
 
 ERL_NIF_INIT(Elixir.Cldr.Collation.Nif, nif_funcs, &on_load, &on_reload, &on_upgrade, &on_unload)
->>>>>>> c/main

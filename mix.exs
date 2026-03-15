@@ -71,9 +71,9 @@ defmodule Cldr.Collation.MixProject do
 
   def links do
     %{
-      "GitHub" => "https://github.com/kipcole9/cldr_collation",
-      "Readme" => "https://github.com/kipcole9/cldr_collation/blob/v#{@version}/README.md",
-      "Changelog" => "https://github.com/kipcole9/cldr_collation/blob/v#{@version}/CHANGELOG.md",
+      "GitHub" => "https://github.com/elixir-cldr/cldr_collation",
+      "Readme" => "https://github.com/elixir-cldr/cldr_collation/blob/v#{@version}/README.md",
+      "Changelog" => "https://github.com/elixir-cldr/cldr_collation/blob/v#{@version}/CHANGELOG.md",
     }
   end
 
@@ -86,6 +86,7 @@ defmodule Cldr.Collation.MixProject do
         "LICENSE.md",
         "CHANGELOG.md"
       ],
+      formatters: ["html"],
       skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md"]
     ]
   end

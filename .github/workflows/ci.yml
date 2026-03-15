@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  test_ubuntu_linux:
     runs-on: ubuntu-latest
     name: Test on OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
@@ -26,7 +26,10 @@ jobs:
       # and running the workflow steps.
       matrix:
         include:
+<<<<<<< HEAD
           # minimum required versions
+=======
+>>>>>>> 17a4051a97fcbc66ee1209380e055638fb8e1033
           - otp: "27.2.4"
             elixir: "1.18.4-otp-27"
           - otp: "28.3.1"
@@ -96,9 +99,12 @@ jobs:
     # Step: Execute the tests without the NIF
     - name: Run tests without NIF
       run: mix test
+<<<<<<< HEAD
 
     # Step: Execute the test with the NIF
     - name: Run tests with NIF
       env:
         CLDR_COLLATION_NIF: true
       run: mix test
+=======
+>>>>>>> 17a4051a97fcbc66ee1209380e055638fb8e1033

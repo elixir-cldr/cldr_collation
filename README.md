@@ -1,10 +1,8 @@
 # Cldr Collation
 
-<<<<<<< HEAD
-A NIF-based Unicode collator based upon the Unicode library `libicu4c`. Builds upon the
-erlang library [erlang-ucol](https://github.com/barrel-db/erlang-ucol) by Benoit Chesneau <benoitc@e-engura.org> and Nicolas Dufour <nrdufour@gmail.com>
-
-This initial version uses only the "root" locale collator which is the [CLDR DUCET collator](http://userguide.icu-project.org/collation).
+An Elixir implementation of the [Unicode Collation Algorithm](https://www.unicode.org/reports/tr10/) (UCA)
+as extended by [CLDR](http://www.unicode.org/reports/tr35/tr35-collation.html), providing
+language-aware string sorting and comparison.
 
 ## Installation
 
@@ -34,35 +32,28 @@ On Linux systems, `libicu-dev`, `libicu` and `pkg-conf` must be installed and we
 
 ```bash
 # For Ubuntu
-# pkg-config and libicu are required for compiling the NIF
+# pkg-config and libicu are required for compiling the NIF;
 # assumes libicu is already installed which is normal on Ubuntu
-$ sudo apt-get install pkgconf libicu-dev
+$ sudo apt-get install build-essential libicu-dev
 
 # For Debian
-# pkg-config and icu-dev are required when compiling the NIF
+# pkg-config and icu-dev are required when compiling the NIF;
 # libicu is required at runtime
 # Debian Bullseye
-$ sudo apt install pkgconf libicu-dev libicu67
+$ sudo apt install build-essential libicu-dev libicu67
 # Debian Bookworm
-$ sudo apt install pkgconf libicu-dev libicu72
+$ sudo apt install build-essential libicu-dev libicu72
 
 # For Alpine
-# pkg-config and icu-dev are required when compiling the NIF
+# erlang-dev and icu-dev are required when compiling the NIF;
 # icu is required at runtime
-$ apk add pkgconf icu-dev icu
+$ apk add build-base icu-dev erlang-dev
 
 # Then check that the libicu package dependencies
 # can be resolved
 $ pkg-config --libs icu-uc icu-io
 -licuio -licui18n -licuuc -licudata
 ```
-
-### Installing ex_cldr_collation
-The package can then be installed by adding `cldr_collation` to your list of dependencies in `mix.exs`:
-=======
-An Elixir implementation of the [Unicode Collation Algorithm](https://www.unicode.org/reports/tr10/) (UCA)
-as extended by [CLDR](http://www.unicode.org/reports/tr35/tr35-collation.html), providing
-language-aware string sorting and comparison.
 
 ## Features
 
@@ -81,49 +72,12 @@ Add `cldr_collation` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-<<<<<<< HEAD
-    {:ex_cldr_collation, "~> 0.7.0"}
-=======
     {:cldr_collation, "~> 0.1.0"}
->>>>>>> c/main
   ]
 end
 ```
 
-<<<<<<< HEAD
 ## Examples
-```elixir
-  # Sorting using Cldr.Collator.sort/2
-  iex> Cldr.Collation.sort(["á", "b", "A"], casing: :sensitive)
-  ["A", "á", "b"]
-
-  iex> Cldr.Collation.sort(["á", "b", "A"], casing: :insensitive)
-  ["á", "A", "b"]
-
-  # Comparing strings
-  iex> Cldr.Collation.compare("a", "A", casing: :insensitive)
-  :eq
-
-  iex> Cldr.Collation.compare("a", "A", casing: :sensitive)
-  :lt
-
-  # Using Elixir 1.10 Enum.sort
-  # Cldr.Collation.Sensitive, Cldr.Collation.Insensitive
-  # comparise modules are provided
-
-  iex> Enum.sort(["AAAA", "AAAa"], Cldr.Collation.Insensitive)
-  ["AAAA", "AAAa"]
-
-  iex> Enum.sort(["AAAA", "AAAa"], Cldr.Collation.Sensitive)
-  ["AAAa", "AAAA"]
-```
-
-
-
-
-
-=======
-## Usage
 
 ```elixir
 # Sort a list of strings
@@ -255,4 +209,3 @@ CLDR_COLLATION_NIF=true mix compile && mix run bench/sort_benchmark.exs
 ## License
 
 Apache-2.0
->>>>>>> c/main

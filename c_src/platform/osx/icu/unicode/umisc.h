@@ -1,10 +1,12 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 **********************************************************************
 *   Copyright (C) 1999-2006, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  umisc.h
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -19,9 +21,9 @@
 
 /**
  * \file
- * \brief  C API:misc definitions 
+ * \brief C API: Miscellaneous definitions
  *
- *  This file contains miscellaneous definitions for the C APIs. 
+ *  This file contains miscellaneous definitions for the C APIs.
  */
 
 U_CDECL_BEGIN

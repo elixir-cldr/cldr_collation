@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ********************************************************************************
-*   Copyright (C) 1997-2008, International Business Machines
+*   Copyright (C) 1997-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ********************************************************************************
 *
@@ -27,8 +29,10 @@
 
 #include "unicode/utypes.h"
 
+#if U_SHOW_CPLUSPLUS_API
+
 /**
- * \file 
+ * \file
  * \brief C++ API: Calendar object
  */
 #if !UCONFIG_NO_FORMATTING
@@ -43,128 +47,148 @@ U_NAMESPACE_BEGIN
 
 class ICUServiceFactory;
 
+// Do not conditionalize the following with #ifndef U_HIDE_INTERNAL_API,
+// it is a return type for a virtual method (@internal)
 /**
  * @internal
  */
 typedef int32_t UFieldResolutionTable[12][8];
 
+class BasicTimeZone;
 /**
- * <code>Calendar</code> is an abstract base class for converting between
- * a <code>UDate</code> object and a set of integer fields such as
- * <code>YEAR</code>, <code>MONTH</code>, <code>DAY</code>, <code>HOUR</code>,
- * and so on. (A <code>UDate</code> object represents a specific instant in
+ * `Calendar` is an abstract base class for converting between
+ * a `UDate` object and a set of integer fields such as
+ * `YEAR`, `MONTH`, `DAY`, `HOUR`, and so on.
+ * (A `UDate` object represents a specific instant in
  * time with millisecond precision. See UDate
- * for information about the <code>UDate</code> class.)
+ * for information about the `UDate` class.)
  *
- * <p>
- * Subclasses of <code>Calendar</code> interpret a <code>UDate</code>
+ * Subclasses of `Calendar` interpret a `UDate`
  * according to the rules of a specific calendar system.
- * The most commonly used subclass of <code>Calendar</code> is
- * <code>GregorianCalendar</code>. Other subclasses could represent
+ * The most commonly used subclass of `Calendar` is
+ * `GregorianCalendar`. Other subclasses could represent
  * the various types of lunar calendars in use in many parts of the world.
  *
- * <p>
- * <b>NOTE</b>: (ICU 2.6) The subclass interface should be considered unstable
- * - it WILL change.
+ * **NOTE**: (ICU 2.6) The subclass interface should be considered unstable -
+ * it WILL change.
  *
- * <p>
- * Like other locale-sensitive classes, <code>Calendar</code> provides a
- * static method, <code>createInstance</code>, for getting a generally useful
- * object of this type. <code>Calendar</code>'s <code>createInstance</code> method
- * returns the appropriate <code>Calendar</code> subclass whose
+ * Like other locale-sensitive classes, `Calendar` provides a
+ * static method, `createInstance`, for getting a generally useful
+ * object of this type. `Calendar`'s `createInstance` method
+ * returns the appropriate `Calendar` subclass whose
  * time fields have been initialized with the current date and time:
- * \htmlonly<blockquote>\endhtmlonly
- * <pre>
- * Calendar *rightNow = Calendar::createInstance(errCode);
- * </pre>
- * \htmlonly</blockquote>\endhtmlonly
  *
- * <p>
- * A <code>Calendar</code> object can produce all the time field values
+ *     Calendar *rightNow = Calendar::createInstance(errCode);
+ *
+ * A `Calendar` object can produce all the time field values
  * needed to implement the date-time formatting for a particular language
  * and calendar style (for example, Japanese-Gregorian, Japanese-Traditional).
  *
- * <p>
- * When computing a <code>UDate</code> from time fields, two special circumstances
+ * When computing a `UDate` from time fields, some special circumstances
  * may arise: there may be insufficient information to compute the
- * <code>UDate</code> (such as only year and month but no day in the month),
- * or there may be inconsistent information (such as "Tuesday, July 15, 1996"
- * -- July 15, 1996 is actually a Monday).
+ * `UDate` (such as only year and month but no day in the month),
+ * there may be inconsistent information (such as "Tuesday, July 15, 1996"
+ * -- July 15, 1996 is actually a Monday), or the input time might be ambiguous
+ * because of time zone transition.
  *
- * <p>
- * <strong>Insufficient information.</strong> The calendar will use default
+ * **Insufficient information.** The calendar will use default
  * information to specify the missing fields. This may vary by calendar; for
  * the Gregorian calendar, the default for a field is the same as that of the
  * start of the epoch: i.e., YEAR = 1970, MONTH = JANUARY, DATE = 1, etc.
  *
- * <p>
- * <strong>Inconsistent information.</strong> If fields conflict, the calendar
+ * **Inconsistent information.** If fields conflict, the calendar
  * will give preference to fields set more recently. For example, when
  * determining the day, the calendar will look for one of the following
  * combinations of fields.  The most recent combination, as determined by the
  * most recently set single field, will be used.
  *
- * \htmlonly<blockquote>\endhtmlonly
- * <pre>
- * MONTH + DAY_OF_MONTH
- * MONTH + WEEK_OF_MONTH + DAY_OF_WEEK
- * MONTH + DAY_OF_WEEK_IN_MONTH + DAY_OF_WEEK
- * DAY_OF_YEAR
- * DAY_OF_WEEK + WEEK_OF_YEAR
- * </pre>
- * \htmlonly</blockquote>\endhtmlonly
+ *     MONTH + DAY_OF_MONTH
+ *     MONTH + WEEK_OF_MONTH + DAY_OF_WEEK
+ *     MONTH + DAY_OF_WEEK_IN_MONTH + DAY_OF_WEEK
+ *     DAY_OF_YEAR
+ *     DAY_OF_WEEK + WEEK_OF_YEAR
  *
  * For the time of day:
  *
- * \htmlonly<blockquote>\endhtmlonly
- * <pre>
- * HOUR_OF_DAY
- * AM_PM + HOUR
- * </pre>
- * \htmlonly</blockquote>\endhtmlonly
+ *     HOUR_OF_DAY
+ *     AM_PM + HOUR
  *
- * <p>
- * <strong>Note:</strong> for some non-Gregorian calendars, different
+ * **Ambiguous Wall Clock Time.** When time offset from UTC has
+ * changed, it produces an ambiguous time slot around the transition. For example,
+ * many US locations observe daylight saving time. On the date switching to daylight
+ * saving time in US, wall clock time jumps from 12:59 AM (standard) to 2:00 AM
+ * (daylight). Therefore, wall clock time from 1:00 AM to 1:59 AM do not exist on
+ * the date. When the input wall time fall into this missing time slot, the ICU
+ * Calendar resolves the time using the UTC offset before the transition by default.
+ * In this example, 1:30 AM is interpreted as 1:30 AM standard time (non-exist),
+ * so the final result will be 2:30 AM daylight time.
+ *
+ * On the date switching back to standard time, wall clock time is moved back one
+ * hour at 2:00 AM. So wall clock time from 1:00 AM to 1:59 AM occur twice. In this
+ * case, the ICU Calendar resolves the time using the UTC offset after the transition
+ * by default. For example, 1:30 AM on the date is resolved as 1:30 AM standard time.
+ *
+ * Ambiguous wall clock time resolution behaviors can be customized by Calendar APIs
+ * {@link #setRepeatedWallTimeOption} and {@link #setSkippedWallTimeOption}.
+ * These methods are available in ICU 49 or later versions.
+ *
+ * **Note:** for some non-Gregorian calendars, different
  * fields may be necessary for complete disambiguation. For example, a full
- * specification of the historial Arabic astronomical calendar requires year,
- * month, day-of-month <em>and</em> day-of-week in some cases.
+ * specification of the historical Arabic astronomical calendar requires year,
+ * month, day-of-month *and* day-of-week in some cases.
  *
- * <p>
- * <strong>Note:</strong> There are certain possible ambiguities in
+ * **Note:** There are certain possible ambiguities in
  * interpretation of certain singular times, which are resolved in the
  * following ways:
- * <ol>
- *     <li> 24:00:00 "belongs" to the following day. That is,
- *          23:59 on Dec 31, 1969 &lt; 24:00 on Jan 1, 1970 &lt; 24:01:00 on Jan 1, 1970
  *
- *     <li> Although historically not precise, midnight also belongs to "am",
- *          and noon belongs to "pm", so on the same day,
- *          12:00 am (midnight) &lt; 12:01 am, and 12:00 pm (noon) &lt; 12:01 pm
- * </ol>
+ *   1. 24:00:00 "belongs" to the following day. That is,
+ *      23:59 on Dec 31, 1969 < 24:00 on Jan 1, 1970 < 24:01:00 on Jan 1, 1970
+ *   2. Although historically not precise, midnight also belongs to "am",
+ *      and noon belongs to "pm", so on the same day,
+ *      12:00 am (midnight) < 12:01 am, and 12:00 pm (noon) < 12:01 pm
  *
- * <p>
  * The date or time format strings are not part of the definition of a
  * calendar, as those must be modifiable or overridable by the user at
- * runtime. Use {@link DateFormat}
- * to format dates.
+ * runtime. Use `DateFormat` to format dates.
  *
- * <p>
- * <code>Calendar</code> provides an API for field "rolling", where fields
+ * `Calendar` provides an API for field "rolling", where fields
  * can be incremented or decremented, but wrap around. For example, rolling the
- * month up in the date <code>December 12, <b>1996</b></code> results in
- * <code>January 12, <b>1996</b></code>.
+ * month up in the date December 12, **1996** results in
+ * January 12, **1996**.
+ *
+ * `Calendar` also provides a date arithmetic function for
+ * adding the specified (signed) amount of time to a particular time field.
+ * For example, subtracting 5 days from the date `September 12, 1996`
+ * results in `September 7, 1996`.
+ *
+ * ***Supported range***
+ *
+ * The allowable range of `Calendar` has been narrowed. `GregorianCalendar` used
+ * to attempt to support the range of dates with millisecond values from
+ * `Long.MIN_VALUE` to `Long.MAX_VALUE`. The new `Calendar` protocol specifies the
+ * maximum range of supportable dates as those having Julian day numbers
+ * of `-0x7F000000` to `+0x7F000000`. This corresponds to years from ~5,800,000 BCE
+ * to ~5,800,000 CE. Programmers should use the protected constants in `Calendar` to
+ * specify an extremely early or extremely late date.
  *
  * <p>
- * <code>Calendar</code> also provides a date arithmetic function for
- * adding the specified (signed) amount of time to a particular time field.
- * For example, subtracting 5 days from the date <code>September 12, 1996</code>
- * results in <code>September 7, 1996</code>.
+ * The Japanese calendar uses a combination of era name and year number.
+ * When an emperor of Japan abdicates and a new emperor ascends the throne,
+ * a new era is declared and year number is reset to 1. Even if the date of
+ * abdication is scheduled ahead of time, the new era name might not be
+ * announced until just before the date. In such case, ICU4C may include
+ * a start date of future era without actual era name, but not enabled
+ * by default. ICU4C users who want to test the behavior of the future era
+ * can enable the tentative era by:
+ * <ul>
+ * <li>Environment variable <code>ICU_ENABLE_TENTATIVE_ERA=true</code>.</li>
+ * </ul>
  *
  * @stable ICU 2.0
  */
 class U_I18N_API Calendar : public UObject {
 public:
-
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * Field IDs for date and time. Used to specify date/time fields. ERA is calendar
      * specific. Example ranges given are for illustration only; see specific Calendar
@@ -173,6 +197,12 @@ public:
      */
     enum EDateFields {
 #ifndef U_HIDE_DEPRECATED_API
+/*
+ * ERA may be defined on other platforms. To avoid any potential problems undefined it here.
+ */
+#ifdef ERA
+#undef ERA
+#endif
         ERA,                  // Example: 0..1
         YEAR,                 // Example: 1..big number
         MONTH,                // Example: 0..11
@@ -192,16 +222,18 @@ public:
         DST_OFFSET,           // Example: 0 or U_MILLIS_PER_HOUR
         YEAR_WOY,             // 'Y' Example: 1..big number - Year of Week of Year
         DOW_LOCAL,            // 'e' Example: 1..7 - Day of Week / Localized
-		
-		EXTENDED_YEAR,
-		JULIAN_DAY,
-		MILLISECONDS_IN_DAY,
-		IS_LEAP_MONTH,
+
+        EXTENDED_YEAR,
+        JULIAN_DAY,
+        MILLISECONDS_IN_DAY,
+        IS_LEAP_MONTH,
 
         FIELD_COUNT = UCAL_FIELD_COUNT // See ucal.h for other fields.
 #endif /* U_HIDE_DEPRECATED_API */
     };
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 
+#ifndef U_HIDE_DEPRECATED_API
     /**
      * Useful constant for days of week. Note: Calendar day-of-week is 1-based. Clients
      * who create locale resources for the field of first-day-of-week should be aware of
@@ -209,7 +241,6 @@ public:
      * @deprecated ICU 2.6. Use C enum UCalendarDaysOfWeek defined in ucal.h
      */
     enum EDaysOfWeek {
-#ifndef U_HIDE_DEPRECATED_API
         SUNDAY = 1,
         MONDAY,
         TUESDAY,
@@ -217,7 +248,6 @@ public:
         THURSDAY,
         FRIDAY,
         SATURDAY
-#endif /* U_HIDE_DEPRECATED_API */
     };
 
     /**
@@ -225,7 +255,6 @@ public:
      * @deprecated ICU 2.6. Use C enum UCalendarMonths defined in ucal.h
      */
     enum EMonths {
-#ifndef U_HIDE_DEPRECATED_API
         JANUARY,
         FEBRUARY,
         MARCH,
@@ -239,7 +268,6 @@ public:
         NOVEMBER,
         DECEMBER,
         UNDECIMBER
-#endif /* U_HIDE_DEPRECATED_API */
     };
 
     /**
@@ -247,11 +275,10 @@ public:
      * @deprecated ICU 2.6. Use C enum UCalendarAMPMs defined in ucal.h
      */
     enum EAmpm {
-#ifndef U_HIDE_DEPRECATED_API
         AM,
         PM
-#endif /* U_HIDE_DEPRECATED_API */
     };
+#endif  /* U_HIDE_DEPRECATED_API */
 
     /**
      * destructor
@@ -265,7 +292,7 @@ public:
      * @return    a polymorphic copy of this calendar.
      * @stable ICU 2.0
      */
-    virtual Calendar* clone(void) const = 0;
+    virtual Calendar* clone() const = 0;
 
     /**
      * Creates a Calendar using the default timezone and locale. Clients are responsible
@@ -275,7 +302,7 @@ public:
      *                 with U_ZERO_ERROR if created successfully, set to a failure result
      *                 otherwise. U_MISSING_RESOURCE_ERROR will be returned if the resource data
      *                 requests a calendar type which has not been installed.
-     * @return         A Calendar if created successfully. NULL otherwise.
+     * @return         A Calendar if created successfully. nullptr otherwise.
      * @stable ICU 2.0
      */
     static Calendar* U_EXPORT2 createInstance(UErrorCode& success);
@@ -289,7 +316,7 @@ public:
      * @param success      Indicates the success/failure of Calendar creation. Filled in
      *                     with U_ZERO_ERROR if created successfully, set to a failure result
      *                     otherwise.
-     * @return             A Calendar if created successfully. NULL otherwise.
+     * @return             A Calendar if created successfully. nullptr otherwise.
      * @stable ICU 2.0
      */
     static Calendar* U_EXPORT2 createInstance(TimeZone* zoneToAdopt, UErrorCode& success);
@@ -302,7 +329,7 @@ public:
      * @param success      Indicates the success/failure of Calendar creation. Filled in
      *                     with U_ZERO_ERROR if created successfully, set to a failure result
      *                     otherwise.
-     * @return             A Calendar if created successfully. NULL otherwise.
+     * @return             A Calendar if created successfully. nullptr otherwise.
      * @stable ICU 2.0
      */
     static Calendar* U_EXPORT2 createInstance(const TimeZone& zone, UErrorCode& success);
@@ -314,7 +341,7 @@ public:
      * @param success  Indicates the success/failure of Calendar creation. Filled in
      *                 with U_ZERO_ERROR if created successfully, set to a failure result
      *                 otherwise.
-     * @return         A Calendar if created successfully. NULL otherwise.
+     * @return         A Calendar if created successfully. nullptr otherwise.
      * @stable ICU 2.0
      */
     static Calendar* U_EXPORT2 createInstance(const Locale& aLocale, UErrorCode& success);
@@ -329,7 +356,7 @@ public:
      * @param success      Indicates the success/failure of Calendar creation. Filled in
      *                     with U_ZERO_ERROR if created successfully, set to a failure result
      *                     otherwise.
-     * @return             A Calendar if created successfully. NULL otherwise.
+     * @return             A Calendar if created successfully. nullptr otherwise.
      * @stable ICU 2.0
      */
     static Calendar* U_EXPORT2 createInstance(TimeZone* zoneToAdopt, const Locale& aLocale, UErrorCode& success);
@@ -338,15 +365,15 @@ public:
      * Gets a Calendar using the given timezone and given locale.  The TimeZone
      * is _not_ adopted; the client is still responsible for deleting it.
      *
-     * @param zoneToAdopt  The given timezone to be adopted.
+     * @param zone         The given timezone.
      * @param aLocale      The given locale.
      * @param success      Indicates the success/failure of Calendar creation. Filled in
      *                     with U_ZERO_ERROR if created successfully, set to a failure result
      *                     otherwise.
-     * @return             A Calendar if created successfully. NULL otherwise.
+     * @return             A Calendar if created successfully. nullptr otherwise.
      * @stable ICU 2.0
      */
-    static Calendar* U_EXPORT2 createInstance(const TimeZone& zoneToAdopt, const Locale& aLocale, UErrorCode& success);
+    static Calendar* U_EXPORT2 createInstance(const TimeZone& zone, const Locale& aLocale, UErrorCode& success);
 
     /**
      * Returns a list of the locales for which Calendars are installed.
@@ -358,6 +385,26 @@ public:
      * @stable ICU 2.0
      */
     static const Locale* U_EXPORT2 getAvailableLocales(int32_t& count);
+
+
+    /**
+     * Given a key and a locale, returns an array of string values in a preferred
+     * order that would make a difference. These are all and only those values where
+     * the open (creation) of the service with the locale formed from the input locale
+     * plus input keyword and that value has different behavior than creation with the
+     * input locale alone.
+     * @param key           one of the keys supported by this service.  For now, only
+     *                      "calendar" is supported.
+     * @param locale        the locale
+     * @param commonlyUsed  if set to true it will return only commonly used values
+     *                      with the given locale in preferred order.  Otherwise,
+     *                      it will return all the available values for the locale.
+     * @param status        ICU Error Code
+     * @return a string enumeration over keyword values for the given key and the locale.
+     * @stable ICU 4.2
+     */
+    static StringEnumeration* U_EXPORT2 getKeywordValuesForLocale(const char* key,
+                    const Locale& locale, UBool commonlyUsed, UErrorCode& status);
 
     /**
      * Returns the current UTC (GMT) time measured in milliseconds since 0:00:00 on 1/1/70
@@ -402,27 +449,27 @@ public:
      * represented time, use equals() instead.
      *
      * @param that  The Calendar object to be compared with.
-     * @return      True if the given Calendar is the same as this Calendar; false
+     * @return      true if the given Calendar is the same as this Calendar; false
      *              otherwise.
      * @stable ICU 2.0
      */
-    virtual UBool operator==(const Calendar& that) const;
+    virtual bool operator==(const Calendar& that) const;
 
     /**
      * Compares the inequality of two Calendar objects.
      *
      * @param that  The Calendar object to be compared with.
-     * @return      True if the given Calendar is not the same as this Calendar; false
+     * @return      true if the given Calendar is not the same as this Calendar; false
      *              otherwise.
      * @stable ICU 2.0
      */
-    UBool operator!=(const Calendar& that) const {return !operator==(that);}
+    bool operator!=(const Calendar& that) const {return !operator==(that);}
 
     /**
-     * Returns TRUE if the given Calendar object is equivalent to this
+     * Returns true if the given Calendar object is equivalent to this
      * one.  An equivalent Calendar will behave exactly as this one
      * does, but it may be set to a different time.  By contrast, for
-     * the operator==() method to return TRUE, the other Calendar must
+     * the operator==() method to return true, the other Calendar must
      * be set to the same time.
      *
      * @param other the Calendar to be compared with this Calendar
@@ -476,6 +523,7 @@ public:
      */
     UBool after(const Calendar& when, UErrorCode& status) const;
 
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * UDate Arithmetic function. Adds the specified (signed) amount of time to the given
      * time field, based on the calendar's rules. For example, to subtract 5 days from
@@ -483,6 +531,9 @@ public:
      * the month or Calendar::MONTH field, other fields like date might conflict and
      * need to be changed. For instance, adding 1 month on the date 01/31/96 will result
      * in 02/29/96.
+     * Adding a positive value always means moving forward in time, so for the Gregorian calendar,
+     * starting with 100 BC and adding +1 to year results in 99 BC (even though this actually reduces
+     * the numeric value of the field itself).
      *
      * @param field   Specifies which date field to modify.
      * @param amount  The amount of time to be added to the field, in the natural unit
@@ -494,6 +545,7 @@ public:
      * @deprecated ICU 2.6. use add(UCalendarDateFields field, int32_t amount, UErrorCode& status) instead.
      */
     virtual void add(EDateFields field, int32_t amount, UErrorCode& status);
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 
     /**
      * UDate Arithmetic function. Adds the specified (signed) amount of time to the given
@@ -502,6 +554,9 @@ public:
      * the month or Calendar::MONTH field, other fields like date might conflict and
      * need to be changed. For instance, adding 1 month on the date 01/31/96 will result
      * in 02/29/96.
+     * Adding a positive value always means moving forward in time, so for the Gregorian calendar,
+     * starting with 100 BC and adding +1 to year results in 99 BC (even though this actually reduces
+     * the numeric value of the field itself).
      *
      * @param field   Specifies which date field to modify.
      * @param amount  The amount of time to be added to the field, in the natural unit
@@ -514,6 +569,7 @@ public:
      */
     virtual void add(UCalendarDateFields field, int32_t amount, UErrorCode& status);
 
+#ifndef U_HIDE_DEPRECATED_API
     /**
      * Time Field Rolling function. Rolls (up/down) a single unit of time on the given
      * time field. For example, to roll the current date up by one day, call
@@ -522,10 +578,19 @@ public:
      * value returned by getMaximum(Calendar::YEAR). When rolling on the month or
      * Calendar::MONTH field, other fields like date might conflict and, need to be
      * changed. For instance, rolling the month up on the date 01/31/96 will result in
-     * 02/29/96. Rolling up always means rolling forward in time; e.g., rolling the year
-     * up on "100 BC" will result in "99 BC", for Gregorian calendar. When rolling on the
-     * hour-in-day or Calendar::HOUR_OF_DAY field, it will roll the hour value in the range
-     * between 0 and 23, which is zero-based.
+     * 02/29/96. Rolling up always means rolling forward in time (unless the limit of the
+     * field is reached, in which case it may pin or wrap), so for Gregorian calendar,
+     * starting with 100 BC and rolling the year up results in 99 BC.
+     * When eras have a definite beginning and end (as in the Chinese calendar, or as in
+     * most eras in the Japanese calendar) then rolling the year past either limit of the
+     * era will cause the year to wrap around. When eras only have a limit at one end,
+     * then attempting to roll the year past that limit will result in pinning the year
+     * at that limit. Note that for most calendars in which era 0 years move forward in
+     * time (such as Buddhist, Hebrew, or Islamic), it is possible for add or roll to
+     * result in negative years for era 0 (that is the only way to represent years before
+     * the calendar epoch).
+     * When rolling on the hour-in-day or Calendar::HOUR_OF_DAY field, it will roll the
+     * hour value in the range between 0 and 23, which is zero-based.
      * <P>
      * NOTE: Do not use this method -- use roll(EDateFields, int, UErrorCode&) instead.
      *
@@ -538,6 +603,7 @@ public:
      * @deprecated ICU 2.6. Use roll(UCalendarDateFields field, UBool up, UErrorCode& status) instead.
      */
     inline void roll(EDateFields field, UBool up, UErrorCode& status);
+#endif  /* U_HIDE_DEPRECATED_API */
 
     /**
      * Time Field Rolling function. Rolls (up/down) a single unit of time on the given
@@ -547,10 +613,19 @@ public:
      * value returned by getMaximum(Calendar::YEAR). When rolling on the month or
      * Calendar::MONTH field, other fields like date might conflict and, need to be
      * changed. For instance, rolling the month up on the date 01/31/96 will result in
-     * 02/29/96. Rolling up always means rolling forward in time; e.g., rolling the year
-     * up on "100 BC" will result in "99 BC", for Gregorian calendar. When rolling on the
-     * hour-in-day or Calendar::HOUR_OF_DAY field, it will roll the hour value in the range
-     * between 0 and 23, which is zero-based.
+     * 02/29/96. Rolling up always means rolling forward in time (unless the limit of the
+     * field is reached, in which case it may pin or wrap), so for Gregorian calendar,
+     * starting with 100 BC and rolling the year up results in 99 BC.
+     * When eras have a definite beginning and end (as in the Chinese calendar, or as in
+     * most eras in the Japanese calendar) then rolling the year past either limit of the
+     * era will cause the year to wrap around. When eras only have a limit at one end,
+     * then attempting to roll the year past that limit will result in pinning the year
+     * at that limit. Note that for most calendars in which era 0 years move forward in
+     * time (such as Buddhist, Hebrew, or Islamic), it is possible for add or roll to
+     * result in negative years for era 0 (that is the only way to represent years before
+     * the calendar epoch).
+     * When rolling on the hour-in-day or Calendar::HOUR_OF_DAY field, it will roll the
+     * hour value in the range between 0 and 23, which is zero-based.
      * <P>
      * NOTE: Do not use this method -- use roll(UCalendarDateFields, int, UErrorCode&) instead.
      *
@@ -564,16 +639,26 @@ public:
      */
     inline void roll(UCalendarDateFields field, UBool up, UErrorCode& status);
 
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * Time Field Rolling function. Rolls by the given amount on the given
      * time field. For example, to roll the current date up by one day, call
      * roll(Calendar::DATE, +1, status). When rolling on the month or
      * Calendar::MONTH field, other fields like date might conflict and, need to be
      * changed. For instance, rolling the month up on the date 01/31/96 will result in
-     * 02/29/96.  Rolling by a positive value always means rolling forward in time;
-     * e.g., rolling the year by +1 on "100 BC" will result in "99 BC", for Gregorian
-     * calendar. When rolling on the hour-in-day or Calendar::HOUR_OF_DAY field, it will
-     * roll the hour value in the range between 0 and 23, which is zero-based.
+     * 02/29/96. Rolling by a positive value always means rolling forward in time (unless
+     * the limit of the field is reached, in which case it may pin or wrap), so for
+     * Gregorian calendar, starting with 100 BC and rolling the year by + 1 results in 99 BC.
+     * When eras have a definite beginning and end (as in the Chinese calendar, or as in
+     * most eras in the Japanese calendar) then rolling the year past either limit of the
+     * era will cause the year to wrap around. When eras only have a limit at one end,
+     * then attempting to roll the year past that limit will result in pinning the year
+     * at that limit. Note that for most calendars in which era 0 years move forward in
+     * time (such as Buddhist, Hebrew, or Islamic), it is possible for add or roll to
+     * result in negative years for era 0 (that is the only way to represent years before
+     * the calendar epoch).
+     * When rolling on the hour-in-day or Calendar::HOUR_OF_DAY field, it will roll the
+     * hour value in the range between 0 and 23, which is zero-based.
      * <P>
      * The only difference between roll() and add() is that roll() does not change
      * the value of more significant fields when it reaches the minimum or maximum
@@ -587,6 +672,7 @@ public:
      * @deprecated ICU 2.6. Use roll(UCalendarDateFields field, int32_t amount, UErrorCode& status) instead.
      */
     virtual void roll(EDateFields field, int32_t amount, UErrorCode& status);
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 
     /**
      * Time Field Rolling function. Rolls by the given amount on the given
@@ -594,10 +680,19 @@ public:
      * roll(Calendar::DATE, +1, status). When rolling on the month or
      * Calendar::MONTH field, other fields like date might conflict and, need to be
      * changed. For instance, rolling the month up on the date 01/31/96 will result in
-     * 02/29/96.  Rolling by a positive value always means rolling forward in time;
-     * e.g., rolling the year by +1 on "100 BC" will result in "99 BC", for Gregorian
-     * calendar. When rolling on the hour-in-day or Calendar::HOUR_OF_DAY field, it will
-     * roll the hour value in the range between 0 and 23, which is zero-based.
+     * 02/29/96. Rolling by a positive value always means rolling forward in time (unless
+     * the limit of the field is reached, in which case it may pin or wrap), so for
+     * Gregorian calendar, starting with 100 BC and rolling the year by + 1 results in 99 BC.
+     * When eras have a definite beginning and end (as in the Chinese calendar, or as in
+     * most eras in the Japanese calendar) then rolling the year past either limit of the
+     * era will cause the year to wrap around. When eras only have a limit at one end,
+     * then attempting to roll the year past that limit will result in pinning the year
+     * at that limit. Note that for most calendars in which era 0 years move forward in
+     * time (such as Buddhist, Hebrew, or Islamic), it is possible for add or roll to
+     * result in negative years for era 0 (that is the only way to represent years before
+     * the calendar epoch).
+     * When rolling on the hour-in-day or Calendar::HOUR_OF_DAY field, it will roll the
+     * hour value in the range between 0 and 23, which is zero-based.
      * <P>
      * The only difference between roll() and add() is that roll() does not change
      * the value of more significant fields when it reaches the minimum or maximum
@@ -612,6 +707,7 @@ public:
      */
     virtual void roll(UCalendarDateFields field, int32_t amount, UErrorCode& status);
 
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * Return the difference between the given time and the time this
      * calendar object is set to.  If this calendar is set
@@ -668,6 +764,7 @@ public:
      * @deprecated ICU 2.6. Use fieldDifference(UDate when, UCalendarDateFields field, UErrorCode& status).
      */
     virtual int32_t fieldDifference(UDate when, EDateFields field, UErrorCode& status);
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 
     /**
      * Return the difference between the given time and the time this
@@ -729,7 +826,7 @@ public:
     /**
      * Sets the calendar's time zone to be the one passed in. The Calendar takes ownership
      * of the TimeZone; the caller is no longer responsible for deleting it.  If the
-     * given time zone is NULL, this function has no effect.
+     * given time zone is nullptr, this function has no effect.
      *
      * @param value  The given time zone.
      * @stable ICU 2.0
@@ -773,7 +870,7 @@ public:
      *           false, otherwise.
      * @stable ICU 2.0
      */
-    virtual UBool inDaylightTime(UErrorCode& status) const = 0;
+    virtual UBool inDaylightTime(UErrorCode& status) const;
 
     /**
      * Specifies whether or not date/time interpretation is to be lenient. With lenient
@@ -798,12 +895,72 @@ public:
     UBool isLenient(void) const;
 
     /**
-     * Sets what the first day of the week is; e.g., Sunday in US, Monday in France.
+     * Sets the behavior for handling wall time repeating multiple times
+     * at negative time zone offset transitions. For example, 1:30 AM on
+     * November 6, 2011 in US Eastern time (America/New_York) occurs twice;
+     * 1:30 AM EDT, then 1:30 AM EST one hour later. When <code>UCAL_WALLTIME_FIRST</code>
+     * is used, the wall time 1:30AM in this example will be interpreted as 1:30 AM EDT
+     * (first occurrence). When <code>UCAL_WALLTIME_LAST</code> is used, it will be
+     * interpreted as 1:30 AM EST (last occurrence). The default value is
+     * <code>UCAL_WALLTIME_LAST</code>.
+     * <p>
+     * <b>Note:</b>When <code>UCAL_WALLTIME_NEXT_VALID</code> is not a valid
+     * option for this. When the argument is neither <code>UCAL_WALLTIME_FIRST</code>
+     * nor <code>UCAL_WALLTIME_LAST</code>, this method has no effect and will keep
+     * the current setting.
      *
-     * @param value  The given first day of the week.
-     * @deprecated ICU 2.6. Use setFirstDayOfWeek(UCalendarDaysOfWeek value) instead.
+     * @param option the behavior for handling repeating wall time, either
+     * <code>UCAL_WALLTIME_FIRST</code> or <code>UCAL_WALLTIME_LAST</code>.
+     * @see #getRepeatedWallTimeOption
+     * @stable ICU 49
      */
-    void setFirstDayOfWeek(EDaysOfWeek value);
+    void setRepeatedWallTimeOption(UCalendarWallTimeOption option);
+
+    /**
+     * Gets the behavior for handling wall time repeating multiple times
+     * at negative time zone offset transitions.
+     *
+     * @return the behavior for handling repeating wall time, either
+     * <code>UCAL_WALLTIME_FIRST</code> or <code>UCAL_WALLTIME_LAST</code>.
+     * @see #setRepeatedWallTimeOption
+     * @stable ICU 49
+     */
+    UCalendarWallTimeOption getRepeatedWallTimeOption(void) const;
+
+    /**
+     * Sets the behavior for handling skipped wall time at positive time zone offset
+     * transitions. For example, 2:30 AM on March 13, 2011 in US Eastern time (America/New_York)
+     * does not exist because the wall time jump from 1:59 AM EST to 3:00 AM EDT. When
+     * <code>UCAL_WALLTIME_FIRST</code> is used, 2:30 AM is interpreted as 30 minutes before 3:00 AM
+     * EDT, therefore, it will be resolved as 1:30 AM EST. When <code>UCAL_WALLTIME_LAST</code>
+     * is used, 2:30 AM is interpreted as 31 minutes after 1:59 AM EST, therefore, it will be
+     * resolved as 3:30 AM EDT. When <code>UCAL_WALLTIME_NEXT_VALID</code> is used, 2:30 AM will
+     * be resolved as next valid wall time, that is 3:00 AM EDT. The default value is
+     * <code>UCAL_WALLTIME_LAST</code>.
+     * <p>
+     * <b>Note:</b>This option is effective only when this calendar is lenient.
+     * When the calendar is strict, such non-existing wall time will cause an error.
+     *
+     * @param option the behavior for handling skipped wall time at positive time zone
+     * offset transitions, one of <code>UCAL_WALLTIME_FIRST</code>, <code>UCAL_WALLTIME_LAST</code> and
+     * <code>UCAL_WALLTIME_NEXT_VALID</code>.
+     * @see #getSkippedWallTimeOption
+     *
+     * @stable ICU 49
+     */
+    void setSkippedWallTimeOption(UCalendarWallTimeOption option);
+
+    /**
+     * Gets the behavior for handling skipped wall time at positive time zone offset
+     * transitions.
+     *
+     * @return the behavior for handling skipped wall time, one of
+     * <code>UCAL_WALLTIME_FIRST</code>, <code>UCAL_WALLTIME_LAST</code>
+     * and <code>UCAL_WALLTIME_NEXT_VALID</code>.
+     * @see #setSkippedWallTimeOption
+     * @stable ICU 49
+     */
+    UCalendarWallTimeOption getSkippedWallTimeOption(void) const;
 
     /**
      * Sets what the first day of the week is; e.g., Sunday in US, Monday in France.
@@ -813,6 +970,7 @@ public:
      */
     void setFirstDayOfWeek(UCalendarDaysOfWeek value);
 
+#ifndef U_HIDE_DEPRECATED_API
     /**
      * Gets what the first day of the week is; e.g., Sunday in US, Monday in France.
      *
@@ -820,6 +978,7 @@ public:
      * @deprecated ICU 2.6 use the overload with error code
      */
     EDaysOfWeek getFirstDayOfWeek(void) const;
+#endif  /* U_HIDE_DEPRECATED_API */
 
     /**
      * Gets what the first day of the week is; e.g., Sunday in US, Monday in France.
@@ -852,6 +1011,7 @@ public:
      */
     uint8_t getMinimalDaysInFirstWeek(void) const;
 
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * Gets the minimum value for the given time field. e.g., for Gregorian
      * DAY_OF_MONTH, 1.
@@ -861,6 +1021,7 @@ public:
      * @deprecated ICU 2.6. Use getMinimum(UCalendarDateFields field) instead.
      */
     virtual int32_t getMinimum(EDateFields field) const;
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 
     /**
      * Gets the minimum value for the given time field. e.g., for Gregorian
@@ -872,6 +1033,7 @@ public:
      */
     virtual int32_t getMinimum(UCalendarDateFields field) const;
 
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * Gets the maximum value for the given time field. e.g. for Gregorian DAY_OF_MONTH,
      * 31.
@@ -881,6 +1043,7 @@ public:
      * @deprecated ICU 2.6. Use getMaximum(UCalendarDateFields field) instead.
      */
     virtual int32_t getMaximum(EDateFields field) const;
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 
     /**
      * Gets the maximum value for the given time field. e.g. for Gregorian DAY_OF_MONTH,
@@ -892,6 +1055,7 @@ public:
      */
     virtual int32_t getMaximum(UCalendarDateFields field) const;
 
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * Gets the highest minimum value for the given field if varies. Otherwise same as
      * getMinimum(). For Gregorian, no difference.
@@ -901,6 +1065,7 @@ public:
      * @deprecated ICU 2.6. Use getGreatestMinimum(UCalendarDateFields field) instead.
      */
     virtual int32_t getGreatestMinimum(EDateFields field) const;
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 
     /**
      * Gets the highest minimum value for the given field if varies. Otherwise same as
@@ -912,6 +1077,7 @@ public:
      */
     virtual int32_t getGreatestMinimum(UCalendarDateFields field) const;
 
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * Gets the lowest maximum value for the given field if varies. Otherwise same as
      * getMaximum(). e.g., for Gregorian DAY_OF_MONTH, 28.
@@ -921,6 +1087,7 @@ public:
      * @deprecated ICU 2.6. Use getLeastMaximum(UCalendarDateFields field) instead.
      */
     virtual int32_t getLeastMaximum(EDateFields field) const;
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 
     /**
      * Gets the lowest maximum value for the given field if varies. Otherwise same as
@@ -932,6 +1099,7 @@ public:
      */
     virtual int32_t getLeastMaximum(UCalendarDateFields field) const;
 
+#ifndef U_HIDE_DEPRECATED_API
     /**
      * Return the minimum value that this field could have, given the current date.
      * For the Gregorian calendar, this is the same as getMinimum() and getGreatestMinimum().
@@ -947,6 +1115,7 @@ public:
      * @deprecated ICU 2.6. Use getActualMinimum(UCalendarDateFields field, UErrorCode& status) instead.
      */
     int32_t getActualMinimum(EDateFields field, UErrorCode& status) const;
+#endif  /* U_HIDE_DEPRECATED_API */
 
     /**
      * Return the minimum value that this field could have, given the current date.
@@ -978,42 +1147,9 @@ public:
      * @param field    the field to determine the maximum of
      * @param status   Fill-in parameter which receives the status of this operation.
      * @return         the maximum of the given field for the current date of this Calendar
-     * @deprecated ICU 2.6. Use getActualMaximum(UCalendarDateFields field, UErrorCode& status) instead.
-     */
-    int32_t getActualMaximum(EDateFields field, UErrorCode& status) const;
-
-    /**
-     * Return the maximum value that this field could have, given the current date.
-     * For example, with the date "Feb 3, 1997" and the DAY_OF_MONTH field, the actual
-     * maximum would be 28; for "Feb 3, 1996" it s 29.  Similarly for a Hebrew calendar,
-     * for some years the actual maximum for MONTH is 12, and for others 13.
-     *
-     * The version of this function on Calendar uses an iterative algorithm to determine the
-     * actual maximum value for the field.  There is almost always a more efficient way to
-     * accomplish this (in most cases, you can simply return getMaximum()).  GregorianCalendar
-     * overrides this function with a more efficient implementation.
-     *
-     * @param field    the field to determine the maximum of
-     * @param status   Fill-in parameter which receives the status of this operation.
-     * @return         the maximum of the given field for the current date of this Calendar
      * @stable ICU 2.6.
      */
     virtual int32_t getActualMaximum(UCalendarDateFields field, UErrorCode& status) const;
-
-    /**
-     * Gets the value for a given time field. Recalculate the current time field values
-     * if the time value has been changed by a call to setTime(). Return zero for unset
-     * fields if any fields have been explicitly set by a call to set(). To force a
-     * recomputation of all fields regardless of the previous state, call complete().
-     * This method is semantically const, but may alter the object in memory.
-     *
-     * @param field  The given time field.
-     * @param status Fill-in parameter which receives the status of the operation.
-     * @return       The value for the given time field, or zero if the field is unset,
-     *               and set() has been called for any other field.
-     * @deprecated ICU 2.6. Use get(UCalendarDateFields field, UErrorCode& status) instead.
-     */
-    int32_t get(EDateFields field, UErrorCode& status) const;
 
     /**
      * Gets the value for a given time field. Recalculate the current time field values
@@ -1036,28 +1172,9 @@ public:
      *
      * @param field  The given time field.
      * @return   True if the given time field has a value set; false otherwise.
-     * @deprecated ICU 2.6. Use isSet(UCalendarDateFields field) instead.
-     */
-    UBool isSet(EDateFields field) const;
-
-    /**
-     * Determines if the given time field has a value set. This can affect in the
-     * resolving of time in Calendar. Unset fields have a value of zero, by definition.
-     *
-     * @param field  The given time field.
-     * @return   True if the given time field has a value set; false otherwise.
      * @stable ICU 2.6.
      */
     UBool isSet(UCalendarDateFields field) const;
-
-    /**
-     * Sets the given time field with the given value.
-     *
-     * @param field  The given time field.
-     * @param value  The value to be set for the given time field.
-     * @deprecated ICU 2.6. Use set(UCalendarDateFields field, int32_t value) instead.
-     */
-    void set(EDateFields field, int32_t value);
 
     /**
      * Sets the given time field with the given value.
@@ -1120,17 +1237,8 @@ public:
     /**
      * Clears the value in the given time field, both making it unset and assigning it a
      * value of zero. This field value will be determined during the next resolving of
-     * time into time fields.
-     *
-     * @param field  The time field to be cleared.
-     * @deprecated ICU 2.6. Use clear(UCalendarDateFields field) instead.
-     */
-    void clear(EDateFields field);
-
-    /**
-     * Clears the value in the given time field, both making it unset and assigning it a
-     * value of zero. This field value will be determined during the next resolving of
-     * time into time fields.
+     * time into time fields. Clearing UCAL_ORDINAL_MONTH or UCAL_MONTH will
+     * clear both fields.
      *
      * @param field  The time field to be cleared.
      * @stable ICU 2.6.
@@ -1152,17 +1260,155 @@ public:
      *           same class ID. Objects of other classes have different class IDs.
      * @stable ICU 2.0
      */
-    virtual UClassID getDynamicClassID(void) const = 0;
+    virtual UClassID getDynamicClassID(void) const override = 0;
 
     /**
-     * Returns the resource key string used for this calendar type.
-     * For example, prepending "Eras_" to this string could return "Eras_japanese"
-     * or "Eras_gregorian".
+     * Returns the calendar type name string for this Calendar object.
+     * The returned string is the legacy ICU calendar attribute value,
+     * for example, "gregorian" or "japanese".
      *
-     * @returns static string, for example, "gregorian" or "japanese"
-     * @internal
+     * See type="old type name" for the calendar attribute of locale IDs
+     * at http://www.unicode.org/reports/tr35/#Key_Type_Definitions
+     *
+     * Sample code for getting the LDML/BCP 47 calendar key value:
+     * \code
+     * const char *calType = cal->getType();
+     * if (0 == strcmp(calType, "unknown")) {
+     *     // deal with unknown calendar type
+     * } else {
+     *     string localeID("root@calendar=");
+     *     localeID.append(calType);
+     *     char langTag[100];
+     *     UErrorCode errorCode = U_ZERO_ERROR;
+     *     int32_t length = uloc_toLanguageTag(localeID.c_str(), langTag, (int32_t)sizeof(langTag), true, &errorCode);
+     *     if (U_FAILURE(errorCode)) {
+     *         // deal with errors & overflow
+     *     }
+     *     string lang(langTag, length);
+     *     size_t caPos = lang.find("-ca-");
+     *     lang.erase(0, caPos + 4);
+     *     // lang now contains the LDML calendar type
+     * }
+     * \endcode
+     *
+     * @return legacy calendar type name string
+     * @stable ICU 49
      */
     virtual const char * getType() const = 0;
+
+    /**
+     * Returns whether the given day of the week is a weekday, a weekend day,
+     * or a day that transitions from one to the other, for the locale and
+     * calendar system associated with this Calendar (the locale's region is
+     * often the most determinant factor). If a transition occurs at midnight,
+     * then the days before and after the transition will have the
+     * type UCAL_WEEKDAY or UCAL_WEEKEND. If a transition occurs at a time
+     * other than midnight, then the day of the transition will have
+     * the type UCAL_WEEKEND_ONSET or UCAL_WEEKEND_CEASE. In this case, the
+     * method getWeekendTransition() will return the point of
+     * transition.
+     * @param dayOfWeek The day of the week whose type is desired (UCAL_SUNDAY..UCAL_SATURDAY).
+     * @param status The error code for the operation.
+     * @return The UCalendarWeekdayType for the day of the week.
+     * @stable ICU 4.4
+     */
+    virtual UCalendarWeekdayType getDayOfWeekType(UCalendarDaysOfWeek dayOfWeek, UErrorCode &status) const;
+
+    /**
+     * Returns the time during the day at which the weekend begins or ends in
+     * this calendar system.  If getDayOfWeekType() returns UCAL_WEEKEND_ONSET
+     * for the specified dayOfWeek, return the time at which the weekend begins.
+     * If getDayOfWeekType() returns UCAL_WEEKEND_CEASE for the specified dayOfWeek,
+     * return the time at which the weekend ends. If getDayOfWeekType() returns
+     * some other UCalendarWeekdayType for the specified dayOfWeek, is it an error condition
+     * (U_ILLEGAL_ARGUMENT_ERROR).
+     * @param dayOfWeek The day of the week for which the weekend transition time is
+     * desired (UCAL_SUNDAY..UCAL_SATURDAY).
+     * @param status The error code for the operation.
+     * @return The milliseconds after midnight at which the weekend begins or ends.
+     * @stable ICU 4.4
+     */
+    virtual int32_t getWeekendTransition(UCalendarDaysOfWeek dayOfWeek, UErrorCode &status) const;
+
+    /**
+     * Returns true if the given UDate is in the weekend in
+     * this calendar system.
+     * @param date The UDate in question.
+     * @param status The error code for the operation.
+     * @return true if the given UDate is in the weekend in
+     * this calendar system, false otherwise.
+     * @stable ICU 4.4
+     */
+    virtual UBool isWeekend(UDate date, UErrorCode &status) const;
+
+    /**
+     * Returns true if this Calendar's current date-time is in the weekend in
+     * this calendar system.
+     * @return true if this Calendar's current date-time is in the weekend in
+     * this calendar system, false otherwise.
+     * @stable ICU 4.4
+     */
+    virtual UBool isWeekend(void) const;
+
+#ifndef U_FORCE_HIDE_DRAFT_API
+    /**
+     * Returns true if the date is in a leap year. Recalculate the current time
+     * field values if the time value has been changed by a call to * setTime().
+     * This method is semantically const, but may alter the object in memory.
+     * A "leap year" is a year that contains more days than other years (for
+     * solar or lunar calendars) or more months than other years (for lunisolar
+     * calendars like Hebrew or Chinese), as defined in the ECMAScript Temporal
+     * proposal.
+     *
+     * @param status        ICU Error Code
+     * @return       True if the date in the fields is in a Temporal proposal
+     *               defined leap year. False otherwise.
+     * @draft ICU 73
+     */
+    virtual bool inTemporalLeapYear(UErrorCode& status) const;
+
+    /**
+     * Gets The Temporal monthCode value corresponding to the month for the date.
+     * The value is a string identifier that starts with the literal grapheme
+     * "M" followed by two graphemes representing the zero-padded month number
+     * of the current month in a normal (non-leap) year and suffixed by an
+     * optional literal grapheme "L" if this is a leap month in a lunisolar
+     * calendar. The 25 possible values are "M01" .. "M13" and "M01L" .. "M12L".
+     * For the Hebrew calendar, the values are "M01" .. "M12" for non-leap year, and
+     * "M01" .. "M05", "M05L", "M06" .. "M12" for leap year.
+     * For the Chinese calendar, the values are "M01" .. "M12" for non-leap year and
+     * in leap year with another monthCode in "M01L" .. "M12L".
+     * For Coptic and Ethiopian calendar, the Temporal monthCode values for any
+     * years are "M01" to "M13".
+     *
+     * @param status        ICU Error Code
+     * @return       One of 25 possible strings in {"M01".."M13", "M01L".."M12L"}.
+     * @draft ICU 73
+     */
+    virtual const char* getTemporalMonthCode(UErrorCode& status) const;
+
+    /**
+     * Sets The Temporal monthCode which is a string identifier that starts
+     * with the literal grapheme "M" followed by two graphemes representing
+     * the zero-padded month number of the current month in a normal
+     * (non-leap) year and suffixed by an optional literal grapheme "L" if this
+     * is a leap month in a lunisolar calendar. The 25 possible values are
+     * "M01" .. "M13" and "M01L" .. "M12L". For Hebrew calendar, the values are
+     * "M01" .. "M12" for non-leap years, and "M01" .. "M05", "M05L", "M06"
+     * .. "M12" for leap year.
+     * For the Chinese calendar, the values are "M01" .. "M12" for non-leap year and
+     * in leap year with another monthCode in "M01L" .. "M12L".
+     * For Coptic and Ethiopian calendar, the Temporal monthCode values for any
+     * years are "M01" to "M13".
+     *
+     * @param temporalMonth  The value to be set for temporal monthCode.
+     * @param status        ICU Error Code
+     *
+     * @draft ICU 73
+     */
+    virtual void setTemporalMonthCode(const char* temporalMonth, UErrorCode& status);
+
+#endif  // U_FORCE_HIDE_DRAFT_API
 
 protected:
 
@@ -1270,6 +1516,7 @@ protected:
      */
     void complete(UErrorCode& status);
 
+#ifndef U_HIDE_DEPRECATED_API
     /**
      * Gets the value for a given time field. Subclasses can use this function to get
      * field values without forcing recomputation of time.
@@ -1279,7 +1526,9 @@ protected:
      * @deprecated ICU 2.6. Use internalGet(UCalendarDateFields field) instead.
      */
     inline int32_t internalGet(EDateFields field) const {return fFields[field];}
+#endif  /* U_HIDE_DEPRECATED_API */
 
+#ifndef U_HIDE_INTERNAL_API
     /**
      * Gets the value for a given time field. Subclasses can use this function to get
      * field values without forcing recomputation of time. If the field's stamp is UNSET,
@@ -1301,7 +1550,33 @@ protected:
      * @internal
      */
     inline int32_t internalGet(UCalendarDateFields field) const {return fFields[field];}
+#endif  /* U_HIDE_INTERNAL_API */
 
+    /**
+     * Use this function instead of internalGet(UCAL_MONTH). The implementation
+     * check the timestamp of UCAL_MONTH and UCAL_ORDINAL_MONTH and use the
+     * one set later. The subclass should override it to conver the value of UCAL_ORDINAL_MONTH
+     * to UCAL_MONTH correctly if UCAL_ORDINAL_MONTH has higher priority.
+     *
+     * @return       The value for the UCAL_MONTH.
+     * @internal
+     */
+    virtual int32_t internalGetMonth() const;
+
+    /**
+     * Use this function instead of internalGet(UCAL_MONTH, defaultValue). The implementation
+     * check the timestamp of UCAL_MONTH and UCAL_ORDINAL_MONTH and use the
+     * one set later. The subclass should override it to conver the value of UCAL_ORDINAL_MONTH
+     * to UCAL_MONTH correctly if UCAL_ORDINAL_MONTH has higher priority.
+     *
+     * @param defaultValue a default value used if the UCAL_MONTH and
+     *   UCAL_ORDINAL are both unset.
+     * @return       The value for the UCAL_MONTH.
+     * @internal
+     */
+    virtual int32_t internalGetMonth(int32_t defaultValue) const;
+
+#ifndef U_HIDE_DEPRECATED_API
     /**
      * Sets the value for a given time field.  This is a fast internal method for
      * subclasses.  It does not affect the areFieldsInSync, isTimeSet, or areAllFieldsSet
@@ -1312,6 +1587,7 @@ protected:
      * @deprecated ICU 2.6. Use internalSet(UCalendarDateFields field, int32_t value) instead.
      */
     void internalSet(EDateFields field, int32_t value);
+#endif  /* U_HIDE_DEPRECATED_API */
 
     /**
      * Sets the value for a given time field.  This is a fast internal method for
@@ -1337,11 +1613,13 @@ protected:
      * @internal
      */
     enum ELimitType {
+#ifndef U_HIDE_INTERNAL_API
       UCAL_LIMIT_MINIMUM = 0,
       UCAL_LIMIT_GREATEST_MINIMUM,
       UCAL_LIMIT_LEAST_MAXIMUM,
       UCAL_LIMIT_MAXIMUM,
       UCAL_LIMIT_COUNT
+#endif  /* U_HIDE_INTERNAL_API */
     };
 
     /**
@@ -1375,7 +1653,6 @@ protected:
      * @internal
      */
     virtual int32_t getLimit(UCalendarDateFields field, ELimitType limitType) const;
-
 
     /**
      * Return the Julian day number of day before the first day of the
@@ -1437,11 +1714,20 @@ protected:
      * (YEAR_WOY and WEEK_OF_YEAR) to an extended year in the case
      * where YEAR, EXTENDED_YEAR are not set.
      * The Calendar implementation assumes yearWoy is in extended gregorian form
-     * @internal
      * @return the extended year, UCAL_EXTENDED_YEAR
+     * @internal
      */
     virtual int32_t handleGetExtendedYearFromWeekFields(int32_t yearWoy, int32_t woy);
 
+    /**
+     * Validate a single field of this calendar.  Subclasses should
+     * override this method to validate any calendar-specific fields.
+     * Generic fields can be handled by `Calendar::validateField()`.
+     * @internal
+     */
+    virtual void validateField(UCalendarDateFields field, UErrorCode &status);
+
+#ifndef U_HIDE_INTERNAL_API
     /**
      * Compute the Julian day from fields.  Will determine whether to use
      * the JULIAN_DAY field directly, or other fields.
@@ -1457,7 +1743,7 @@ protected:
      * reflects local zone wall time.
      * @internal
      */
-    int32_t computeMillisInDay();
+    double computeMillisInDay();
 
     /**
      * This method can assume EXTENDED_YEAR has been set.
@@ -1468,7 +1754,7 @@ protected:
      *          when this function fails.
      * @internal
      */
-    int32_t computeZoneOffset(double millis, int32_t millisInDay, UErrorCode &ec);
+    int32_t computeZoneOffset(double millis, double millisInDay, UErrorCode &ec);
 
 
     /**
@@ -1482,16 +1768,22 @@ protected:
     int32_t newestStamp(UCalendarDateFields start, UCalendarDateFields end, int32_t bestSoFar) const;
 
     /**
-     * Values for field resolution tables
+     * Marker for end of resolve set (row or group). Value for field resolution tables.
+     *
      * @see #resolveFields
      * @internal
      */
-    enum {
-      /** Marker for end of resolve set (row or group). */
-      kResolveSTOP = -1,
-      /** Value to be bitwised "ORed" against resolve table field values for remapping.  Example: (UCAL_DATE | kResolveRemap) in 1st column will cause 'UCAL_DATE' to be returned, but will not examine the value of UCAL_DATE.  */
-      kResolveRemap = 32
-    };
+    static constexpr int32_t kResolveSTOP = -1;
+    /**
+     * Value to be bitwised "ORed" against resolve table field values for remapping.
+     * Example: (UCAL_DATE | kResolveRemap) in 1st column will cause 'UCAL_DATE' to be returned,
+     * but will not examine the value of UCAL_DATE.
+     * Value for field resolution tables.
+     *
+     * @see #resolveFields
+     * @internal
+     */
+    static constexpr int32_t kResolveRemap = 32;
 
     /**
      * Precedence table for Dates
@@ -1513,6 +1805,13 @@ protected:
      * @internal
      */
     static const UFieldResolutionTable kDOWPrecedence[];
+
+    /**
+     * Precedence table for Months
+     * @see #resolveFields
+     * @internal
+     */
+    static const UFieldResolutionTable kMonthPrecedence[];
 
     /**
      * Given a precedence table, return the newest field combination in
@@ -1541,7 +1840,8 @@ protected:
      * match, then UCAL_FIELD_COUNT is returned.
      * @internal
      */
-    UCalendarDateFields resolveFields(const UFieldResolutionTable *precedenceTable);
+    UCalendarDateFields resolveFields(const UFieldResolutionTable *precedenceTable) const;
+#endif  /* U_HIDE_INTERNAL_API */
 
 
     /**
@@ -1549,12 +1849,14 @@ protected:
      */
     virtual const UFieldResolutionTable* getFieldResolutionTable() const;
 
+#ifndef U_HIDE_INTERNAL_API
     /**
      * Return the field that is newer, either defaultField, or
      * alternateField.  If neither is newer or neither is set, return defaultField.
      * @internal
      */
     UCalendarDateFields newerField(UCalendarDateFields defaultField, UCalendarDateFields alternateField) const;
+#endif  /* U_HIDE_INTERNAL_API */
 
 
 private:
@@ -1564,7 +1866,7 @@ private:
      * @param startValue starting (least max) value of field
      * @param endValue ending (greatest max) value of field
      * @param status return type
-     * @internal
+     * @internal (private)
      */
     int32_t getActualHelper(UCalendarDateFields field, int32_t startValue, int32_t endValue, UErrorCode &status) const;
 
@@ -1627,11 +1929,13 @@ protected:
      */
     int32_t     fFields[UCAL_FIELD_COUNT];
 
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * The flags which tell if a specified time field for the calendar is set.
      * @deprecated ICU 2.8 use (fStamp[n]!=kUnset)
      */
     UBool      fIsSet[UCAL_FIELD_COUNT];
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 
     /** Special values of stamp[]
      * @stable ICU 2.0
@@ -1676,6 +1980,7 @@ protected:
      */
     virtual void handleComputeFields(int32_t julianDay, UErrorCode &status);
 
+#ifndef U_HIDE_INTERNAL_API
     /**
      * Return the extended year on the Gregorian calendar as computed by
      * <code>computeGregorianFields()</code>.
@@ -1711,22 +2016,25 @@ protected:
     int32_t getGregorianDayOfMonth() const {
       return fGregorianDayOfMonth;
     }
+#endif  /* U_HIDE_INTERNAL_API */
 
     /**
      * Called by computeJulianDay.  Returns the default month (0-based) for the year,
      * taking year and era into account.  Defaults to 0 for Gregorian, which doesn't care.
-     * @internal
+     * @param eyear The extended year
      * @internal
      */
-    virtual int32_t getDefaultMonthInYear() ;
+    virtual int32_t getDefaultMonthInYear(int32_t eyear) ;
 
 
     /**
      * Called by computeJulianDay.  Returns the default day (1-based) for the month,
      * taking currently-set year and era into account.  Defaults to 1 for Gregorian.
+     * @param eyear the extended year
+     * @param month the month in the year
      * @internal
      */
-    virtual int32_t getDefaultDayInMonth(int32_t /*month*/);
+    virtual int32_t getDefaultDayInMonth(int32_t eyear, int32_t month);
 
     //-------------------------------------------------------------------------
     // Protected utility methods for use by subclasses.  These are very handy
@@ -1810,6 +2118,7 @@ protected:
     int32_t weekNumber(int32_t desiredDay, int32_t dayOfPeriod, int32_t dayOfWeek);
 
 
+#ifndef U_HIDE_INTERNAL_API
     /**
      * Return the week number of a day, within a period. This may be the week number in
      * a year, or the week number in a month. Usually this will be a value >= 1, but if
@@ -1847,6 +2156,7 @@ protected:
      * @internal
      */
     int32_t getLocalDOW();
+#endif  /* U_HIDE_INTERNAL_API */
 
 private:
 
@@ -1854,6 +2164,12 @@ private:
      * The next available value for fStamp[]
      */
     int32_t fNextStamp;// = MINIMUM_USER_STAMP;
+
+    /**
+     * Recalculates the time stamp array (fStamp).
+     * Resets fNextStamp to lowest next stamp value.
+     */
+    void recalculateStamp();
 
     /**
      * The current time set for the calendar.
@@ -1867,9 +2183,21 @@ private:
 
     /**
      * Time zone affects the time calculation done by Calendar. Calendar subclasses use
-     * the time zone data to produce the local time.
+     * the time zone data to produce the local time. Always set; never nullptr.
      */
     TimeZone*   fZone;
+
+    /**
+     * Option for repeated wall time
+     * @see #setRepeatedWallTimeOption
+     */
+    UCalendarWallTimeOption fRepeatedWallTime;
+
+    /**
+     * Option for skipped wall time
+     * @see #setSkippedWallTimeOption
+     */
+    UCalendarWallTimeOption fSkippedWallTime;
 
     /**
      * Both firstDayOfWeek and minimalDaysInFirstWeek are locale-dependent. They are
@@ -1881,6 +2209,10 @@ private:
      */
     UCalendarDaysOfWeek fFirstDayOfWeek;
     uint8_t     fMinimalDaysInFirstWeek;
+    UCalendarDaysOfWeek fWeekendOnset;
+    int32_t fWeekendOnsetMillis;
+    UCalendarDaysOfWeek fWeekendCease;
+    int32_t fWeekendCeaseMillis;
 
     /**
      * Sets firstDayOfWeek and minimalDaysInFirstWeek. Called at Calendar construction
@@ -1892,7 +2224,7 @@ private:
      *                       the resource for the given locale. Returns U_ZERO_ERROR if
      *                       constructed successfully.
      */
-    void        setWeekCountData(const Locale& desiredLocale, const char *type, UErrorCode& success);
+    void        setWeekData(const Locale& desiredLocale, const char *type, UErrorCode& success);
 
     /**
      * Recompute the time and update the status fields isTimeSet
@@ -1943,7 +2275,7 @@ private:
      */
     void computeGregorianAndDOWFields(int32_t julianDay, UErrorCode &ec);
 
-	protected:
+protected:
 
     /**
      * Compute the Gregorian calendar year, month, and day of month from the
@@ -1951,13 +2283,10 @@ private:
      * variables gregorianXxx.  They are used for time zone computations and by
      * subclasses that are Gregorian derivatives.  Subclasses may call this
      * method to perform a Gregorian calendar millis->fields computation.
-     * To perform a Gregorian calendar fields->millis computation, call
-     * computeGregorianMonthStart().
-     * @see #computeGregorianMonthStart
      */
     void computeGregorianFields(int32_t julianDay, UErrorCode &ec);
 
-	private:
+private:
 
     /**
      * Compute the fields WEEK_OF_YEAR, YEAR_WOY, WEEK_OF_MONTH,
@@ -1988,19 +2317,8 @@ private:
      * should only be called if this calendar is not lenient.
      * @see #isLenient
      * @see #validateField(int, int&)
-     * @internal
      */
     void validateFields(UErrorCode &status);
-
-    /**
-     * Validate a single field of this calendar.  Subclasses should
-     * override this method to validate any calendar-specific fields.
-     * Generic fields can be handled by
-     * <code>Calendar.validateField()</code>.
-     * @see #validateField(int, int, int, int&)
-     * @internal
-     */
-    virtual void validateField(UCalendarDateFields field, UErrorCode &status);
 
     /**
      * Validate a single field of this calendar given its minimum and
@@ -2008,11 +2326,11 @@ private:
      * <code>U_ILLEGAL_ARGUMENT_ERROR</code> will be set.  Subclasses may
      * use this method in their implementation of {@link
      * #validateField(int, int&)}.
-     * @internal
      */
     void validateField(UCalendarDateFields field, int32_t min, int32_t max, UErrorCode& status);
 
  protected:
+#ifndef U_HIDE_INTERNAL_API
     /**
      * Convert a quasi Julian date to the day of the week. The Julian date used here is
      * not a true Julian date, since it is measured from midnight, not noon. Return
@@ -2023,6 +2341,7 @@ private:
      * @internal
      */
     static uint8_t julianDayToDayOfWeek(double julian);
+#endif  /* U_HIDE_INTERNAL_API */
 
  private:
     char validLocale[ULOC_FULLNAME_CAPACITY];
@@ -2034,6 +2353,7 @@ private:
      * INTERNAL FOR 2.6 --  Registration.
      */
 
+#ifndef U_HIDE_INTERNAL_API
     /**
      * Return a StringEnumeration over the locales available at the time of the call,
      * including registered locales.
@@ -2045,6 +2365,11 @@ private:
     /**
      * Register a new Calendar factory.  The factory will be adopted.
      * INTERNAL in 2.6
+     *
+     * Because ICU may choose to cache Calendars internally, this must
+     * be called at application startup, prior to any calls to
+     * Calendar::createInstance to avoid undefined behavior.
+     *
      * @param toAdopt the factory instance to be adopted
      * @param status the in/out status code, no special meanings are assigned
      * @return a registry key that can be used to unregister this factory
@@ -2057,12 +2382,18 @@ private:
      * register call.  Key becomes invalid after a successful call and should not be used again.
      * The CalendarFactory corresponding to the key will be deleted.
      * INTERNAL in 2.6
+     *
+     * Because ICU may choose to cache Calendars internally, this should
+     * be called during application shutdown, after all calls to
+     * Calendar::createInstance to avoid undefined behavior.
+     *
      * @param key the registry key returned by a previous call to registerFactory
      * @param status the in/out status code, no special meanings are assigned
-     * @return TRUE if the factory for the key was successfully unregistered
+     * @return true if the factory for the key was successfully unregistered
      * @internal
      */
     static UBool unregister(URegistryKey key, UErrorCode& status);
+#endif  /* U_HIDE_INTERNAL_API */
 
     /**
      * Multiple Calendar Implementation
@@ -2084,19 +2415,19 @@ private:
 #endif /* !UCONFIG_NO_SERVICE */
 
     /**
+     * @return true if this calendar has a default century (i.e. 03 -> 2003)
      * @internal
-     * @return TRUE if this calendar has a default century (i.e. 03 -> 2003)
      */
     virtual UBool haveDefaultCentury() const = 0;
 
     /**
-     * @internal
      * @return the start of the default century, as a UDate
+     * @internal
      */
     virtual UDate defaultCenturyStart() const = 0;
     /**
-     * @internal
      * @return the beginning year of the default century, as a year
+     * @internal
      */
     virtual int32_t defaultCenturyStartYear() const = 0;
 
@@ -2108,6 +2439,21 @@ private:
      */
     Locale getLocale(ULocDataLocaleType type, UErrorCode &status) const;
 
+    /**
+     * @return      The related Gregorian year; will be obtained by modifying the value
+     *              obtained by get from UCAL_EXTENDED_YEAR field
+     * @internal
+     */
+    virtual int32_t getRelatedYear(UErrorCode &status) const;
+
+    /**
+     * @param year  The related Gregorian year to set; will be modified as necessary then
+     *              set in UCAL_EXTENDED_YEAR field
+     * @internal
+     */
+    virtual void setRelatedYear(int32_t year);
+
+#ifndef U_HIDE_INTERNAL_API
     /** Get the locale for this calendar object. You can choose between valid and actual locale.
      *  @param type type of the locale we're looking for (valid or actual)
      *  @param status error code for the operation
@@ -2115,7 +2461,53 @@ private:
      *  @internal
      */
     const char* getLocaleID(ULocDataLocaleType type, UErrorCode &status) const;
+#endif  /* U_HIDE_INTERNAL_API */
 
+private:
+    /**
+     * Cast TimeZone used by this object to BasicTimeZone, or nullptr if the TimeZone
+     * is not an instance of BasicTimeZone.
+     */
+    BasicTimeZone* getBasicTimeZone() const;
+
+    /**
+     * Find the previous zone transition near the given time.
+     * @param base The base time, inclusive
+     * @param transitionTime Receives the result time
+     * @param status The error status
+     * @return true if a transition is found.
+     */
+    UBool getImmediatePreviousZoneTransition(UDate base, UDate *transitionTime, UErrorCode& status) const;
+
+public:
+#ifndef U_HIDE_INTERNAL_API
+    /**
+     * Creates a new Calendar from a Locale for the cache.
+     * This method does not set the time or timezone in returned calendar.
+     * @param locale the locale.
+     * @param status any error returned here.
+     * @return the new Calendar object with no time or timezone set.
+     * @internal For ICU use only.
+     */
+    static Calendar * U_EXPORT2 makeInstance(
+            const Locale &locale, UErrorCode &status);
+
+    /**
+     * Get the calendar type for given locale.
+     * @param locale the locale
+     * @param typeBuffer calendar type returned here
+     * @param typeBufferSize The size of typeBuffer in bytes. If the type
+     *   can't fit in the buffer, this method sets status to
+     *   U_BUFFER_OVERFLOW_ERROR
+     * @param status error, if any, returned here.
+     * @internal For ICU use only.
+     */
+    static void U_EXPORT2 getCalendarTypeFromLocale(
+            const Locale &locale,
+            char *typeBuffer,
+            int32_t typeBufferSize,
+            UErrorCode &status);
+#endif  /* U_HIDE_INTERNAL_API */
 };
 
 // -------------------------------------
@@ -2135,11 +2527,13 @@ Calendar::roll(UCalendarDateFields field, UBool up, UErrorCode& status)
     roll(field, (int32_t)(up ? +1 : -1), status);
 }
 
+#ifndef U_HIDE_DEPRECATED_API
 inline void
 Calendar::roll(EDateFields field, UBool up, UErrorCode& status)
 {
     roll((UCalendarDateFields) field, up, status);
 }
+#endif  /* U_HIDE_DEPRECATED_API */
 
 
 // -------------------------------------
@@ -2154,17 +2548,21 @@ Calendar::internalSet(UCalendarDateFields field, int32_t value)
 {
     fFields[field] = value;
     fStamp[field] = kInternallySet;
-    fIsSet[field]     = TRUE; // Remove later
+    fIsSet[field]     = true; // Remove later
 }
 
+
+#ifndef U_HIDE_INTERNAL_API
 inline int32_t  Calendar::weekNumber(int32_t dayOfPeriod, int32_t dayOfWeek)
 {
   return weekNumber(dayOfPeriod, dayOfPeriod, dayOfWeek);
 }
-
+#endif  /* U_HIDE_INTERNAL_API */
 
 U_NAMESPACE_END
 
 #endif /* #if !UCONFIG_NO_FORMATTING */
+
+#endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif // _CALENDAR

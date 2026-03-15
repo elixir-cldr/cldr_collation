@@ -1,7 +1,7 @@
-defmodule CldrCollation.MixProject do
+defmodule Cldr.Collation.MixProject do
   use Mix.Project
 
-  @version "0.7.5"
+  @version "1.0.0"
 
   def project do
     [
@@ -13,7 +13,7 @@ defmodule CldrCollation.MixProject do
       elixir: "~> 1.10",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
-      compilers: [:elixir_make] ++ Mix.compilers(),
+      compilers: maybe_elixir_make() ++ Mix.compilers(),
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       make_makefile: "c_src/Makefile",
@@ -28,7 +28,8 @@ defmodule CldrCollation.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :inets]
+      mod: {Cldr.Collation.Application, []},
+      extra_applications: [:logger]
     ]
   end
 
@@ -41,7 +42,9 @@ defmodule CldrCollation.MixProject do
 
   defp deps do
     [
-      {:elixir_make, "~> 0.4", runtime: false},
+      {:unicode, "~> 1.21"},
+      {:elixir_make, "~> 0.4", runtime: false, optional: true},
+      {:benchee, "~> 1.0", only: :dev, runtime: false},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false, optional: true},
       {:dialyxir, "~> 1.4", only: [:dev], runtime: false}
     ]
@@ -87,7 +90,18 @@ defmodule CldrCollation.MixProject do
     ]
   end
 
+  # Only add the :elixir_make compiler when the NIF build is opted-in
+  # via the CLDR_COLLATION_NIF=true environment variable.
+  defp maybe_elixir_make do
+    if System.get_env("CLDR_COLLATION_NIF") == "true" do
+      [:elixir_make]
+    else
+      []
+    end
+  end
+
   defp elixirc_paths(:test), do: ["lib", "mix", "c_src", "test"]
   defp elixirc_paths(:dev), do: ["lib", "mix", "c_src"]
   defp elixirc_paths(_), do: ["lib", "c_src"]
+
 end

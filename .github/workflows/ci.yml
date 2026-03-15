@@ -25,8 +25,19 @@ jobs:
       # Specify the OTP and Elixir versions to use when building
       # and running the workflow steps.
       matrix:
-        otp: ['26.2.5.1']       # Define the OTP version [required]
-        elixir: ['1.16.2']    # Define the elixir version [required]
+        include:
+          # minimum required versions
+          - otp: "27.2.4"
+            elixir: "1.18.4-otp-27"
+          - otp: "28.3.1"
+            elixir: "1.18.4-otp-28"
+          - otp: "27.2.4"
+            elixir: "1.19.5-otp-27"
+          - otp: "28.3.1"
+            elixir: "1.19.5-otp-28"
+          - otp: "28.3.1"
+            elixir: "1.20.0-rc.1-otp-28"
+            lint: true
     steps:
     # Step: Setup Elixir + Erlang image as the base.
     - name: Set up Elixir
@@ -82,7 +93,12 @@ jobs:
     # - name: Check Formatting
     #   run: mix format --check-formatted
 
-    # Step: Execute the tests.
-    - name: Run tests
+    # Step: Execute the tests without the NIF
+    - name: Run tests without NIF
       run: mix test
 
+    # Step: Execute the test with the NIF
+    - name: Run tests with NIF
+      env:
+        CLDR_COLLATION_NIF: true
+      run: mix test

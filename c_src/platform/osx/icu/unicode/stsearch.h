@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 **********************************************************************
-*   Copyright (C) 2001-2008 IBM and others. All rights reserved.
+*   Copyright (C) 2001-2014 IBM and others. All rights reserved.
 **********************************************************************
 *   Date        Name        Description
 *  03/22/2000   helena      Creation.
@@ -11,6 +13,8 @@
 #define STSEARCH_H
 
 #include "unicode/utypes.h"
+
+#if U_SHOW_CPLUSPLUS_API
 
 /**
  * \file 
@@ -30,85 +34,79 @@ U_NAMESPACE_BEGIN
  * <tt>StringSearch</tt> is a <tt>SearchIterator</tt> that provides
  * language-sensitive text searching based on the comparison rules defined
  * in a {@link RuleBasedCollator} object.
- * StringSearch ensures that language eccentricity can be 
- * handled, e.g. for the German collator, characters &szlig; and SS will be matched 
+ * StringSearch ensures that language eccentricity can be
+ * handled, e.g. for the German collator, characters &szlig; and SS will be matched
  * if case is chosen to be ignored.
- * See the <a href="http://source.icu-project.org/repos/icu/icuhtml/trunk/design/collation/ICU_collation_design.htm">
+ * See the <a href="https://htmlpreview.github.io/?https://github.com/unicode-org/icu-docs/blob/main/design/collation/ICU_collation_design.htm">
  * "ICU Collation Design Document"</a> for more information.
- * <p> 
- * The algorithm implemented is a modified form of the Boyer Moore's search.
- * For more information  see 
- * <a href="http://icu-project.org/docs/papers/efficient_text_searching_in_java.html">
- * "Efficient Text Searching in Java"</a>, published in <i>Java Report</i> 
- * in February, 1999, for further information on the algorithm.
  * <p>
  * There are 2 match options for selection:<br>
- * Let S' be the sub-string of a text string S between the offsets start and 
- * end <start, end>.
+ * Let S' be the sub-string of a text string S between the offsets start and
+ * end [start, end].
  * <br>
- * A pattern string P matches a text string S at the offsets <start, end> 
+ * A pattern string P matches a text string S at the offsets [start, end]
  * if
  * <pre> 
- * option 1. Some canonical equivalent of P matches some canonical equivalent 
+ * option 1. Some canonical equivalent of P matches some canonical equivalent
  *           of S'
- * option 2. P matches S' and if P starts or ends with a combining mark, 
- *           there exists no non-ignorable combining mark before or after S? 
- *           in S respectively. 
+ * option 2. P matches S' and if P starts or ends with a combining mark,
+ *           there exists no non-ignorable combining mark before or after S?
+ *           in S respectively.
  * </pre>
  * Option 2. will be the default.
  * <p>
  * This search has APIs similar to that of other text iteration mechanisms 
  * such as the break iterators in <tt>BreakIterator</tt>. Using these 
- * APIs, it is easy to scan through text looking for all occurances of 
+ * APIs, it is easy to scan through text looking for all occurrences of 
  * a given pattern. This search iterator allows changing of direction by 
- * calling a <tt>reset</tt> followed by a <tt>next</tt> or <tt>previous</tt>. 
- * Though a direction change can occur without calling <tt>reset</tt> first,  
+ * calling a <tt>reset</tt> followed by a <tt>next</tt> or <tt>previous</tt>.
+ * Though a direction change can occur without calling <tt>reset</tt> first,
  * this operation comes with some speed penalty.
- * Match results in the forward direction will match the result matches in 
+ * Match results in the forward direction will match the result matches in
  * the backwards direction in the reverse order
  * <p>
- * <tt>SearchIterator</tt> provides APIs to specify the starting position 
+ * <tt>SearchIterator</tt> provides APIs to specify the starting position
  * within the text string to be searched, e.g. <tt>setOffset</tt>,
- * <tt>preceding</tt> and <tt>following</tt>. Since the 
- * starting position will be set as it is specified, please take note that 
- * there are some danger points which the search may render incorrect 
+ * <tt>preceding</tt> and <tt>following</tt>. Since the
+ * starting position will be set as it is specified, please take note that
+ * there are some danger points which the search may render incorrect
  * results:
  * <ul>
  * <li> The midst of a substring that requires normalization.
  * <li> If the following match is to be found, the position should not be the
- *      second character which requires to be swapped with the preceding 
- *      character. Vice versa, if the preceding match is to be found, 
- *      position to search from should not be the first character which 
+ *      second character which requires to be swapped with the preceding
+ *      character. Vice versa, if the preceding match is to be found,
+ *      position to search from should not be the first character which
  *      requires to be swapped with the next character. E.g certain Thai and
  *      Lao characters require swapping.
- * <li> If a following pattern match is to be found, any position within a 
- *      contracting sequence except the first will fail. Vice versa if a 
- *      preceding pattern match is to be found, a invalid starting point 
+ * <li> If a following pattern match is to be found, any position within a
+ *      contracting sequence except the first will fail. Vice versa if a
+ *      preceding pattern match is to be found, a invalid starting point
  *      would be any character within a contracting sequence except the last.
  * </ul>
  * <p>
- * A breakiterator can be used if only matches at logical breaks are desired.
- * Using a breakiterator will only give you results that exactly matches the
+ * A <tt>BreakIterator</tt> can be used if only matches at logical breaks are desired.
+ * Using a <tt>BreakIterator</tt> will only give you results that exactly matches the
  * boundaries given by the breakiterator. For instance the pattern "e" will
  * not be found in the string "\u00e9" if a character break iterator is used.
  * <p>
- * Options are provided to handle overlapping matches. 
- * E.g. In English, overlapping matches produces the result 0 and 2 
- * for the pattern "abab" in the text "ababab", where else mutually 
+ * Options are provided to handle overlapping matches.
+ * E.g. In English, overlapping matches produces the result 0 and 2
+ * for the pattern "abab" in the text "ababab", where else mutually
  * exclusive matches only produce the result of 0.
  * <p>
- * Though collator attributes will be taken into consideration while 
- * performing matches, there are no APIs here for setting and getting the 
+ * Though collator attributes will be taken into consideration while
+ * performing matches, there are no APIs here for setting and getting the
  * attributes. These attributes can be set by getting the collator
  * from <tt>getCollator</tt> and using the APIs in <tt>coll.h</tt>.
- * Lastly to update StringSearch to the new collator attributes, 
- * reset() has to be called.
+ * Lastly to update <tt>StringSearch</tt> to the new collator attributes,
+ * <tt>reset</tt> has to be called.
  * <p> 
  * Restriction: <br>
  * Currently there are no composite characters that consists of a
- * character with combining class > 0 before a character with combining 
- * class == 0. However, if such a character exists in the future,  
- * StringSearch does not guarantee the results for option 1.
+ * character with combining class > 0 before a character with combining
+ * class == 0. However, if such a character exists in the future,
+ * <tt>StringSearch</tt> does not guarantee the results for option 1.
  * <p>
  * Consult the <tt>SearchIterator</tt> documentation for information on
  * and examples of how to use instances of this class to implement text
@@ -118,24 +116,23 @@ U_NAMESPACE_BEGIN
  * UnicodeString pattern("fox");
  *
  * UErrorCode      error = U_ZERO_ERROR;
- * StringSearch iter(pattern, target, Locale::getUS(), NULL, status);
+ * StringSearch iter(pattern, target, Locale::getUS(), nullptr, status);
  * for (int pos = iter.first(error);
  *      pos != USEARCH_DONE; 
  *      pos = iter.next(error))
  * {
- *     printf("Found match at %d pos, length is %d\n", pos, 
- *                                             iter.getMatchLength());
+ *     printf("Found match at %d pos, length is %d\n", pos, iter.getMatchedLength());
  * }
  * </code></pre>
  * <p>
- * Note, StringSearch is not to be subclassed.
+ * Note, <tt>StringSearch</tt> is not to be subclassed.
  * </p>
  * @see SearchIterator
  * @see RuleBasedCollator
  * @since ICU 2.0
  */
 
-class U_I18N_API StringSearch : public SearchIterator
+class U_I18N_API StringSearch final : public SearchIterator
 {
 public:
 
@@ -156,8 +153,8 @@ public:
      *                indices in the target text are not boundaries as 
      *                determined by the <tt>BreakIterator</tt> are 
      *                ignored. If this behavior is not desired, 
-     *                <tt>NULL</tt> can be passed in instead.
-     * @param status  for errors if any. If pattern or text is NULL, or if
+     *                <tt>nullptr</tt> can be passed in instead.
+     * @param status  for errors if any. If pattern or text is nullptr, or if
      *               either the length of pattern or text is 0 then an 
      *               U_ILLEGAL_ARGUMENT_ERROR is returned.
      * @stable ICU 2.0
@@ -183,7 +180,7 @@ public:
      *                indices in the target text are not boundaries as 
      *                determined by the <tt>BreakIterator</tt> are 
      *                ignored. If this behavior is not desired, 
-     *                <tt>NULL</tt> can be passed in instead.
+     *                <tt>nullptr</tt> can be passed in instead.
      * @param status for errors if any. If either the length of pattern or 
      *               text is 0 then an U_ILLEGAL_ARGUMENT_ERROR is returned.
      * @stable ICU 2.0
@@ -214,7 +211,7 @@ public:
      *                indices in the target text are not boundaries as 
      *                determined by the <tt>BreakIterator</tt> are 
      *                ignored. If this behavior is not desired, 
-     *                <tt>NULL</tt> can be passed in instead.
+     *                <tt>nullptr</tt> can be passed in instead.
      * @param status for errors if any. If either the length of pattern or 
      *               text is 0 then an U_ILLEGAL_ARGUMENT_ERROR is returned.
      * @stable ICU 2.0
@@ -244,7 +241,7 @@ public:
      *                indices in the target text are not boundaries as 
      *                determined by the <tt>BreakIterator</tt> are 
      *                ignored. If this behavior is not desired, 
-     *                <tt>NULL</tt> can be passed in instead.
+     *                <tt>nullptr</tt> can be passed in instead.
      * @param status for errors if any. If either the length of pattern or 
      *               text is 0 then an U_ILLEGAL_ARGUMENT_ERROR is returned.
      * @stable ICU 2.0
@@ -272,7 +269,7 @@ public:
     /**
      * Clone this object.
      * Clones can be used concurrently in multiple threads.
-     * If an error occurs, then NULL is returned.
+     * If an error occurs, then nullptr is returned.
      * The caller must delete the clone.
      *
      * @return a clone of this object
@@ -295,12 +292,12 @@ public:
     /**
      * Equality operator. 
      * @param that instance to be compared.
-     * @return TRUE if both instances have the same attributes, 
+     * @return true if both instances have the same attributes, 
      *         breakiterators, collators and iterate over the same text 
      *         while looking for the same pattern.
      * @stable ICU 2.0
      */
-    virtual UBool operator==(const SearchIterator &that) const;
+    virtual bool operator==(const SearchIterator &that) const override;
 
     // public get and set methods ----------------------------------------
 
@@ -317,7 +314,7 @@ public:
      * @param status for errors if it occurs
      * @stable ICU 2.0
      */
-    virtual void setOffset(int32_t position, UErrorCode &status);
+    virtual void setOffset(int32_t position, UErrorCode &status) override;
 
     /**
      * Return the current index in the text being searched.
@@ -327,7 +324,7 @@ public:
      * @return current index in the text being searched.
      * @stable ICU 2.0
      */
-    virtual int32_t getOffset(void) const;
+    virtual int32_t getOffset(void) const override;
 
     /**
      * Set the target text to be searched.
@@ -340,7 +337,7 @@ public:
      *        U_ILLEGAL_ARGUMENT_ERROR is returned.
      * @stable ICU 2.0
      */
-    virtual void setText(const UnicodeString &text, UErrorCode &status);
+    virtual void setText(const UnicodeString &text, UErrorCode &status) override;
     
     /**
      * Set the target text to be searched.
@@ -356,7 +353,7 @@ public:
      *        U_ILLEGAL_ARGUMENT_ERROR is returned.
      * @stable ICU 2.0
      */
-    virtual void setText(CharacterIterator &text, UErrorCode &status);
+    virtual void setText(CharacterIterator &text, UErrorCode &status) override;
 
     /**
      * Gets the collator used for the language rules.
@@ -372,9 +369,7 @@ public:
     /**
      * Sets the collator used for the language rules. User retains the 
      * ownership of this collator, thus the responsibility of deletion lies 
-     * with the user. This method causes internal data such as Boyer-Moore 
-     * shift tables to be recalculated, but the iterator's position is 
-     * unchanged.
+     * with the user. The iterator's position will not be changed by this method.
      * @param coll    collator 
      * @param status  for errors if any
      * @stable ICU 2.0
@@ -383,8 +378,7 @@ public:
     
     /**
      * Sets the pattern used for matching.
-     * Internal data like the Boyer Moore table will be recalculated, but 
-     * the iterator's position is unchanged.
+     * The iterator's position will not be changed by this method.
      * @param pattern search pattern to be found
      * @param status for errors if any. If the pattern length is 0 then an 
      *               U_ILLEGAL_ARGUMENT_ERROR is returned.
@@ -409,7 +403,7 @@ public:
      * search will begin at the end of the text string.
      * @stable ICU 2.0
      */
-    virtual void reset();
+    virtual void reset() override;
 
     /**
      * Returns a copy of StringSearch with the same behavior, and 
@@ -419,14 +413,14 @@ public:
      * @return cloned object
      * @stable ICU 2.0
      */
-    virtual SearchIterator * safeClone(void) const;
+    virtual StringSearch * safeClone() const override;
     
     /**
      * ICU "poor man's RTTI", returns a UClassID for the actual class.
      *
      * @stable ICU 2.2
      */
-    virtual UClassID getDynamicClassID() const;
+    virtual UClassID getDynamicClassID() const override;
 
     /**
      * ICU "poor man's RTTI", returns a UClassID for this class.
@@ -461,7 +455,7 @@ protected:
      *         USEARCH_DONE if no match was found.
      * @stable ICU 2.0
      */
-    virtual int32_t handleNext(int32_t position, UErrorCode &status);
+    virtual int32_t handleNext(int32_t position, UErrorCode &status) override;
 
     /**
      * Search backward for matching text, starting at a given location.
@@ -485,18 +479,13 @@ protected:
      *         USEARCH_DONE if no match was found.
      * @stable ICU 2.0
      */
-    virtual int32_t handlePrev(int32_t position, UErrorCode &status);
+    virtual int32_t handlePrev(int32_t position, UErrorCode &status) override;
     
 private :
-    StringSearch(); // default constructor not implemented
+    StringSearch() = delete; // default constructor not implemented
 
     // private data members ----------------------------------------------
 
-    /**
-    * RuleBasedCollator, contains exactly the same UCollator * in m_strsrch_
-    * @stable ICU 2.0
-    */
-    RuleBasedCollator  m_collator_;
     /**
     * Pattern text
     * @stable ICU 2.0
@@ -513,6 +502,8 @@ private :
 U_NAMESPACE_END
 
 #endif /* #if !UCONFIG_NO_COLLATION */
+
+#endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif
 

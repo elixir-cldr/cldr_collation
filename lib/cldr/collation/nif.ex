@@ -46,14 +46,14 @@ defmodule Cldr.Collation.Nif do
   # ICU UScriptCode values (from uscript.h) and UColReorderCode values (from ucol.h)
   @script_codes %{
     # Special reorder codes (UColReorderCode)
-    :space =>  0x1000,
-    :punct =>  0x1001,
-    :punctuation =>  0x1001,
-    :symbol =>  0x1002,
-    :currency =>  0x1003,
-    :digit =>  0x1004,
-    :others =>  0,
-    :Zzzz =>  0,
+    :space => 0x1000,
+    :punct => 0x1001,
+    :punctuation => 0x1001,
+    :symbol => 0x1002,
+    :currency => 0x1003,
+    :digit => 0x1004,
+    :others => 0,
+    :Zzzz => 0,
 
     # Common script codes (UScriptCode)
     :Arab => 2,
@@ -122,9 +122,16 @@ defmodule Cldr.Collation.Nif do
       # If NIF is loaded, cmp/10 will be replaced by the native implementation.
       # Calling with empty strings and all defaults is a lightweight probe.
       cmp(
-        "", "",
-        @opt_default, @opt_default, @opt_default, @opt_default,
-        @opt_default, @opt_default, @opt_default, <<>>
+        "",
+        "",
+        @opt_default,
+        @opt_default,
+        @opt_default,
+        @opt_default,
+        @opt_default,
+        @opt_default,
+        @opt_default,
+        <<>>
       )
 
       {:ok, true}
@@ -153,13 +160,20 @@ defmodule Cldr.Collation.Nif do
   """
   @spec nif_compare(String.t(), String.t(), Options.t()) :: :lt | :eq | :gt
   def nif_compare(string_a, string_b, %Options{} = options) do
-    {strength, backwards, alternate, case_first, case_level, normalization, numeric,
-     reorder_bin} = options_to_nif_args(options)
+    {strength, backwards, alternate, case_first, case_level, normalization, numeric, reorder_bin} =
+      options_to_nif_args(options)
 
     case cmp(
-           string_a, string_b,
-           strength, backwards, alternate, case_first,
-           case_level, normalization, numeric, reorder_bin
+           string_a,
+           string_b,
+           strength,
+           backwards,
+           alternate,
+           case_first,
+           case_level,
+           normalization,
+           numeric,
+           reorder_bin
          ) do
       1 -> :gt
       0 -> :eq
@@ -243,7 +257,18 @@ defmodule Cldr.Collation.Nif do
 
   @dialyzer {:no_return, cmp: 10}
   @doc false
-  def cmp(_a, _b, _strength, _backwards, _alternate, _case_first, _case_level, _normalization, _numeric, _reorder_bin) do
+  def cmp(
+        _a,
+        _b,
+        _strength,
+        _backwards,
+        _alternate,
+        _case_first,
+        _case_level,
+        _normalization,
+        _numeric,
+        _reorder_bin
+      ) do
     :erlang.nif_error(:nif_library_not_loaded)
   end
 end

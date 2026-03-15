@@ -31,7 +31,7 @@ defmodule Cldr.Collation.Numeric do
 
   ### Examples
 
-      iex> pairs = [{[0x31], [%Cldr.Collation.Element{primary: 0x21E7}]}, {[0x30], [%Cldr.Collation.Element{primary: 0x21E6}]}]
+      iex> pairs = [{[0x31], [{0x21E7, 0x0020, 0x0002, false}]}, {[0x30], [{0x21E6, 0x0020, 0x0002, false}]}]
       iex> result = Cldr.Collation.Numeric.process_elements(pairs)
       iex> length(result)
       3
@@ -135,19 +135,11 @@ defmodule Cldr.Collation.Numeric do
     # Primary weight of DIGIT ZERO in allkeys_CLDR.txt
     digit_base = 0x21E6
 
-    length_ce = %Element{
-      primary: digit_base + len,
-      secondary: 0x0020,
-      tertiary: 0x0002
-    }
+    length_ce = Element.new(digit_base + len, 0x0020, 0x0002)
 
     digit_ces =
       Enum.map(digits, fn d ->
-        %Element{
-          primary: digit_base + d,
-          secondary: 0x0020,
-          tertiary: 0x0002
-        }
+        Element.new(digit_base + d, 0x0020, 0x0002)
       end)
 
     [length_ce | digit_ces]

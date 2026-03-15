@@ -154,7 +154,7 @@ defmodule Cldr.Collation.Han do
   ### Examples
 
       iex> elements = Cldr.Collation.Han.key_to_elements(0)
-      iex> hd(elements).primary
+      iex> Cldr.Collation.Element.primary(hd(elements))
       0xFB40
 
   """
@@ -167,8 +167,8 @@ defmodule Cldr.Collation.Han do
     low = key &&& 0xFFFF
 
     [
-      %Element{primary: 0xFB40 + (high >>> 16), secondary: 0x0020, tertiary: 0x0002},
-      %Element{primary: low ||| 0x8000, secondary: 0x0000, tertiary: 0x0000}
+      Element.new(0xFB40 + (high >>> 16), 0x0020, 0x0002),
+      Element.new(low ||| 0x8000, 0x0000, 0x0000)
     ]
   end
 

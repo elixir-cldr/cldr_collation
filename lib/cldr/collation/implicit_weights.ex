@@ -165,9 +165,9 @@ defmodule Cldr.Collation.ImplicitWeights do
   ### Examples
 
       iex> [ce1, ce2] = Cldr.Collation.ImplicitWeights.compute(0x4E00)
-      iex> ce1.primary >= 0xFB40
+      iex> Cldr.Collation.Element.primary(ce1) >= 0xFB40
       true
-      iex> ce2.secondary
+      iex> Cldr.Collation.Element.secondary(ce2)
       0
 
   """
@@ -259,8 +259,8 @@ defmodule Cldr.Collation.ImplicitWeights do
     bbbb = (cp &&& 0x7FFF) ||| 0x8000
 
     [
-      %Element{primary: aaaa, secondary: 0x0020, tertiary: 0x0002},
-      %Element{primary: bbbb, secondary: 0x0000, tertiary: 0x0000}
+      Element.new(aaaa, 0x0020, 0x0002),
+      Element.new(bbbb, 0x0000, 0x0000)
     ]
   end
 end

@@ -18,6 +18,7 @@ defmodule Cldr.Collation.Tailoring do
   """
 
   alias Cldr.Collation.{Element, Table}
+  alias Cldr.Collation.Table.Parser
 
   # Embedded CLDR tailoring rules per {language, collation_type}.
   # Source: unicode-org/cldr/common/collation/*.xml (CLDR 46)
@@ -265,7 +266,8 @@ defmodule Cldr.Collation.Tailoring do
             case state do
               {:after, anchor_elements} ->
                 new_elements = compute_tailored_elements(anchor_elements, level)
-                new_overlay = Map.put(overlay, cps, new_elements)
+                key = Parser.codepoints_to_key(cps)
+                new_overlay = Map.put(overlay, key, new_elements)
                 {new_overlay, {:after, new_elements}}
 
               nil ->
@@ -289,9 +291,9 @@ defmodule Cldr.Collation.Tailoring do
 
       :unmapped ->
         Enum.flat_map(cps, fn cp ->
-          case Table.lookup([cp]) do
+          case Table.lookup(cp) do
             {:ok, elems} -> elems
-            :unmapped -> [%Element{primary: 0, secondary: 0x0020, tertiary: 0x0002}]
+            :unmapped -> [Element.new(0, 0x0020, 0x0002)]
           end
         end)
     end
@@ -300,13 +302,13 @@ defmodule Cldr.Collation.Tailoring do
   # Adjust elements for [before N] — decrement at the appropriate level
   # on the LAST CE's weight at level N
   defp adjust_before(elements, level) do
-    {init, [last]} = Enum.split(elements, -1)
+    {init, [{p, s, t, v}]} = Enum.split(elements, -1)
 
     adjusted =
       case level do
-        1 -> %{last | primary: last.primary - 1}
-        2 -> %{last | secondary: last.secondary - 1}
-        3 -> %{last | tertiary: last.tertiary - 1}
+        1 -> {p - 1, s, t, v}
+        2 -> {p, s - 1, t, v}
+        3 -> {p, s, t - 1, v}
       end
 
     init ++ [adjusted]
@@ -315,17 +317,17 @@ defmodule Cldr.Collation.Tailoring do
   # Compute tailored elements by incrementing at the appropriate level
   # on the last CE in the list. This preserves multi-CE structure for expansions.
   defp compute_tailored_elements(anchor_elements, :primary) do
-    {init, [last]} = Enum.split(anchor_elements, -1)
-    init ++ [%{last | primary: last.primary + 1, secondary: 0x0020, tertiary: 0x0002}]
+    {init, [{p, _s, _t, v}]} = Enum.split(anchor_elements, -1)
+    init ++ [{p + 1, 0x0020, 0x0002, v}]
   end
 
   defp compute_tailored_elements(anchor_elements, :secondary) do
-    {init, [last]} = Enum.split(anchor_elements, -1)
-    init ++ [%{last | secondary: last.secondary + 1, tertiary: 0x0002}]
+    {init, [{p, s, _t, v}]} = Enum.split(anchor_elements, -1)
+    init ++ [{p, s + 1, 0x0002, v}]
   end
 
   defp compute_tailored_elements(anchor_elements, :tertiary) do
-    {init, [last]} = Enum.split(anchor_elements, -1)
-    init ++ [%{last | tertiary: last.tertiary + 1}]
+    {init, [{p, s, t, v}]} = Enum.split(anchor_elements, -1)
+    init ++ [{p, s, t + 1, v}]
   end
 end

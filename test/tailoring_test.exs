@@ -78,10 +78,10 @@ defmodule Cldr.Collation.TailoringTest do
       {overlay, opts} = Cldr.Collation.Tailoring.get_tailoring("de", :phonebook)
       assert is_map(overlay)
       assert opts == []
-      # Should have entries for ä, ö, ü, Ä, Ö, Ü
-      assert Map.has_key?(overlay, [?ä])
-      assert Map.has_key?(overlay, [?ö])
-      assert Map.has_key?(overlay, [?ü])
+      # Should have entries for ä, ö, ü (keys are now bare integers)
+      assert Map.has_key?(overlay, ?ä)
+      assert Map.has_key?(overlay, ?ö)
+      assert Map.has_key?(overlay, ?ü)
     end
 
     test "returns nil for unsupported locale" do

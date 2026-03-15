@@ -18,13 +18,13 @@ defmodule Cldr.Collation.Variable do
 
   ### Arguments
 
-  * `elements` - a list of `%Cldr.Collation.Element{}` structs
+  * `elements` - a list of collation element tuples
   * `alternate` - the variable handling mode: `:non_ignorable` or `:shifted`
   * `max_variable_primary` - the maximum primary weight for variable elements
 
   ### Returns
 
-  A list of `{%Cldr.Collation.Element{}, quaternary_weight}` tuples.
+  A list of `{element, quaternary_weight}` tuples.
 
   For `:non_ignorable`, quaternary is always `0`.
   For `:shifted`:
@@ -35,9 +35,9 @@ defmodule Cldr.Collation.Variable do
 
   ### Examples
 
-      iex> elems = [%Cldr.Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0002}]
+      iex> elems = [{0x23EC, 0x0020, 0x0002, false}]
       iex> [{elem, q}] = Cldr.Collation.Variable.process(elems, :non_ignorable, 0x0B61)
-      iex> {elem.primary, q}
+      iex> {Cldr.Collation.Element.primary(elem), q}
       {0x23EC, 0}
 
   """
@@ -51,17 +51,17 @@ defmodule Cldr.Collation.Variable do
         cond do
           # Variable element: zero out L1/L2/L3, set L4 to original L1
           Element.variable?(elem, max_variable_primary) ->
-            shifted = %Element{primary: 0, secondary: 0, tertiary: 0}
-            {[{shifted, elem.primary} | acc], true}
+            shifted = Element.new(0, 0, 0)
+            {[{shifted, Element.primary(elem)} | acc], true}
 
           # Ignorable CE after variable: zero all weights, L4 = 0
           after_variable and Element.primary_ignorable?(elem) ->
-            zeroed = %Element{primary: 0, secondary: 0, tertiary: 0}
+            zeroed = Element.new(0, 0, 0)
             {[{zeroed, 0} | acc], true}
 
           # Regular CE: L4 = 0xFFFF if primary > 0, else L4 = 0
           true ->
-            l4 = if elem.primary > 0, do: 0xFFFF, else: 0
+            l4 = if Element.primary(elem) > 0, do: 0xFFFF, else: 0
             {[{elem, l4} | acc], false}
         end
       end)

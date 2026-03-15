@@ -102,7 +102,9 @@ defmodule Cldr.Collation.Options do
   defp resolve_ignore_accents(options) do
     case Keyword.pop(options, :ignore_accents) do
       {true, options} ->
-        if Keyword.has_key?(options, :strength), do: options, else: Keyword.put(options, :strength, :primary)
+        if Keyword.has_key?(options, :strength),
+          do: options,
+          else: Keyword.put(options, :strength, :primary)
 
       {_, options} ->
         options
@@ -114,7 +116,9 @@ defmodule Cldr.Collation.Options do
   defp resolve_ignore_case(options) do
     case Keyword.pop(options, :ignore_case) do
       {true, options} ->
-        if Keyword.has_key?(options, :strength), do: options, else: Keyword.put(options, :strength, :secondary)
+        if Keyword.has_key?(options, :strength),
+          do: options,
+          else: Keyword.put(options, :strength, :secondary)
 
       {_, options} ->
         options
@@ -128,10 +132,14 @@ defmodule Cldr.Collation.Options do
       {true, options} ->
         options
         |> then(fn opts ->
-          if Keyword.has_key?(opts, :strength), do: opts, else: Keyword.put(opts, :strength, :tertiary)
+          if Keyword.has_key?(opts, :strength),
+            do: opts,
+            else: Keyword.put(opts, :strength, :tertiary)
         end)
         |> then(fn opts ->
-          if Keyword.has_key?(opts, :alternate), do: opts, else: Keyword.put(opts, :alternate, :shifted)
+          if Keyword.has_key?(opts, :alternate),
+            do: opts,
+            else: Keyword.put(opts, :alternate, :shifted)
         end)
 
       {_, options} ->

@@ -11,7 +11,7 @@ defmodule Cldr.Collation.SortKey do
 
   import Bitwise
 
-  alias Cldr.Collation.Options
+  alias Cldr.Collation.{Element, Options}
 
   @level_separator <<0x00, 0x00>>
 
@@ -23,7 +23,7 @@ defmodule Cldr.Collation.SortKey do
 
   ### Arguments
 
-  * `processed_elements` - a list of `{%Cldr.Collation.Element{}, quaternary}` tuples as returned by `Cldr.Collation.Variable.process/3`
+  * `processed_elements` - a list of `{element, quaternary}` tuples as returned by `Cldr.Collation.Variable.process/3`
   * `options` - a `%Cldr.Collation.Options{}` struct controlling which levels to include
   * `original_string` - the original input string, used for the identical level (default: `nil`)
 
@@ -34,7 +34,7 @@ defmodule Cldr.Collation.SortKey do
 
   ### Examples
 
-      iex> elements = [{%Cldr.Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0008}, 0}]
+      iex> elements = [{{0x23EC, 0x0020, 0x0008, false}, 0}]
       iex> options = Cldr.Collation.Options.new(strength: :primary)
       iex> Cldr.Collation.SortKey.build(elements, options)
       <<0x23, 0xEC>>
@@ -94,8 +94,10 @@ defmodule Cldr.Collation.SortKey do
   defp build_primary(elements) do
     elements
     |> Enum.reduce(<<>>, fn {elem, _q}, acc ->
-      if elem.primary > 0 do
-        acc <> <<elem.primary::16>>
+      p = Element.primary(elem)
+
+      if p > 0 do
+        acc <> <<p::16>>
       else
         acc
       end
@@ -106,8 +108,10 @@ defmodule Cldr.Collation.SortKey do
     weights =
       elements
       |> Enum.reduce([], fn {elem, _q}, acc ->
-        if elem.secondary > 0 do
-          [elem.secondary | acc]
+        s = Element.secondary(elem)
+
+        if s > 0 do
+          [s | acc]
         else
           acc
         end
@@ -128,7 +132,7 @@ defmodule Cldr.Collation.SortKey do
   defp build_tertiary(elements, options) do
     elements
     |> Enum.reduce(<<>>, fn {elem, _q}, acc ->
-      t = apply_case_first(elem.tertiary, options.case_first)
+      t = apply_case_first(Element.tertiary(elem), options.case_first)
 
       if t > 0 do
         acc <> <<t::16>>
@@ -143,8 +147,8 @@ defmodule Cldr.Collation.SortKey do
     # Upper case = tertiary & 0x08 (bit 3 set)
     elements
     |> Enum.reduce(<<>>, fn {elem, _q}, acc ->
-      if elem.primary > 0 do
-        case_bit = if (elem.tertiary &&& 0x08) != 0, do: 1, else: 0
+      if Element.primary(elem) > 0 do
+        case_bit = if (Element.tertiary(elem) &&& 0x08) != 0, do: 1, else: 0
         acc <> <<case_bit::16>>
       else
         acc

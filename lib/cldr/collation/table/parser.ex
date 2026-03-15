@@ -22,7 +22,7 @@ defmodule Cldr.Collation.Table.Parser do
 
   A map with two keys:
 
-  * `:entries` - `%{[integer()] => [%Cldr.Collation.Element{}]}` mapping codepoint sequences to collation elements
+  * `:entries` - `%{integer() | tuple() => [%Cldr.Collation.Element{}]}` mapping codepoints (integers for single, tuples for contractions) to collation elements
   * `:version` - the UCA version string from the file header, or `nil`
 
   ### Examples
@@ -49,7 +49,8 @@ defmodule Cldr.Collation.Table.Parser do
         true ->
           case parse_entry(line) do
             {:ok, codepoints, elements} ->
-              %{acc | entries: Map.put(acc.entries, codepoints, elements)}
+              key = codepoints_to_key(codepoints)
+              %{acc | entries: Map.put(acc.entries, key, elements)}
 
             :skip ->
               acc
@@ -75,8 +76,8 @@ defmodule Cldr.Collation.Table.Parser do
       iex> {:ok, cps, elems} = Cldr.Collation.Table.Parser.parse_entry("0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A")
       iex> cps
       [65]
-      iex> hd(elems).primary
-      0x23EC
+      iex> hd(elems)
+      {0x23EC, 0x0020, 0x0008, false}
 
   """
   def parse_entry(line) do
@@ -105,6 +106,32 @@ defmodule Cldr.Collation.Table.Parser do
   end
 
   @doc """
+  Convert a codepoint list to a table key.
+
+  Single codepoints become bare integers, multi-codepoint sequences (contractions)
+  become tuples for compact persistent_term storage.
+
+  ### Arguments
+
+  * `codepoints` - a list of integer codepoints
+
+  ### Returns
+
+  An integer for single codepoints, or a tuple for contractions.
+
+  ### Examples
+
+      iex> Cldr.Collation.Table.Parser.codepoints_to_key([0x0041])
+      0x0041
+
+      iex> Cldr.Collation.Table.Parser.codepoints_to_key([0x006C, 0x00B7])
+      {0x006C, 0x00B7}
+
+  """
+  def codepoints_to_key([cp]), do: cp
+  def codepoints_to_key(cps) when is_list(cps), do: List.to_tuple(cps)
+
+  @doc """
   Parse weight elements from an allkeys weight string.
 
   Handles both regular (`[.PPPP.SSSS.TTTT]`) and variable (`[*PPPP.SSSS.TTTT]`)
@@ -117,28 +144,27 @@ defmodule Cldr.Collation.Table.Parser do
 
   ### Returns
 
-  A list of `%Cldr.Collation.Element{}` structs with parsed primary, secondary, tertiary
-  weights and the `variable` flag.
+  A list of collation element tuples `{primary, secondary, tertiary, variable}`.
 
   ### Examples
 
       iex> Cldr.Collation.Table.Parser.parse_elements("[.23EC.0020.0008]")
-      [%Cldr.Collation.Element{primary: 0x23EC, secondary: 0x0020, tertiary: 0x0008, variable: false}]
+      [{0x23EC, 0x0020, 0x0008, false}]
 
       iex> Cldr.Collation.Table.Parser.parse_elements("[*0269.0020.0002]")
-      [%Cldr.Collation.Element{primary: 0x0269, secondary: 0x0020, tertiary: 0x0002, variable: true}]
+      [{0x0269, 0x0020, 0x0002, true}]
 
   """
   def parse_elements(str) do
     ~r/\[([.*])([0-9A-Fa-f]{4})\.([0-9A-Fa-f]{4})\.([0-9A-Fa-f]{4})\]/
     |> Regex.scan(str)
     |> Enum.map(fn [_full, marker, p, s, t] ->
-      %Element{
-        primary: String.to_integer(p, 16),
-        secondary: String.to_integer(s, 16),
-        tertiary: String.to_integer(t, 16),
-        variable: marker == "*"
-      }
+      Element.new(
+        String.to_integer(p, 16),
+        String.to_integer(s, 16),
+        String.to_integer(t, 16),
+        marker == "*"
+      )
     end)
   end
 
@@ -156,12 +182,12 @@ defmodule Cldr.Collation.Table.Parser do
 
   ### Returns
 
-  An updated entries map `%{[integer()] => [%Cldr.Collation.Element{}]}` with new
+  An updated entries map `%{integer() | tuple() => [%Cldr.Collation.Element{}]}` with new
   entries merged in. Existing entries are never overwritten.
 
   ### Examples
 
-      iex> existing = %{[0x0041] => [%Cldr.Collation.Element{primary: 0x23EC}]}
+      iex> existing = %{0x0041 => [{0x23EC, 0x0020, 0x0008, false}]}
       iex> result = Cldr.Collation.Table.Parser.parse_fractional_supplement("priv/FractionalUCA.txt", existing)
       iex> map_size(result) > map_size(existing)
       true
@@ -184,11 +210,13 @@ defmodule Cldr.Collation.Table.Parser do
         String.contains?(line, ";") ->
           case parse_fractional_entry(line) do
             {:ok, codepoints, elements} when elements != [] ->
+              key = codepoints_to_key(codepoints)
+
               # Only add if not already in the table
-              if Map.has_key?(acc, codepoints) do
+              if Map.has_key?(acc, key) do
                 acc
               else
-                Map.put(acc, codepoints, elements)
+                Map.put(acc, key, elements)
               end
 
             _ ->
@@ -257,11 +285,11 @@ defmodule Cldr.Collation.Table.Parser do
     ~r/\[([0-9A-Fa-f]{4})\.([0-9A-Fa-f]{4})\.([0-9A-Fa-f]{4})\]/
     |> Regex.scan(str)
     |> Enum.map(fn [_full, p, s, t] ->
-      %Element{
-        primary: String.to_integer(p, 16),
-        secondary: String.to_integer(s, 16),
-        tertiary: String.to_integer(t, 16)
-      }
+      Element.new(
+        String.to_integer(p, 16),
+        String.to_integer(s, 16),
+        String.to_integer(t, 16)
+      )
     end)
   end
 end

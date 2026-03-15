@@ -51,8 +51,7 @@ defmodule Cldr.Collation.LanguageTagTest do
     test "alternate shifted from LanguageTag" do
       tag = language_tag(u: %{col_alternate: :shifted})
       # With shifted, spaces/punctuation are ignorable at primary
-      assert Cldr.Collation.compare("de luge", "de Luge",
-               locale: tag, strength: :primary) == :eq
+      assert Cldr.Collation.compare("de luge", "de Luge", locale: tag, strength: :primary) == :eq
     end
 
     test "numeric sorting from LanguageTag" do
@@ -85,8 +84,7 @@ defmodule Cldr.Collation.LanguageTagTest do
     test "max_variable from LanguageTag" do
       tag = language_tag(u: %{kv: :space, col_alternate: :shifted})
       # With max_variable=space and alternate=shifted, spaces are ignorable
-      assert Cldr.Collation.compare("de luge", "deluge",
-               locale: tag, strength: :primary) == :eq
+      assert Cldr.Collation.compare("de luge", "deluge", locale: tag, strength: :primary) == :eq
     end
   end
 
@@ -160,8 +158,7 @@ defmodule Cldr.Collation.LanguageTagTest do
     test "explicit numeric option overrides tag numeric" do
       tag = language_tag(u: %{col_numeric: :yes})
       # Tag enables numeric, but explicit option disables it
-      result = Cldr.Collation.sort(["file10", "file2", "file1"],
-                 locale: tag, numeric: false)
+      result = Cldr.Collation.sort(["file10", "file2", "file1"], locale: tag, numeric: false)
       assert result == ["file1", "file10", "file2"]
     end
   end
@@ -214,11 +211,13 @@ defmodule Cldr.Collation.LanguageTagTest do
     end
 
     test "U extension overrides locale defaults" do
-      tag = language_tag(
-        language: "da",
-        cldr_locale_name: :da,
-        u: %{col_case_first: :lower}
-      )
+      tag =
+        language_tag(
+          language: "da",
+          cldr_locale_name: :da,
+          u: %{col_case_first: :lower}
+        )
+
       # U extension says lower, overriding Danish default of upper
       assert Cldr.Collation.compare("a", "A", locale: tag) == :lt
     end
@@ -303,14 +302,12 @@ defmodule Cldr.Collation.LanguageTagTest do
       tag = language_tag(backend: SomeApp.Cldr)
       # Passing :cldr_backend in extra options should not cause errors
       # even when tag already has a backend
-      assert Cldr.Collation.compare("a", "b",
-               locale: tag, cldr_backend: AnotherApp.Cldr) == :lt
+      assert Cldr.Collation.compare("a", "b", locale: tag, cldr_backend: AnotherApp.Cldr) == :lt
     end
 
     test "tag without backend still works with :cldr_backend option" do
       tag = language_tag()
-      assert Cldr.Collation.compare("a", "b",
-               locale: tag, cldr_backend: SomeApp.Cldr) == :lt
+      assert Cldr.Collation.compare("a", "b", locale: tag, cldr_backend: SomeApp.Cldr) == :lt
     end
 
     test ":cldr_backend option does not leak into Options struct" do

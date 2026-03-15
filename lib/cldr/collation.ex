@@ -80,7 +80,6 @@ defmodule Cldr.Collation do
   """
 
   alias Cldr.Collation.{
-    Element,
     ImplicitWeights,
     Nif,
     Normalizer,
@@ -223,8 +222,8 @@ defmodule Cldr.Collation do
           processed
 
         mapping_fn ->
-          Enum.map(processed, fn {%Element{} = elem, q} ->
-            {%Element{elem | primary: mapping_fn.(elem.primary)}, q}
+          Enum.map(processed, fn {{p, s, t, v}, q} ->
+            {{mapping_fn.(p), s, t, v}, q}
           end)
       end
 
@@ -516,7 +515,10 @@ defmodule Cldr.Collation do
     unless Code.ensure_loaded?(Cldr.LanguageTag) and is_struct(tag, Cldr.LanguageTag) do
       raise ArgumentError,
             "invalid :locale option #{inspect(tag)}, expected a BCP47 locale string" <>
-              if(Code.ensure_loaded?(Cldr.LanguageTag), do: " or a Cldr.LanguageTag struct", else: "")
+              if(Code.ensure_loaded?(Cldr.LanguageTag),
+                do: " or a Cldr.LanguageTag struct",
+                else: ""
+              )
     end
 
     alias Cldr.Collation.Tailoring

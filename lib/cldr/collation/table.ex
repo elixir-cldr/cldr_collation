@@ -50,7 +50,8 @@ defmodule Cldr.Collation.Table do
   ### Arguments
 
   * `codepoint` - a single integer codepoint, or a list of integer
-    codepoints (contraction).
+    codepoints (contraction). Lists are internally converted to the
+    compact key format (integer for single, tuple for multi).
 
   ### Returns
 
@@ -63,7 +64,7 @@ defmodule Cldr.Collation.Table do
 
       iex> Cldr.Collation.Table.ensure_loaded()
       iex> {:ok, elements} = Cldr.Collation.Table.lookup(0x0041)
-      iex> hd(elements).primary > 0
+      iex> Cldr.Collation.Element.primary(hd(elements)) > 0
       true
 
       iex> Cldr.Collation.Table.ensure_loaded()
@@ -74,7 +75,7 @@ defmodule Cldr.Collation.Table do
   def lookup(codepoint) when is_integer(codepoint) do
     table = :persistent_term.get(@table_name)
 
-    case Map.get(table, [codepoint]) do
+    case Map.get(table, codepoint) do
       nil -> :unmapped
       elements -> {:ok, elements}
     end
@@ -82,8 +83,9 @@ defmodule Cldr.Collation.Table do
 
   def lookup(codepoints) when is_list(codepoints) do
     table = :persistent_term.get(@table_name)
+    key = Parser.codepoints_to_key(codepoints)
 
-    case Map.get(table, codepoints) do
+    case Map.get(table, key) do
       nil -> :unmapped
       elements -> {:ok, elements}
     end
@@ -191,6 +193,9 @@ defmodule Cldr.Collation.Table do
     end
   end
 
+  # Note: longest_match returns matched codepoints as lists for downstream compatibility.
+  # The lookup functions handle the list-to-key conversion internally.
+
   def longest_match([]), do: :done
 
   @doc """
@@ -200,8 +205,8 @@ defmodule Cldr.Collation.Table do
 
   * `codepoints` - a single integer codepoint, or a list of integer codepoints.
 
-  * `overlay` - a map of `%{[codepoint] => [%Cldr.Collation.Element{}]}`
-    tailoring entries.
+  * `overlay` - a map of `%{key => [%Cldr.Collation.Element{}]}` tailoring
+    entries, where keys are integers (single CP) or tuples (contractions).
 
   ### Returns
 
@@ -211,25 +216,43 @@ defmodule Cldr.Collation.Table do
   ### Examples
 
       iex> Cldr.Collation.Table.ensure_loaded()
-      iex> overlay = %{[0x0041] => [%Cldr.Collation.Element{primary: 0xFFFF}]}
-      iex> {:ok, [elem]} = Cldr.Collation.Table.lookup_with_overlay([0x0041], overlay)
-      iex> elem.primary
+      iex> overlay = %{0x0041 => [{0xFFFF, 0x0020, 0x0008, false}]}
+      iex> {:ok, [elem]} = Cldr.Collation.Table.lookup_with_overlay(0x0041, overlay)
+      iex> Cldr.Collation.Element.primary(elem)
       0xFFFF
 
   """
   def lookup_with_overlay(codepoint, overlay) when is_integer(codepoint) do
-    lookup_with_overlay([codepoint], overlay)
+    lookup_with_overlay_key(codepoint, overlay)
   end
 
-  def lookup_with_overlay(codepoints, overlay) when is_list(codepoints) and is_map(overlay) do
-    case Map.get(overlay, codepoints) do
-      nil -> lookup(codepoints)
+  def lookup_with_overlay(codepoints, overlay) when is_list(codepoints) do
+    key = Parser.codepoints_to_key(codepoints)
+    lookup_with_overlay_key(key, overlay)
+  end
+
+  defp lookup_with_overlay_key(key, nil) do
+    table = :persistent_term.get(@table_name)
+
+    case Map.get(table, key) do
+      nil -> :unmapped
       elements -> {:ok, elements}
     end
   end
 
-  def lookup_with_overlay(codepoints, nil) when is_list(codepoints) do
-    lookup(codepoints)
+  defp lookup_with_overlay_key(key, overlay) when is_map(overlay) do
+    case Map.get(overlay, key) do
+      nil ->
+        table = :persistent_term.get(@table_name)
+
+        case Map.get(table, key) do
+          nil -> :unmapped
+          elements -> {:ok, elements}
+        end
+
+      elements ->
+        {:ok, elements}
+    end
   end
 
   @doc """
@@ -269,8 +292,9 @@ defmodule Cldr.Collation.Table do
         |> Enum.reduce_while(nil, fn len, _acc ->
           if len <= length(available) do
             candidate = Enum.take(available, len)
+            key = Parser.codepoints_to_key(candidate)
 
-            case Map.get(overlay, candidate) do
+            case Map.get(overlay, key) do
               nil ->
                 {:cont, nil}
 
@@ -298,19 +322,16 @@ defmodule Cldr.Collation.Table do
 
   def longest_match_with_overlay([], _overlay), do: :done
 
-  # Find the maximum contraction length in the overlay starting with cp
+  # Find the maximum contraction length in the overlay starting with cp.
+  # Overlay keys are integers (single CP) or tuples (contractions).
   defp overlay_max_contraction_length(cp, overlay) do
     overlay
     |> Map.keys()
-    |> Enum.filter(fn
-      [first | _] -> first == cp
-      _ -> false
+    |> Enum.reduce(0, fn
+      ^cp, acc -> max(acc, 1)
+      key, acc when is_tuple(key) and elem(key, 0) == cp -> max(acc, tuple_size(key))
+      _, acc -> acc
     end)
-    |> Enum.map(&length/1)
-    |> case do
-      [] -> 0
-      lengths -> Enum.max(lengths)
-    end
   end
 
   # GenServer
@@ -363,17 +384,19 @@ defmodule Cldr.Collation.Table do
         entries
       end
 
-    # Build contraction starters map
+    # Build contraction starters map.
+    # Keys are now integers (single CP) or tuples (contractions).
     contractions =
-      Enum.reduce(all_entries, %{}, fn {codepoints, _elements}, acc ->
-        case codepoints do
-          [first | _] when length(codepoints) > 1 ->
-            len = length(codepoints)
+      Enum.reduce(all_entries, %{}, fn {key, _elements}, acc ->
+        case key do
+          cp when is_integer(cp) ->
+            acc
+
+          tuple when is_tuple(tuple) ->
+            first = elem(tuple, 0)
+            len = tuple_size(tuple)
             existing = Map.get(acc, first, MapSet.new())
             Map.put(acc, first, MapSet.put(existing, len))
-
-          _ ->
-            acc
         end
       end)
 

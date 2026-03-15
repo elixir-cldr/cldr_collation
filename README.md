@@ -197,8 +197,8 @@ The two backends use fundamentally different approaches:
 
 - **Elixir**: Generates binary sort keys from the CLDR-modified DUCET table,
   then compares keys with standard binary operators. `sort/2` pre-computes
-  sort keys for all strings (Schwartzian transform), making it efficient for
-  large lists but more memory-intensive.
+  sort keys for all strings ([Schwartzian transform](https://en.wikipedia.org/wiki/Schwartzian_transform)),
+  making it efficient for large lists but more memory-intensive.
 
 ### Potential Result Differences
 

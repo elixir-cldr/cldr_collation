@@ -227,35 +227,35 @@ CLDR_COLLATION_NIF=true mix compile && mix run bench/sort_benchmark.exs
 
 | Scenario                   | NIF (ips)  | Elixir (ips) | NIF vs Elixir |
 |----------------------------|:-----------|:-------------|:--------------|
-| Cased, 5-char strings      | 9,300      | 4,330        | 2.15x         |
-| Cased, 10-char strings     | 9,260      | 2,460        | 3.76x         |
-| Cased, 20-char strings     | 9,100      | 1,320        | 6.89x         |
-| Cased, 50-char strings     | 9,190      | 560          | 16.41x        |
-| Uncased, 5-char strings    | 2,560      | 5,100        | 0.50x         |
-| Uncased, 10-char strings   | 2,530      | 2,720        | 0.93x         |
-| Uncased, 20-char strings   | 2,520      | 1,470        | 1.71x         |
-| Uncased, 50-char strings   | 2,550      | 590          | 4.32x         |
+| Cased, 5-char strings      | 9,460      | 6,420        | 1.47x         |
+| Cased, 10-char strings     | 9,410      | 3,710        | 2.54x         |
+| Cased, 20-char strings     | 9,420      | 2,070        | 4.55x         |
+| Cased, 50-char strings     | 9,330      | 900          | 10.37x        |
+| Uncased, 5-char strings    | 2,600      | 8,000        | 0.33x         |
+| Uncased, 10-char strings   | 2,570      | 4,460        | 0.58x         |
+| Uncased, 20-char strings   | 2,570      | 2,460        | 1.04x         |
+| Uncased, 50-char strings   | 2,570      | 990          | 2.60x         |
 
 ### Memory per sort call
 
 | Scenario                   | NIF        | Elixir       | NIF vs Elixir |
 |----------------------------|:-----------|:-------------|:--------------|
-| Cased, 5-char strings      | 54.36 KB   | 263.02 KB    | 0.21x         |
-| Cased, 10-char strings     | 53.95 KB   | 494.39 KB    | 0.11x         |
-| Cased, 20-char strings     | 54.99 KB   | 952.35 KB    | 0.06x         |
-| Cased, 50-char strings     | 52.99 KB   | 2,319.91 KB  | 0.02x         |
-| Uncased, 5-char strings    | 54.54 KB   | 224.52 KB    | 0.24x         |
-| Uncased, 10-char strings   | 53.92 KB   | 425.41 KB    | 0.13x         |
-| Uncased, 20-char strings   | 55.05 KB   | 824.29 KB    | 0.07x         |
-| Uncased, 50-char strings   | 53.17 KB   | 2,017.65 KB  | 0.03x         |
+| Cased, 5-char strings      | 54.36 KB   | 223.58 KB    | 0.24x         |
+| Cased, 10-char strings     | 53.95 KB   | 417.48 KB    | 0.13x         |
+| Cased, 20-char strings     | 54.99 KB   | 797.56 KB    | 0.07x         |
+| Cased, 50-char strings     | 52.99 KB   | 1,930.24 KB  | 0.03x         |
+| Uncased, 5-char strings    | 54.54 KB   | 186.19 KB    | 0.29x         |
+| Uncased, 10-char strings   | 53.92 KB   | 348.09 KB    | 0.15x         |
+| Uncased, 20-char strings   | 55.05 KB   | 668.40 KB    | 0.08x         |
+| Uncased, 50-char strings   | 53.17 KB   | 1,628.27 KB  | 0.03x         |
 
 ### Key Observations
 
-- **NIF throughput is constant** across string lengths (~9,200 ips cased, ~2,550 ips uncased) because ICU processes strings entirely in C.
-- **Elixir throughput scales with string length**, from 5,100 ips (5 chars) down to 560 ips (50 chars).
-- **NIF is faster for cased comparisons** at all string lengths, and for uncased at 20+ characters.
-- **Elixir is faster for short uncased strings** (5-10 chars) due to lower per-call overhead (no NIF boundary crossing).
-- **NIF uses ~54 KB constant memory** regardless of string length, while Elixir allocates 225 KB to 2.3 MB per sort (generating intermediate sort keys and collation elements).
+- **NIF throughput is constant** across string lengths (~9,400 ips cased, ~2,570 ips uncased) because ICU processes strings entirely in C.
+- **Elixir throughput scales with string length**, from 8,000 ips (5 chars) down to 900 ips (50 chars).
+- **NIF is faster for cased comparisons** at all string lengths, and for uncased at 50+ characters.
+- **Elixir is faster for uncased strings** up to 20 characters due to lower per-call overhead and the fast Latin lookup path.
+- **NIF uses ~54 KB constant memory** regardless of string length, while Elixir allocates 186 KB to 1.9 MB per sort (generating intermediate sort keys and collation elements).
 
 ## License
 

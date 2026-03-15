@@ -406,6 +406,9 @@ defmodule Cldr.Collation.Table do
     # Store atomically in persistent_term
     :persistent_term.put(@table_name, all_entries)
     :persistent_term.put(@contractions_table, contractions)
+
+    # Build fast Latin lookup table
+    Cldr.Collation.FastLatin.build()
   end
 
   defp data_path(filename) do

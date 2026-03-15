@@ -80,6 +80,7 @@ defmodule Cldr.Collation do
   """
 
   alias Cldr.Collation.{
+    FastLatin,
     ImplicitWeights,
     Nif,
     Normalizer,
@@ -314,7 +315,25 @@ defmodule Cldr.Collation do
 
   defp do_produce([], acc, _overlay), do: Enum.reverse(acc) |> List.flatten()
 
+  # Fast path for Basic Latin / Latin Extended-A codepoints without tailoring.
+  # Skips contraction checking and discontiguous match for characters that
+  # are known to have direct single-codepoint mappings (no contractions,
+  # CCC = 0).
+  defp do_produce([cp | rest], acc, nil) when cp < 0x0180 do
+    case FastLatin.lookup(cp) do
+      nil ->
+        do_produce_full([cp | rest], acc, nil)
+
+      elements ->
+        do_produce(rest, [elements | acc], nil)
+    end
+  end
+
   defp do_produce(codepoints, acc, overlay) do
+    do_produce_full(codepoints, acc, overlay)
+  end
+
+  defp do_produce_full(codepoints, acc, overlay) do
     case Table.longest_match_with_overlay(codepoints, overlay) do
       {matched, elements, remaining} when is_list(elements) ->
         # After matching, check for discontiguous contractions with following

@@ -66,9 +66,14 @@ defmodule Cldr.Collation do
   case_level, normalization, numeric, reorder). Options requiring locale
   tailoring or non-default max_variable use the pure Elixir backend.
 
-  To enable the NIF backend:
+  To enable the NIF backend, either set the environment variable:
 
       CLDR_COLLATION_NIF=true mix compile
+
+  Or add to your `config.exs` (must be `config.exs`, not `runtime.exs`,
+  since it is evaluated at compile time):
+
+      config :ex_cldr_collation, :nif, true
 
   Requires ICU system libraries (`libicu` or `icucore` on macOS).
 
@@ -106,7 +111,8 @@ defmodule Cldr.Collation do
   * `:numeric` - numeric string comparison: `false` (default) or `true`
   * `:reorder` - list of script code atoms to reorder: `[]` (default)
   * `:max_variable` - variable weight boundary: `:punct` (default), `:space`, `:symbol`, or `:currency`
-  * `:locale` - a BCP47 locale string with `-u-` extension keys (e.g., `"en-u-ks-level2"`)
+  * `:locale` - a BCP47 locale string (e.g., `"en-u-ks-level2"`) or a `Cldr.LanguageTag` struct (when `ex_cldr` is available). When `ex_cldr` is loaded and a string is provided, it is parsed via `Cldr.Locale.canonical_language_tag/2` using the default CLDR backend.
+  * `:cldr_backend` - a CLDR backend module to use for locale parsing (e.g., `MyApp.Cldr`). Only used when `:locale` is a string. Defaults to `Cldr.default_backend!()`.
   * `:ignore_accents` - `true` to ignore accent differences (sets `strength: :primary`). Explicit `:strength` takes precedence.
   * `:ignore_case` - `true` to ignore case differences (sets `strength: :secondary`). Explicit `:strength` takes precedence.
   * `:ignore_punctuation` - `true` to ignore punctuation and whitespace (sets `alternate: :shifted`). Explicit `:strength` or `:alternate` take precedence.
@@ -447,12 +453,107 @@ defmodule Cldr.Collation do
 
   defp resolve_options(options) when is_list(options) do
     case Keyword.get(options, :locale) do
-      nil -> Options.new(options)
-      locale -> Options.from_locale(locale) |> struct(Keyword.delete(options, :locale))
+      nil ->
+        Options.new(options)
+
+      locale when is_binary(locale) ->
+        rest = Keyword.delete(options, :locale)
+
+        case parse_locale_string(locale, rest) do
+          {:cldr, tag, extra} ->
+            options_from_language_tag(tag, extra)
+
+          {:builtin, locale_string, extra} ->
+            Options.from_locale(locale_string) |> struct(extra)
+        end
+
+      locale ->
+        options_from_language_tag(locale, Keyword.delete(options, :locale))
     end
   end
 
   defp resolve_options(%Options{} = options), do: options
+
+  # When ex_cldr is available, parse a locale string into a Cldr.LanguageTag
+  # using the configured backend for full validation and canonicalization.
+  # Falls back to the built-in parser when ex_cldr is not loaded or no
+  # backend is available.
+  defp parse_locale_string(locale, extra_options) do
+    with true <- Code.ensure_loaded?(Cldr.Locale),
+         {:ok, backend} <- cldr_backend(extra_options),
+         {:ok, tag} <- Cldr.Locale.canonical_language_tag(locale, backend) do
+      {:cldr, tag, Keyword.delete(extra_options, :cldr_backend)}
+    else
+      _ -> {:builtin, locale, extra_options}
+    end
+  end
+
+  # Resolve the CLDR backend from options or the configured default.
+  defp cldr_backend(options) do
+    case Keyword.get(options, :cldr_backend) do
+      nil ->
+        try do
+          {:ok, Cldr.default_backend!()}
+        rescue
+          _ -> :error
+        end
+
+      backend when is_atom(backend) ->
+        {:ok, backend}
+    end
+  end
+
+  # Extract collation options from a Cldr.LanguageTag struct.
+  # The tag's `locale` field contains the parsed -u- extension data
+  # as a %Cldr.LanguageTag.U{} struct with atom keys and validated values.
+  defp options_from_language_tag(tag, extra_options) do
+    unless Code.ensure_loaded?(Cldr.LanguageTag) and is_struct(tag, Cldr.LanguageTag) do
+      raise ArgumentError,
+            "invalid :locale option #{inspect(tag)}, expected a BCP47 locale string" <>
+              if(Code.ensure_loaded?(Cldr.LanguageTag), do: " or a Cldr.LanguageTag struct", else: "")
+    end
+
+    u = tag.locale
+
+    tag_options =
+      []
+      |> maybe_put(:strength, u_strength(u))
+      |> maybe_put(:alternate, u_alternate(u))
+      |> maybe_put(:backwards, u_bool(u, :col_backwards))
+      |> maybe_put(:normalization, u_bool(u, :col_normalization))
+      |> maybe_put(:case_level, u_bool(u, :col_case_level))
+      |> maybe_put(:case_first, u_case_first(u))
+      |> maybe_put(:numeric, u_bool(u, :col_numeric))
+      |> maybe_put(:reorder, u_reorder(u))
+      |> maybe_put(:max_variable, u_max_variable(u))
+      |> maybe_put(:type, u_collation_type(u))
+
+    # Extra keyword options override tag options
+    Options.new(Keyword.merge(tag_options, extra_options))
+  end
+
+  defp maybe_put(opts, _key, nil), do: opts
+  defp maybe_put(opts, key, value), do: Keyword.put(opts, key, value)
+
+  defp u_strength(u), do: u_field(u, :col_strength)
+  defp u_alternate(u), do: u_field(u, :col_alternate)
+  defp u_case_first(u), do: u_field(u, :col_case_first)
+  defp u_collation_type(u), do: u_field(u, :collation)
+  defp u_max_variable(u), do: u_field(u, :kv)
+  defp u_reorder(u), do: u_field(u, :col_reorder)
+
+  # U struct uses :yes/:no for boolean fields
+  defp u_bool(u, field) do
+    case u_field(u, field) do
+      :yes -> true
+      :no -> false
+      nil -> nil
+    end
+  end
+
+  # Safely access a field from either a %Cldr.LanguageTag.U{} struct or a plain map.
+  defp u_field(u, field) when is_struct(u), do: Map.get(u, field)
+  defp u_field(_u, _field), do: nil
 
   # Determine whether to use the NIF backend for the given options.
   # Returns true when:
@@ -467,7 +568,8 @@ defmodule Cldr.Collation do
     unless Nif.available?() do
       raise RuntimeError,
             "NIF collation backend requested but not available. " <>
-              "Compile with CLDR_COLLATION_NIF=true and ensure ICU libraries are installed."
+              "Compile with CLDR_COLLATION_NIF=true or set `config :ex_cldr_collation, :nif, true` " <>
+              "in config.exs, and ensure ICU libraries are installed."
     end
 
     unless Options.nif_compatible?(options) do

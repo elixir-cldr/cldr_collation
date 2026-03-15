@@ -321,7 +321,7 @@ defmodule Cldr.Collation.Table do
 
   @impl true
   def init(_options) do
-    if System.get_env("CLDR_COLLATION_NIF") == "true" do
+    if nif_enabled?() do
       {:ok, %{loaded: false}}
     else
       {:ok, %{loaded: false}, {:continue, :load}}
@@ -342,6 +342,11 @@ defmodule Cldr.Collation.Table do
   def handle_call(:load, _from, %{loaded: false} = state) do
     load_table()
     {:reply, :ok, %{state | loaded: true}}
+  end
+
+  defp nif_enabled? do
+    System.get_env("CLDR_COLLATION_NIF") == "true" or
+      Application.get_env(:ex_cldr_collation, :nif, false) == true
   end
 
   defp load_table do

@@ -12,7 +12,12 @@ defmodule Cldr.Collation.Nif do
 
   1. ICU system libraries installed (`libicu` or `icucore` on macOS)
   2. The `elixir_make` dependency
-  3. Compilation with `CLDR_COLLATION_NIF=true mix compile`
+  3. Enable the NIF via either:
+     - Environment variable: `CLDR_COLLATION_NIF=true mix compile`
+     - Application config in `config.exs`: `config :ex_cldr_collation, :nif, true`
+
+  The config key must be set in `config.exs` (not `runtime.exs`) because
+  it is evaluated at compile time to include the `:elixir_make` compiler.
 
   If the NIF is not available, `available?/0` returns `false` and the
   pure Elixir implementation is used automatically.

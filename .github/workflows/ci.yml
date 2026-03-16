@@ -104,8 +104,7 @@ jobs:
         CLDR_COLLATION_NIF: true
       run: mix test
       
-   # Step: Dialyzer
-   - name: Dialyzer
-     run: mix dialyzer
-      
-
+    # Step: Dialyzer
+    - name: Dialyzer
+      if: ${{ matrix.lint }}
+      run: mix dialyzer

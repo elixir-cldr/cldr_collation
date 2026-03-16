@@ -2,9 +2,9 @@ defmodule Cldr.Collation.Table do
   @moduledoc """
   Persistent-term-backed collation element table.
 
-  Stores the CLDR allkeys table for fast concurrent lookups using
-  `:persistent_term`, which provides zero-copy reads for data that is
-  written once and never modified.
+  Stores the collation table parsed from `FractionalUCA.txt` for fast
+  concurrent lookups using `:persistent_term`, which provides zero-copy
+  reads for data that is written once and never modified.
 
   Handles both single codepoint mappings and contractions
   (multi-codepoint sequences).
@@ -18,14 +18,13 @@ defmodule Cldr.Collation.Table do
   @table_name :collation_table
   @contractions_table :collation_contractions
 
-  @all_keys "allkeys_CLDR.txt"
   @fractional_keys "FractionalUCA.txt"
 
   @doc """
   Ensure the collation table is loaded.
 
-  Loads the `allkeys_CLDR.txt` and `FractionalUCA.txt` data
-  files on first call. Subsequent calls are no-ops.
+  Loads the `FractionalUCA.txt` data file on first call. Subsequent calls
+  are no-ops.
 
   ### Returns
 
@@ -371,18 +370,8 @@ defmodule Cldr.Collation.Table do
   end
 
   defp load_table do
-    allkeys_path = data_path(@all_keys)
-    %{entries: entries} = Parser.parse(allkeys_path)
-
-    # Supplement with entries from FractionalUCA.txt not in allkeys
     fractional_path = data_path(@fractional_keys)
-
-    all_entries =
-      if File.exists?(fractional_path) do
-        Parser.parse_fractional_supplement(fractional_path, entries)
-      else
-        entries
-      end
+    %{entries: all_entries} = Parser.parse(fractional_path)
 
     # Build contraction starters map.
     # Keys are now integers (single CP) or tuples (contractions).

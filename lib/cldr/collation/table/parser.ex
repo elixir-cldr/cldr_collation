@@ -1,111 +1,189 @@
 defmodule Cldr.Collation.Table.Parser do
   @moduledoc """
-  Parses the allkeys_CLDR.txt file into a map of codepoint sequences to collation elements.
+  Parses the FractionalUCA.txt file into a map of codepoint sequences to collation elements.
 
-  Format: `CODEPOINTS ; [.PPPP.SSSS.TTTT]... # comment`
+  FractionalUCA.txt is the single source of truth for the collation table. Each data line
+  contains both fractional weights (used for script reordering) and allkeys-format decimal
+  weights (used for collation element construction) in the comment:
 
-  * Single codepoint: `0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A`.
+  * Single codepoint: `0041; [2B, 05, 9C]  # Latn Lu  [23EC.0020.0008]  * LATIN CAPITAL LETTER A`.
 
-  * Multi-CE: `00E9 ; [.2453.0020.0002][.0000.0024.0002] # LATIN SMALL LETTER E WITH ACUTE`.
+  * Multi-CE: `00E9; [2B 86, 05, 05]  # Latn Ll  [2453.0020.0002][0000.0024.0002]  * LATIN SMALL LETTER E WITH ACUTE`.
 
-  * Contraction: `006C 00B7 ; [.2528.0020.0002][.0000.011F.0002] # LATIN SMALL LETTER L, MIDDLE DOT`.
+  * Context entry: `004C | 00B7; [, FB B6, 05]  # Zyyy Po  [0000.011F.0002]  * MIDDLE DOT`.
+
+  Context entries represent CLDR-specific contractions where a target codepoint's weights
+  change depending on the preceding context codepoint. These are converted to explicit
+  contraction entries (e.g., `{0x004C, 0x00B7} => L's CEs ++ modified CEs`).
+
+  Variable status (spaces, punctuation, symbols, currency) is derived from the
+  `[last variable]` header line rather than per-entry markers.
 
   """
 
   alias Cldr.Collation.Element
 
+  # The allkeys primary weight boundaries for variable elements, parsed from
+  # [first variable ...] and [last variable ...] in FractionalUCA.txt.
+  # Entries with first_variable_primary <= primary <= last_variable_primary
+  # are variable (spaces, punctuation, symbols, currency).
+  @default_first_variable_primary 0x0201
+  @default_last_variable_primary 0x04E0
+
   @doc """
-  Parse the allkeys_CLDR.txt file into a collation table.
+  Parse FractionalUCA.txt into a collation table.
+
+  This is the primary parser that builds the complete collation table from
+  a single data file. Variable status is derived from the `[last variable]`
+  header line.
 
   ### Arguments
 
-  * `path` - file path to the allkeys_CLDR.txt data file.
+  * `path` - file path to the FractionalUCA.txt data file.
 
   ### Returns
 
   A map with two keys:
 
-  * `:entries` - `%{integer() | tuple() => [%Cldr.Collation.Element{}]}` mapping codepoints (integers for single, tuples for contractions) to collation elements.
+  * `:entries` - `%{integer() | tuple() => [Element.t()]}` mapping codepoints
+    (integers for single, tuples for contractions) to collation elements.
+
   * `:version` - the UCA version string from the file header, or `nil`.
 
   ### Examples
 
-      iex> result = Cldr.Collation.Table.Parser.parse("priv/allkeys_CLDR.txt")
+      iex> result = Cldr.Collation.Table.Parser.parse("priv/FractionalUCA.txt")
       iex> is_map(result.entries) and is_binary(result.version)
       true
 
   """
   def parse(path) do
-    path
-    |> File.stream!()
-    |> Enum.reduce(%{entries: %{}, version: nil}, fn line, acc ->
-      line = String.trim(line)
+    # Two-pass parse:
+    # Pass 1: collect entries and last_variable_primary
+    # Pass 2: apply variable flags and resolve context entries
+    acc =
+      path
+      |> File.stream!()
+      |> Enum.reduce(
+        %{
+          entries: %{},
+          contexts: [],
+          version: nil,
+          first_variable_primary: @default_first_variable_primary,
+          last_variable_primary: @default_last_variable_primary
+        },
+        fn line, acc ->
+          line = String.trim(line)
 
-      cond do
-        String.starts_with?(line, "@version") ->
-          version = line |> String.replace("@version ", "") |> String.trim()
-          %{acc | version: version}
+          cond do
+            line == "" or String.starts_with?(line, "#") ->
+              acc
 
-        String.starts_with?(line, "#") or line == "" ->
-          acc
+            String.starts_with?(line, "[UCA version") ->
+              case Regex.run(~r/\[UCA version = (.+)\]/, line) do
+                [_, version] -> %{acc | version: String.trim(version)}
+                _ -> acc
+              end
 
-        true ->
-          case parse_entry(line) do
-            {:ok, codepoints, elements} ->
-              key = codepoints_to_key(codepoints)
-              %{acc | entries: Map.put(acc.entries, key, elements)}
+            String.starts_with?(line, "[first variable") ->
+              case parse_variable_boundary(line) do
+                {:ok, primary} -> %{acc | first_variable_primary: primary}
+                :skip -> acc
+              end
 
-            :skip ->
+            String.starts_with?(line, "[last variable") ->
+              case parse_variable_boundary(line) do
+                {:ok, primary} -> %{acc | last_variable_primary: primary}
+                :skip -> acc
+              end
+
+            String.starts_with?(line, "[") ->
+              # Skip other metadata lines ([radical...], [first...], [variable top...], etc.)
+              acc
+
+            String.starts_with?(line, "FDD") ->
+              # Skip FDD0/FDD1 sentinel entries (script reorder boundaries)
+              acc
+
+            String.contains?(line, ";") ->
+              case parse_fractional_entry(line) do
+                {:ok, codepoints, elements} when elements != [] ->
+                  key = codepoints_to_key(codepoints)
+                  %{acc | entries: Map.put(acc.entries, key, elements)}
+
+                {:context, context_cp, target_cp, elements} ->
+                  %{acc | contexts: [{context_cp, target_cp, elements} | acc.contexts]}
+
+                _ ->
+                  acc
+              end
+
+            true ->
               acc
           end
-      end
-    end)
+        end
+      )
+
+    # Apply variable flags based on first/last variable primary boundaries
+    variable_range = {acc.first_variable_primary, acc.last_variable_primary}
+    entries = apply_variable_flags(acc.entries, variable_range)
+
+    # Resolve context entries into contractions
+    entries = resolve_context_entries(acc.contexts, entries, variable_range)
+
+    %{entries: entries, version: acc.version}
   end
 
   @doc """
-  Parse a single allkeys entry line.
+  Parse a single FractionalUCA.txt data entry.
+
+  Extracts codepoints and allkeys-format decimal weights from a FractionalUCA line.
+  Context entries (containing `|`) are returned as `{:context, ...}` tuples for
+  later resolution into contractions.
 
   ### Arguments
 
-  * `line` - a single line from the allkeys file (e.g., `"0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A"`).
+  * `line` - a single data line from FractionalUCA.txt.
 
   ### Returns
 
   * `{:ok, codepoints, elements}` - the parsed codepoint list and collation elements.
+
+  * `{:context, context_cp, target_cp, elements}` - a context entry to be resolved later.
+
   * `:skip` - the line could not be parsed.
 
   ### Examples
 
-      iex> {:ok, cps, elems} = Cldr.Collation.Table.Parser.parse_entry("0041 ; [.23EC.0020.0008] # LATIN CAPITAL LETTER A")
-      iex> cps
-      [65]
-      iex> hd(elems)
-      {0x23EC, 0x0020, 0x0008, false}
+      iex> Cldr.Collation.Table.Parser.parse_fractional_entry("0041; [2B, 05, 9C]\\t# Latn Lu\\t[23EC.0020.0008]\\t* LATIN CAPITAL LETTER A")
+      {:ok, [65], [{0x23EC, 0x0020, 0x0008, false}]}
+
+      iex> Cldr.Collation.Table.Parser.parse_fractional_entry("invalid line")
+      :skip
 
   """
-  def parse_entry(line) do
+  def parse_fractional_entry(line) do
     case String.split(line, ";", parts: 2) do
       [cp_part, rest] ->
-        codepoints = parse_codepoints(String.trim(cp_part))
-        # Strip comment
-        weight_part =
-          case String.split(rest, "#", parts: 2) do
-            [w, _comment] -> String.trim(w)
-            [w] -> String.trim(w)
-          end
+        cp_str = String.trim(cp_part)
 
-        elements = parse_elements(weight_part)
-        {:ok, codepoints, elements}
+        if String.contains?(cp_str, "|") do
+          parse_context_entry(cp_str, rest)
+        else
+          codepoints = parse_codepoints(cp_str)
+
+          case extract_allkeys_weights(rest) do
+            elements when elements != [] ->
+              {:ok, codepoints, elements}
+
+            _ ->
+              :skip
+          end
+        end
 
       _ ->
         :skip
     end
-  end
-
-  defp parse_codepoints(str) do
-    str
-    |> String.split()
-    |> Enum.map(&String.to_integer(&1, 16))
   end
 
   @doc """
@@ -171,111 +249,29 @@ defmodule Cldr.Collation.Table.Parser do
     end)
   end
 
-  @doc """
-  Parse FractionalUCA.txt to extract entries not already in allkeys_CLDR.txt.
-
-  Supplements the allkeys table with additional entries (notably Tangut, Nushu,
-  and Khitan characters) by extracting decimal weights from the comment portion
-  of FractionalUCA lines.
-
-  ### Arguments
-
-  * `path` - file path to the FractionalUCA.txt data file.
-  * `existing_entries` - the map of entries already parsed from allkeys_CLDR.txt.
-
-  ### Returns
-
-  An updated entries map `%{integer() | tuple() => [%Cldr.Collation.Element{}]}` with new
-  entries merged in. Existing entries are never overwritten.
-
-  ### Examples
-
-      iex> existing = %{0x0041 => [{0x23EC, 0x0020, 0x0008, false}]}
-      iex> result = Cldr.Collation.Table.Parser.parse_fractional_supplement("priv/FractionalUCA.txt", existing)
-      iex> map_size(result) > map_size(existing)
-      true
-
-  """
-  def parse_fractional_supplement(path, existing_entries) do
-    path
-    |> File.stream!()
-    |> Enum.reduce(existing_entries, fn line, acc ->
-      line = String.trim(line)
-
-      cond do
-        # Skip comments, empty lines, metadata, and FDD markers
-        line == "" or String.starts_with?(line, "#") or
-          String.starts_with?(line, "[") or
-            String.starts_with?(line, "FDD") ->
-          acc
-
-        # Data entry
-        String.contains?(line, ";") ->
-          case parse_fractional_entry(line) do
-            {:ok, codepoints, elements} when elements != [] ->
-              key = codepoints_to_key(codepoints)
-
-              # Only add if not already in the table
-              if Map.has_key?(acc, key) do
-                acc
-              else
-                Map.put(acc, key, elements)
-              end
-
-            _ ->
-              acc
-          end
-
-        true ->
-          acc
-      end
-    end)
+  # Parse a [first variable ...] or [last variable ...] line to extract
+  # the allkeys primary weight from the comment.
+  # Format: [last variable [0B 8E 64, 05, 05]] # U+1E5FF ... [04E0.0020.0002]
+  defp parse_variable_boundary(line) do
+    case Regex.run(~r/\[([0-9A-Fa-f]{4})\.[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\]/, line) do
+      [_, primary_hex] -> {:ok, String.to_integer(primary_hex, 16)}
+      _ -> :skip
+    end
   end
 
-  @doc """
-  Parse a single FractionalUCA.txt data entry.
+  # Parse a context entry: "004C | 00B7; ..." → {:context, 0x004C, 0x00B7, elements}
+  defp parse_context_entry(cp_str, rest) do
+    case String.split(cp_str, "|") do
+      [context_str, target_str] ->
+        [context_cp] = parse_codepoints(String.trim(context_str))
+        [target_cp] = parse_codepoints(String.trim(target_str))
 
-  Extracts codepoints and decimal weights from a FractionalUCA line. Context
-  entries (containing `|`) are skipped.
+        case extract_allkeys_weights(rest) do
+          elements when elements != [] ->
+            {:context, context_cp, target_cp, elements}
 
-  ### Arguments
-
-  * `line` - a single data line from FractionalUCA.txt.
-
-  ### Returns
-
-  * `{:ok, codepoints, elements}` - the parsed codepoint list and collation elements.
-  * `:skip` - the line could not be parsed or is a context entry.
-
-  ### Examples
-
-      iex> Cldr.Collation.Table.Parser.parse_fractional_entry("invalid line")
-      :skip
-
-  """
-  def parse_fractional_entry(line) do
-    case String.split(line, ";", parts: 2) do
-      [cp_part, rest] ->
-        cp_str = String.trim(cp_part)
-
-        # Skip context entries (contain | character)
-        if String.contains?(cp_str, "|") do
-          :skip
-        else
-          codepoints = parse_codepoints(cp_str)
-
-          # Extract decimal weights from brackets after the # comment marker
-          # Format: [PPPP.SSSS.TTTT][PPPP.SSSS.TTTT]...
-          case Regex.run(~r/#.*?(\[.+)$/, rest) do
-            [_, weights_and_name] ->
-              # The weights are inside brackets, followed by * NAME
-              # Extract just the weight brackets
-              elements = parse_fractional_weights(weights_and_name)
-              {:ok, codepoints, elements}
-
-            nil ->
-              :skip
-          end
+          _ ->
+            :skip
         end
 
       _ ->
@@ -283,16 +279,107 @@ defmodule Cldr.Collation.Table.Parser do
     end
   end
 
-  defp parse_fractional_weights(str) do
-    # Match [PPPP.SSSS.TTTT] patterns (allkeys decimal format)
-    ~r/\[([0-9A-Fa-f]{4})\.([0-9A-Fa-f]{4})\.([0-9A-Fa-f]{4})\]/
-    |> Regex.scan(str)
-    |> Enum.map(fn [_full, p, s, t] ->
-      Element.new(
-        String.to_integer(p, 16),
-        String.to_integer(s, 16),
-        String.to_integer(t, 16)
-      )
+  # Extract allkeys-format [PPPP.SSSS.TTTT] weights from the comment portion
+  # of a FractionalUCA line. These appear after the # marker.
+  # Falls back to parsing fractional weights for special entries (FFFE, FFFF)
+  # that lack allkeys-format comments.
+  defp extract_allkeys_weights(rest) do
+    elements =
+      case Regex.run(~r/#.*?(\[.+)$/, rest) do
+        [_, weights_section] ->
+          ~r/\[([0-9A-Fa-f]{4})\.([0-9A-Fa-f]{4})\.([0-9A-Fa-f]{4})\]/
+          |> Regex.scan(weights_section)
+          |> Enum.map(fn [_full, p, s, t] ->
+            Element.new(
+              String.to_integer(p, 16),
+              String.to_integer(s, 16),
+              String.to_integer(t, 16)
+            )
+          end)
+
+        nil ->
+          []
+      end
+
+    if elements != [] do
+      elements
+    else
+      # No allkeys-format weights in comment — try fractional weights
+      # This handles special entries like FFFE and FFFF
+      parse_fractional_as_allkeys(rest)
+    end
+  end
+
+  # Parse fractional weights for special entries that lack allkeys-format
+  # comments (e.g., FFFE "LOWEST primary" and FFFF "HIGHEST primary").
+  # Maps single-byte fractional primaries to their allkeys equivalents:
+  #   0x02 → 0x0001 (FFFE: lowest primary)
+  #   0xEF → 0xFFFE (FFFF: highest primary, encoded as [EF FF, ...])
+  defp parse_fractional_as_allkeys(rest) do
+    # Extract the fractional weight portion before the comment
+    weight_part =
+      case String.split(rest, "#", parts: 2) do
+        [w, _] -> String.trim(w)
+        [w] -> String.trim(w)
+      end
+
+    cond do
+      # FFFE: [02, 05, 05] → primary = 0x0001
+      String.contains?(weight_part, "[02, 05, 05]") ->
+        [Element.new(0x0001, 0x0020, 0x0002)]
+
+      # FFFF: [EF FF, 05, 05] → primary = 0xFFFE
+      String.contains?(weight_part, "[EF FF, 05, 05]") ->
+        [Element.new(0xFFFE, 0x0020, 0x0002)]
+
+      true ->
+        []
+    end
+  end
+
+  # Apply variable flags to all entries based on the variable primary range.
+  # An element is variable if first_variable_primary <= primary <= last_variable_primary.
+  defp apply_variable_flags(entries, {first_variable, last_variable}) do
+    Map.new(entries, fn {key, elements} ->
+      flagged =
+        Enum.map(elements, fn {p, s, t, _v} ->
+          variable = p >= first_variable and p <= last_variable
+          {p, s, t, variable}
+        end)
+
+      {key, flagged}
     end)
+  end
+
+  # Resolve context entries into contraction entries.
+  # A context entry "CONTEXT_CP | TARGET_CP" with modified CEs becomes
+  # a contraction key {CONTEXT_CP, TARGET_CP} with CEs =
+  # context_cp's own CEs ++ modified CEs.
+  defp resolve_context_entries(contexts, entries, {first_variable, last_variable}) do
+    Enum.reduce(contexts, entries, fn {context_cp, target_cp, modified_elements}, acc ->
+      case Map.get(acc, context_cp) do
+        nil ->
+          # Context codepoint not in table — skip
+          acc
+
+        context_elements ->
+          # Flag the modified elements for variable status
+          flagged =
+            Enum.map(modified_elements, fn {p, s, t, _v} ->
+              variable = p >= first_variable and p <= last_variable
+              {p, s, t, variable}
+            end)
+
+          contraction_key = {context_cp, target_cp}
+          contraction_elements = context_elements ++ flagged
+          Map.put(acc, contraction_key, contraction_elements)
+      end
+    end)
+  end
+
+  defp parse_codepoints(str) do
+    str
+    |> String.split()
+    |> Enum.map(&String.to_integer(&1, 16))
   end
 end

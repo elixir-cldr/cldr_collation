@@ -132,7 +132,7 @@ defmodule Cldr.Collation.Numeric do
     # Primary weight for numeric: digit base + encoded value
     # We use a scheme where the length prefix ensures longer numbers sort after shorter
     # The digit_base comes from the DIGIT group in FractionalUCA
-    # Primary weight of DIGIT ZERO in allkeys_CLDR.txt
+    # Primary weight of DIGIT ZERO in the collation table
     digit_base = 0x21E6
 
     length_ce = Element.new(digit_base + len, 0x0020, 0x0002)

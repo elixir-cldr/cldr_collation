@@ -191,20 +191,28 @@ defmodule Cldr.Collation.ReorderTest do
   describe "reorder combined with other options" do
     test "reorder with strength: :secondary" do
       # Reorder should work with case-insensitive comparison
-      result = Cldr.Collation.sort(
-        ["Alpha", "αλφα", "alpha"],
-        reorder: [:Grek], strength: :secondary, backend: :elixir
-      )
+      result =
+        Cldr.Collation.sort(
+          ["Alpha", "αλφα", "alpha"],
+          reorder: [:Grek],
+          strength: :secondary,
+          backend: :elixir
+        )
+
       # Greek first, then the two Latin strings (equal at secondary)
       assert hd(result) == "αλφα"
     end
 
     test "reorder with alternate: :shifted" do
       # Reorder should work with shifted punctuation handling
-      result = Cldr.Collation.sort(
-        ["al-pha", "αλφα"],
-        reorder: [:Grek], alternate: :shifted, backend: :elixir
-      )
+      result =
+        Cldr.Collation.sort(
+          ["al-pha", "αλφα"],
+          reorder: [:Grek],
+          alternate: :shifted,
+          backend: :elixir
+        )
+
       assert result == ["αλφα", "al-pha"]
     end
   end

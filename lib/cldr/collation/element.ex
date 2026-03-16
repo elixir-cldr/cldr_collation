@@ -155,7 +155,8 @@ defmodule Cldr.Collation.Element do
 
   Variable elements represent spaces, punctuation, symbols, and currency signs.
   They are identified by the `variable: true` flag set during parsing of the
-  allkeys table (marked with `*` prefix in the data file).
+  collation table (derived from the `[first variable]` and `[last variable]`
+  boundaries in FractionalUCA.txt).
 
   ### Arguments
 

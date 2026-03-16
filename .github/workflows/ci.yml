@@ -40,7 +40,7 @@ jobs:
       
     steps:
     - name: Install build tools
-      run: sudo apt build-essential
+      run: "sudo apt-get update; sudo apt-get install build-essential"
         
     # Step: Setup Elixir + Erlang image as the base.
     - name: Set up Elixir

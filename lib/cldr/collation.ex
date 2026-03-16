@@ -41,7 +41,9 @@ defmodule Cldr.Collation do
 
   ## Cldr.Collation Options
 
-  All BCP47 -u- extension collation keys are supported:
+  All BCP47 -u- extension collation keys are supported. See the
+  [detailed explanation](collation_options.html) for more information on how
+  each option affect sort order.
 
   * `strength` - `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`, `:identical`.
 
@@ -116,6 +118,9 @@ defmodule Cldr.Collation do
   * `options` - a keyword list of collation options.
 
   ### Options
+
+  See the [detailed explanation](collation_options.html) for more information on
+  each option and its impact on sort order.
 
   * `:strength` - comparison level: `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`,
      or `:identical`.

@@ -96,7 +96,9 @@ iex> Cldr.Collation.sort_key("hello")
   32, 0, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2>>
 ```
 
-## Options
+## Collation Options
+
+The collation options are summarised here. See the [detailed explanation](collation_options.html) for more information about the impact and usage of the various options.
 
 | Option          | Values                                                       | Default            |
 |-----------------|--------------------------------------------------------------|:-------------------|
@@ -130,7 +132,7 @@ for features the NIF does not support.
 3. Compile with the NIF enabled:
 
 ```bash
-UNICODE_COLLATION_NIF=true mix compile
+CLDR_COLLATION_NIF=true mix compile
 ```
 
 Or set it permanently in `config/config.exs`:
@@ -187,27 +189,74 @@ for unsupported options. With `backend: :nif`, unsupported options raise an
 
 The two backends use fundamentally different approaches:
 
-- **NIF**: Calls ICU4C's `ucol_strcollIter()` for pairwise string comparison.
-  Comparison and sorting happen entirely in C with constant memory overhead.
-  Sort keys are not generated — `sort/2` uses pairwise comparisons via
-  `Enum.sort/2`.
+* **NIF**: Calls ICU4C's `ucol_strcollIter()` for pairwise string comparison. Comparison and sorting happen entirely in C with constant memory overhead. Sort keys are not generated — `sort/2` uses pairwise comparisons via `Enum.sort/2`.
 
-- **Elixir**: Generates binary sort keys from the CLDR-modified DUCET table,
-  then compares keys with standard binary operators. `sort/2` pre-computes
-  sort keys for all strings ([Schwartzian transform](https://en.wikipedia.org/wiki/Schwartzian_transform)),
-  making it efficient for large lists but more memory-intensive.
+* **Elixir**: Generates binary sort keys from the CLDR-modified DUCET table, then compares keys with standard binary operators. `sort/2` pre-computes sort keys for all strings ([Schwartzian transform](https://en.wikipedia.org/wiki/Schwartzian_transform)), making it efficient for large lists but more memory-intensive.
 
-### Potential Result Differences
+### Known Deviations Between Backends
 
-For NIF-compatible options, both backends produce identical ordering. However,
-differences may arise in edge cases:
+For NIF-compatible options, both backends produce identical ordering for
+common text. The following edge cases may produce different results or
+different behavior.
 
-- **ICU version mismatch**: The Elixir backend uses the CLDR allkeys table
-  (UCA 17.0.0). If the system ICU library uses a different Unicode version,
-  rare codepoints may sort differently between backends.
-- **Locale tailoring**: Only the Elixir backend applies CLDR locale-specific
-  rules. Using `backend: :nif` with a locale that has tailoring rules will
-  raise an error; `backend: :default` will silently fall back to Elixir.
+#### Unicode version mismatch
+
+The Elixir backend uses the CLDR FractionalUCA table (UCA 17.0.0). The NIF
+backend delegates to the system's ICU library, which may use a different
+Unicode version. Characters added or reassigned between Unicode versions
+(typically rare or recently encoded codepoints) may sort differently.
+
+To check which ICU version your system provides:
+
+```bash
+# macOS (uses icucore)
+$ icu-config --version 2>/dev/null || echo "see /usr/lib/libicucore.dylib"
+
+# Linux
+$ pkg-config --modversion icu-uc
+```
+
+#### Locale tailoring is Elixir-only
+
+Only the Elixir backend applies CLDR locale-specific tailoring rules
+(e.g., German phonebook `de-u-co-phonebk`, Swedish `sv`, Danish `da`,
+Spanish traditional `es-u-co-trad`). The NIF backend does not load
+CLDR tailoring data.
+
+* With `backend: :default`, locale tailoring silently falls back to the Elixir backend.
+
+* With `backend: :nif`, passing a locale that requires tailoring raises an `ArgumentError`.
+
+#### `max_variable` values other than `:punct`
+
+The NIF backend only supports the default `max_variable: :punct`. The
+values `:space`, `:symbol`, and `:currency` require the Elixir backend.
+With `backend: :default`, non-default values silently fall back to Elixir.
+
+#### `sort_key/2` is always Elixir
+
+Sort keys are generated exclusively by the Elixir backend, regardless of
+the `backend` option. The NIF backend uses pairwise ICU comparisons and
+does not produce sort keys.
+
+#### Sorting algorithm
+
+The two backends use different sorting strategies:
+
+* **NIF**: Uses `Enum.sort/2` with pairwise ICU comparisons.
+
+* **Elixir**: Pre-computes binary sort keys (Schwartzian transform), then sorts by key with `Enum.sort_by/2`.
+
+Both use Erlang's stable merge sort, so strings that are collation-equal
+retain their original input order.
+
+#### Reorder codes
+
+The NIF backend supports a fixed set of ISO 15924 script codes (`:Latn`,
+`:Grek`, `:Cyrl`, `:Hani`, `:Hang`, `:Arab`, `:Hebr`, `:Deva`, `:Thai`,
+etc.) and special codes (`:space`, `:punct`, `:symbol`, `:currency`,
+`:digit`). Unrecognized script codes fall back to Elixir with
+`backend: :default` and raise with `backend: :nif`.
 
 ## Benchmarks
 

@@ -482,15 +482,8 @@ defmodule Cldr.Collation do
     {final_elements, consumed_set, unconsumed}
   end
 
-  # Get the canonical combining class for a codepoint.
-  # The upstream typespec doesn't include nil, but the function can return nil
-  # for unassigned codepoints.
-  @dialyzer {:nowarn_function, combining_class: 1}
   defp combining_class(cp) do
-    case Unicode.CanonicalCombiningClass.combining_class(cp) do
-      nil -> 0
-      ccc -> ccc
-    end
+    Unicode.CanonicalCombiningClass.combining_class(cp)
   end
 
   defp produce_with_numeric(codepoints, _options) do

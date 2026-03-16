@@ -110,7 +110,7 @@ defmodule Cldr.Collation.MixProject do
 
   @doc false
   def nif_enabled? do
-    System.get_env("CLDR_COLLATION_NIF") == "true" or
+    String.downcase(System.get_env("CLDR_COLLATION_NIF", "false")) == "true" or
       Application.get_env(:ex_cldr_collation, :nif, false) == true
   end
 end

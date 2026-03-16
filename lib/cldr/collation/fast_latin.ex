@@ -31,6 +31,7 @@ defmodule Cldr.Collation.FastLatin do
   * `:ok`.
 
   """
+  @spec build() :: :ok
   def build do
     table = :persistent_term.get(:collation_table)
     contractions = :persistent_term.get(:collation_contractions)
@@ -79,6 +80,7 @@ defmodule Cldr.Collation.FastLatin do
       nil
 
   """
+  @spec lookup(non_neg_integer()) :: [Cldr.Collation.Element.t()] | nil
   def lookup(cp) when cp < @latin_limit do
     elem(:persistent_term.get(@table_name), cp)
   end

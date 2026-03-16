@@ -10,7 +10,7 @@ defmodule Cldr.Collation.MixProject do
       name: "Cldr Collation",
       docs: docs(),
       source_url: "https://github.com/elixir-cldr/cldr_collation",
-      elixir: "~> 1.10",
+      elixir: "~> 1.12",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       compilers: maybe_elixir_make() ++ Mix.compilers(),
@@ -61,11 +61,13 @@ defmodule Cldr.Collation.MixProject do
         "c_src/platform",
         "c_src/*.c",
         "c_src/Makefile",
+        "priv/FractionalUCA.txt",
         "config",
         "mix.exs",
         "README*",
         "CHANGELOG*",
-        "LICENSE*"
+        "LICENSE*",
+        "COLLATION_OPTIONS.md"
       ]
     ]
   end
@@ -86,9 +88,10 @@ defmodule Cldr.Collation.MixProject do
       extras: [
         "README.md",
         "LICENSE.md",
-        "CHANGELOG.md"
+        "CHANGELOG.md",
+        "COLLATION_OPTIONS.md"
       ],
-      formatters: ["html"],
+      formatters: ["html", "markdown"],
       skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md"]
     ]
   end

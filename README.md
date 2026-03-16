@@ -2,55 +2,35 @@
 
 An Elixir implementation of the [Unicode Collation Algorithm](https://www.unicode.org/reports/tr10/) (UCA)
 as extended by [CLDR](http://www.unicode.org/reports/tr35/tr35-collation.html), providing
-language-aware string sorting and comparison.
+language-aware string sorting and comparison. An opt-in NIF is provided for high performance collating.
 
-### Introduction
+## Features
 
-Information is displayed in sorted order to enable users to easily find the items they are looking for. However, users of different languages might have very different expectations of what a “sorted” list should look like. Not only does the alphabetical order vary from one language to another, but it also can vary from document to document within the same language. For example, phonebook ordering might be different than dictionary ordering. String comparison is one of the basic functions most applications require, and yet implementations often do not match local conventions. This library  provides string comparison capability with support for appropriate sort orderings for each of the locales you need. In the event there is a very unusual requirement, it is also possible to customize orderings.
+* Full Unicode Collation Algorithm implementation in pure Elixir.
 
-`ex_cldr_collation` is compliant to the Unicode Collation Algorithm (UCA) (Unicode Technical Standard #10) and based on the Default Unicode Collation Element Table (DUCET) which defines the same sort order as ISO 14651. It also contains several enhancements that are not available in UCA. These have been adopted into the CLDR Collation Algorithm. For example:
+* CLDR root collation based on the Unicode DUCET table.
 
-* Additional case handling (as specified by CLDR): ICU allows case differences to be ignored or flipped. Uppercase letters can be sorted before lowercase letters, or vice-versa.
+* Locale-specific tailoring for 10+ languages (Danish, German phonebook, Spanish, Swedish, Finnish, etc.)
 
-* Easy customization (as specified by CLDR): Services can be easily tailored to address a wide range of collation requirements.
+* All BCP47 `-u-` extension collation keys supported.
 
-* The default (root) sort order has been tailored slightly for improved functionality and performance.
+* Optional high-performance NIF backend using ICU4C.
 
-In other words, ICU implements the CLDR Collation Algorithm which is an extension of the Unicode Collation Algorithm (UCA) which is an extension of ISO 14651.
+* Sort key generation for efficient repeated comparisons.
 
-There are several benefits to using the collation algorithms defined in these standards, including:
+## Installation
 
-* The algorithms have been designed and reviewed by experts in multilingual collation, and therefore are robust and comprehensive.
+Add `cldr_collation` to your list of dependencies in `mix.exs`:
 
-* Applications that share sorted data but do not agree on how the data should be ordered fail to perform correctly. By conforming to the CLDR/UCA/14651 standards for collation and using CLDR language-specific collation data, independently developed applications sort data identically and perform properly.
+```elixir
+def deps do
+  [
+    {:ex_cldr_collation, "~> 1.0"}
+  ]
+end
+```
 
-There are many challenges when accommodating the world’s languages and writing systems and the different orderings that are used. However, `ex_cldr_collation` provides an excellent means for comparing strings in a locale-sensitive fashion.
-
-For example, here are some of the ways languages vary in ordering strings:
-
-* The letters A-Z can be sorted in a different order than in English. For example, in Lithuanian, “y” is sorted between “i” and “k”.
-
-* Combinations of letters can be treated as if they were one letter. For example, in traditional Spanish “ch” is treated as a single letter, and sorted between “c” and “d”.
-
-* Accented letters can be treated as minor variants of the unaccented letter. For example, “é” can be treated equivalent to “e”.
-
-* Accented letters can be treated as distinct letters. For example, “Å” in Danish is treated as a separate letter that sorts just after “Z”.
-
-* Unaccented letters that are considered distinct in one language can be indistinct in another. For example, the letters “v” and “w” are two different letters according to English. However, “v” and “w” are traditionally considered variant forms of the same letter in Swedish.
-
-* A letter can be treated as if it were two letters. For example, in German phonebook (or “lists of names”) order “ä” is compared as if it were “ae”.
-
-* Thai requires that the order of certain letters be reversed.
-
-* Some French dictionary ordering traditions sort accents in backwards order, from the end of the string. For example, the word “côte” sorts before “coté” because the acute accent on the final “e” is more significant than the circumflex on the “o”.
-
-* Sometimes lowercase letters sort before uppercase letters. The reverse is required in other situations. For example, lowercase letters are usually sorted before uppercase letters in English. Danish letters are the exact opposite.
-
-* Even in the same language, different applications might require different sorting orders. For example, in German dictionaries, “öf” would come before “of”. In phone books the situation is the exact opposite.
-
-* Sorting orders can change over time due to government regulations or new characters/scripts in Unicode.
-
-### Installation on MacOS
+### NIF Installation on MacOS
 
 On MacOS, the relevant headers are included in `ex_cldr_collation` and no additional installation is required. The build process will link to the MacOX native `icucore` library.
 
@@ -64,7 +44,7 @@ However it is also possible to use another installation of `libicu` if, for some
 % mix deps.compile ex_cldr_collation
 ```
 
-### Installation on Linux
+### NIF Installation on Linux
 
 On Linux systems, `libicu-dev`, `libicu` and `pkg-conf` must be installed and well as basic development tools for the build process.
 
@@ -93,29 +73,7 @@ $ pkg-config --libs icu-uc icu-io
 -licuio -licui18n -licuuc -licudata
 ```
 
-## Features
-
-- Full Unicode Collation Algorithm implementation in pure Elixir
-- CLDR root collation based on the Unicode DUCET table
-- Locale-specific tailoring for 10+ languages (Danish, German phonebook, Spanish, Swedish, Finnish, etc.)
-- All BCP47 `-u-` extension collation keys supported
-- Optional high-performance NIF backend using ICU4C
-- Sort key generation for efficient repeated comparisons
-
-## Installation
-
-Add `cldr_collation` to your list of dependencies in `mix.exs`:
->>>>>>> c/main
-
-```elixir
-def deps do
-  [
-    {:cldr_collation, "~> 0.1.0"}
-  ]
-end
-```
-
-## Examples
+## Example Usage
 
 ```elixir
 # Sort a list of strings
@@ -169,15 +127,20 @@ When compiled, it is used automatically for comparisons and sorting when all
 options are NIF-compatible. The pure Elixir implementation is used as a fallback
 for features the NIF does not support.
 
-### Enabling the NIF
+### Setup
 
-Requires ICU system libraries (`libicu` or `icucore` on macOS):
+1. Install ICU system libraries (`libicu` on Linux). For MacOS, `icucore` is used and is part of the base operating system.
+2. Add the `elixir_make` dependency (already included as optional).
+3. Compile with the NIF enabled:
 
 ```bash
-# macOS: icucore is included with the OS, no extra install needed
-# Linux: sudo apt-get install libicu-dev
+UNICODE_COLLATION_NIF=true mix compile
+```
 
-CLDR_COLLATION_NIF=true mix compile
+Or set it permanently in `config/config.exs`:
+
+```elixir
+config :ex_cldr_collation, :nif, true
 ```
 
 ### Backend Selection
@@ -290,16 +253,22 @@ CLDR_COLLATION_NIF=true mix compile && mix run bench/sort_benchmark.exs
 ### Key Observations
 
 - **NIF throughput is constant** across string lengths (~9,400 ips cased, ~2,570 ips uncased) because ICU processes strings entirely in C.
+
 - **Elixir throughput scales with string length**, from 8,000 ips (5 chars) down to 900 ips (50 chars).
+
 - **NIF is faster for cased comparisons** at all string lengths, and for uncased at 50+ characters.
+
 - **Elixir is faster for uncased strings** up to 20 characters due to lower per-call overhead and the fast Latin lookup path.
+
 - **NIF uses ~54 KB constant memory** regardless of string length, while Elixir allocates 186 KB to 1.9 MB per sort (generating intermediate sort keys and collation elements).
 
 ### Possible Future Optimizations
 
 Two additional optimizations from ICU could further improve the Elixir backend:
 
-**Incremental comparison** — ICU's `ucol_strcoll` compares two strings by
+#### Incremental comparison
+
+ICU's `ucol_strcoll` compares two strings by
 processing collation elements from both strings simultaneously, stopping at
 the first primary-level difference. Since 90%+ of comparisons resolve at the
 primary level, secondary and tertiary weights are never computed. The current
@@ -315,7 +284,9 @@ sort keys. The tradeoff: lower memory and faster `compare/3`, but pairwise
 comparison in `sort/2` would perform O(n log n) collation walks instead of
 O(n) key generations followed by cheap binary comparisons.
 
-**Sort key compression** — In the collation table, 80.5% of secondary weights
+#### Sort key compression
+
+In the collation table, 80.5% of secondary weights
 are `0x0020` and 70.1% of tertiary weights are `0x0002`. The current sort key
 format encodes every weight as 16 bits, wasting a byte on these common values.
 ICU uses a common-weight compression scheme
@@ -328,6 +299,3 @@ keys (e.g., in database indexes) would need to regenerate them. The
 performance benefit is primarily reduced memory allocation rather than reduced
 CPU, since binary comparison is already fast regardless of key length.
 
-## License
-
-Apache-2.0

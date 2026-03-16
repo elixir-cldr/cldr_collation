@@ -29,6 +29,7 @@ defmodule Cldr.Collation.Normalizer do
       "e\u0301"
 
   """
+  @spec nfd(String.t()) :: String.t()
   def nfd(string) when is_binary(string) do
     string
     |> :unicode.characters_to_nfd_binary()
@@ -57,6 +58,7 @@ defmodule Cldr.Collation.Normalizer do
       [233]
 
   """
+  @spec to_codepoints(String.t()) :: [non_neg_integer()]
   def to_codepoints(string) when is_binary(string) do
     string
     |> String.to_charlist()
@@ -83,6 +85,7 @@ defmodule Cldr.Collation.Normalizer do
       [99, 97, 102, 101, 769]
 
   """
+  @spec normalize_to_codepoints(String.t(), boolean()) :: [non_neg_integer()]
   def normalize_to_codepoints(string, normalize? \\ false) do
     string
     |> then(fn s -> if normalize?, do: nfd(s), else: s end)

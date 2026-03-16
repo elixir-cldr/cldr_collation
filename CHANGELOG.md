@@ -1,5 +1,43 @@
 # Changelog
 
+## Ex_Cldr_Collation v1.0.0
+
+This is the changelog for Ex_Cldr_Collation v1.0.0 released on March 17th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
+
+This is a major release that replaces the previous NIF-only implementation with a
+complete pure-Elixir implementation of the Unicode Collation Algorithm (UCA) as
+extended by CLDR. The optional NIF backend is retained for high-performance use cases.
+
+### Breaking changes
+
+* The main module is now `Cldr.Collation` (was `Cldr.Collator`).
+
+* `Cldr.Collation.compare/3` returns `:lt | :eq | :gt` (was `-1 | 0 | 1`).
+
+* Module-based comparators are now `Cldr.Collation.Sensitive` and `Cldr.Collation.Insensitive` (were `Cldr.Collator.Sensitive` and `Cldr.Collator.Insensitive`).
+
+### Enhancements
+
+* Implement the full Unicode Collation Algorithm in pure Elixir, removing the hard requirement on ICU system libraries.
+
+* Support all BCP47 -u- extension collation keys: strength, alternate, backwards, normalization, case_level, case_first, numeric, reorder, and max_variable.
+
+* Add locale-specific tailoring for Danish, German (phonebook), Spanish, Swedish, Finnish, Norwegian, Polish, Croatian, and Turkish.
+
+* Add CJK radical-stroke ordering via `Cldr.Collation.Han`.
+
+* Add fast Latin lookup path for codepoints U+0000..U+017F.
+
+* Add script reordering support (`reorder` option).
+
+* Add convenience options: `ignore_accents`, `ignore_case`, `ignore_punctuation`, and `casing` for compatibility with the previous `ex_cldr_collation` API.
+
+* Add `Cldr.Collation.sort/2` for sorting string lists.
+
+* Add `Cldr.Collation.sort_key/2` for generating binary sort keys.
+
+* Support `Cldr.LanguageTag` structs as the `:locale` option when `ex_cldr` is available.
+
 ## Ex_Cldr_Collation v0.7.5
 
 This is the changelog for Cldr_collation v0.7.5 released on September 29th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)

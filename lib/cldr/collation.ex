@@ -178,6 +178,7 @@ defmodule Cldr.Collation do
       :eq
 
   """
+  @spec compare(String.t(), String.t(), keyword() | Options.t()) :: :lt | :eq | :gt
   def compare(string_a, string_b, options \\ []) do
     options = resolve_options(options)
 
@@ -228,6 +229,7 @@ defmodule Cldr.Collation do
       true
 
   """
+  @spec sort_key(String.t() | [non_neg_integer()], keyword() | Options.t()) :: binary()
   def sort_key(input, options \\ [])
 
   def sort_key(input, options) when is_list(options) do
@@ -301,6 +303,7 @@ defmodule Cldr.Collation do
       ["а", "б", "в"]
 
   """
+  @spec sort([String.t()], keyword() | Options.t()) :: [String.t()]
   def sort(strings, options \\ []) do
     options = resolve_options(options)
 
@@ -338,6 +341,7 @@ defmodule Cldr.Collation do
       :ok
 
   """
+  @spec ensure_loaded() :: :ok
   def ensure_loaded do
     Table.ensure_loaded()
   end

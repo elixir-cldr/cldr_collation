@@ -35,6 +35,7 @@ defmodule Cldr.Collation.Element do
       {0x23EC, 0x0020, 0x0008, false}
 
   """
+  @spec new(non_neg_integer(), non_neg_integer(), non_neg_integer(), boolean()) :: t()
   def new(primary \\ 0, secondary \\ 0, tertiary \\ 0, variable \\ false) do
     {primary, secondary, tertiary, variable}
   end
@@ -56,6 +57,7 @@ defmodule Cldr.Collation.Element do
       0x23EC
 
   """
+  @spec primary(t()) :: non_neg_integer()
   def primary({p, _, _, _}), do: p
 
   @doc """
@@ -75,6 +77,7 @@ defmodule Cldr.Collation.Element do
       0x0020
 
   """
+  @spec secondary(t()) :: non_neg_integer()
   def secondary({_, s, _, _}), do: s
 
   @doc """
@@ -94,6 +97,7 @@ defmodule Cldr.Collation.Element do
       0x0008
 
   """
+  @spec tertiary(t()) :: non_neg_integer()
   def tertiary({_, _, t, _}), do: t
 
   @doc """
@@ -120,6 +124,7 @@ defmodule Cldr.Collation.Element do
       false
 
   """
+  @spec ignorable?(t()) :: boolean()
   def ignorable?({0, 0, 0, _}), do: true
   def ignorable?(_), do: false
 
@@ -147,6 +152,7 @@ defmodule Cldr.Collation.Element do
       false
 
   """
+  @spec primary_ignorable?(t()) :: boolean()
   def primary_ignorable?({0, _, _, _}), do: true
   def primary_ignorable?(_), do: false
 
@@ -177,6 +183,7 @@ defmodule Cldr.Collation.Element do
       false
 
   """
+  @spec variable?(t(), non_neg_integer()) :: boolean()
   def variable?({p, _, _, true}, _max_variable_primary) when p > 0, do: true
   def variable?(_, _), do: false
 end

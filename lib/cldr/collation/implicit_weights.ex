@@ -93,6 +93,7 @@ defmodule Cldr.Collation.ImplicitWeights do
       false
 
   """
+  @spec unified_ideograph?(non_neg_integer()) :: boolean()
   def unified_ideograph?(cp) do
     (cp >= @cjk_unified_start and cp <= @cjk_unified_end) or
       (cp >= @cjk_ext_a_start and cp <= @cjk_ext_a_end) or
@@ -143,6 +144,7 @@ defmodule Cldr.Collation.ImplicitWeights do
       false
 
   """
+  @spec hangul_syllable?(non_neg_integer()) :: boolean()
   def hangul_syllable?(cp), do: cp >= @hangul_start and cp <= @hangul_end
 
   @doc """
@@ -171,6 +173,7 @@ defmodule Cldr.Collation.ImplicitWeights do
       0
 
   """
+  @spec compute(non_neg_integer()) :: {:hangul_decompose, [non_neg_integer()]} | [Element.t()]
   def compute(cp) do
     cond do
       hangul_syllable?(cp) ->
@@ -210,6 +213,7 @@ defmodule Cldr.Collation.ImplicitWeights do
       [0x1100, 0x1161, 0x11A8]
 
   """
+  @spec decompose_hangul_to_jamo(non_neg_integer()) :: [non_neg_integer()]
   def decompose_hangul_to_jamo(cp) do
     sindex = cp - @sbase
     lindex = div(sindex, @ncount)

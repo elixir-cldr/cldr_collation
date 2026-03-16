@@ -13,6 +13,7 @@ defmodule Cldr.Collation.Table do
 
   use GenServer
 
+  alias Cldr.Collation.Element
   alias Cldr.Collation.Table.Parser
 
   @table_name :collation_table
@@ -36,6 +37,7 @@ defmodule Cldr.Collation.Table do
       :ok
 
   """
+  @spec ensure_loaded() :: :ok
   def ensure_loaded do
     case :persistent_term.get(@table_name, nil) do
       nil -> GenServer.call(__MODULE__, :load, :infinity)
@@ -71,6 +73,7 @@ defmodule Cldr.Collation.Table do
       :unmapped
 
   """
+  @spec lookup(non_neg_integer() | [non_neg_integer()]) :: {:ok, [Element.t()]} | :unmapped
   def lookup(codepoint) when is_integer(codepoint) do
     table = :persistent_term.get(@table_name)
 
@@ -110,6 +113,7 @@ defmodule Cldr.Collation.Table do
       true
 
   """
+  @spec contraction_starters(non_neg_integer()) :: [pos_integer()]
   def contraction_starters(codepoint) do
     contractions = :persistent_term.get(@contractions_table)
     Map.get(contractions, codepoint, [])
@@ -144,6 +148,10 @@ defmodule Cldr.Collation.Table do
       [66]
 
   """
+  @spec longest_match([non_neg_integer()]) ::
+          {[non_neg_integer()], [Element.t()], [non_neg_integer()]}
+          | {:unmapped, non_neg_integer(), [non_neg_integer()]}
+          | :done
   def longest_match([cp | rest] = _codepoints) do
     # Check if this codepoint starts any contractions
     lengths = contraction_starters(cp)
@@ -221,6 +229,8 @@ defmodule Cldr.Collation.Table do
       0xFFFF
 
   """
+  @spec lookup_with_overlay(non_neg_integer() | [non_neg_integer()], map() | nil) ::
+          {:ok, [Element.t()]} | :unmapped
   def lookup_with_overlay(codepoint, overlay) when is_integer(codepoint) do
     lookup_with_overlay_key(codepoint, overlay)
   end
@@ -277,6 +287,10 @@ defmodule Cldr.Collation.Table do
       [66]
 
   """
+  @spec longest_match_with_overlay([non_neg_integer()], map() | nil) ::
+          {[non_neg_integer()], [Element.t()], [non_neg_integer()]}
+          | {:unmapped, non_neg_integer(), [non_neg_integer()]}
+          | :done
   def longest_match_with_overlay(codepoints, nil), do: longest_match(codepoints)
 
   def longest_match_with_overlay([cp | rest] = _codepoints, overlay) when is_map(overlay) do

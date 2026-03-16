@@ -46,6 +46,7 @@ defmodule Cldr.Collation.Tailoring.LocaleDefaults do
       []
 
   """
+  @spec options_for(String.t()) :: keyword()
   def options_for(locale) when is_binary(locale) do
     language = extract_language(locale)
     Map.get(@locale_defaults, language, [])
@@ -71,6 +72,7 @@ defmodule Cldr.Collation.Tailoring.LocaleDefaults do
       :standard
 
   """
+  @spec default_type(String.t()) :: atom()
   def default_type(locale) when is_binary(locale) do
     language = extract_language(locale)
     Map.get(@locale_type_defaults, language, :standard)
@@ -96,6 +98,7 @@ defmodule Cldr.Collation.Tailoring.LocaleDefaults do
       "sv"
 
   """
+  @spec extract_language(String.t()) :: String.t()
   def extract_language(locale) do
     locale
     |> String.split("-", parts: 2)

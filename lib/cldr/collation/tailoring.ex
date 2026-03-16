@@ -73,6 +73,7 @@ defmodule Cldr.Collation.Tailoring do
       true
 
   """
+  @spec get_tailoring(String.t(), atom()) :: {map(), keyword()} | nil
   def get_tailoring(language, type) do
     case Map.get(@tailorings, {language, type}) do
       nil -> nil
@@ -94,6 +95,7 @@ defmodule Cldr.Collation.Tailoring do
       true
 
   """
+  @spec supported_locales() :: [{String.t(), atom()}]
   def supported_locales do
     Map.keys(@tailorings)
   end
@@ -122,6 +124,7 @@ defmodule Cldr.Collation.Tailoring do
       3
 
   """
+  @spec parse_rules(String.t()) :: [tuple()]
   def parse_rules(rules_str) do
     rules_str
     |> String.split("\n", trim: true)

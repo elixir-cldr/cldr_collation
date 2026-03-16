@@ -54,6 +54,7 @@ defmodule Cldr.Collation.Han do
       :ok
 
   """
+  @spec ensure_loaded() :: :ok
   def ensure_loaded do
     case :ets.whereis(@table_name) do
       :undefined -> GenServer.call(__MODULE__, :load, :infinity)
@@ -81,6 +82,7 @@ defmodule Cldr.Collation.Han do
       2
 
   """
+  @spec collation_elements(non_neg_integer()) :: [Element.t()] | nil
   def collation_elements(codepoint) do
     ensure_loaded()
 
@@ -133,6 +135,13 @@ defmodule Cldr.Collation.Han do
       17592186064384
 
   """
+  @spec compute_key(
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) :: non_neg_integer()
   def compute_key(radical, residual_strokes, simplification, block, codepoint) do
     import Bitwise
 
@@ -165,6 +174,7 @@ defmodule Cldr.Collation.Han do
       0xFB40
 
   """
+  @spec key_to_elements(non_neg_integer()) :: [Element.t()]
   def key_to_elements(key) do
     # Encode as two CEs with primary weights derived from the key
     # Use the Han implicit base (0xFB40) as a starting point
@@ -208,6 +218,7 @@ defmodule Cldr.Collation.Han do
       1
 
   """
+  @spec block_index(non_neg_integer()) :: non_neg_integer()
   def block_index(cp) do
     cond do
       cp >= 0x4E00 and cp <= 0x9FFF -> @block_cjk_unified
@@ -285,6 +296,9 @@ defmodule Cldr.Collation.Han do
       :skip
 
   """
+  @spec parse_radical_line(String.t()) ::
+          {:ok, pos_integer(), [{non_neg_integer(), non_neg_integer(), non_neg_integer()}]}
+          | :skip
   def parse_radical_line(line) do
     case Regex.run(~r/^\[radical (\d+)=.+?:(.+)\]$/, line) do
       [_, num_str, members_str] ->

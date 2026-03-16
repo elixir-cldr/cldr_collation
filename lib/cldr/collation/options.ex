@@ -85,6 +85,7 @@ defmodule Cldr.Collation.Options do
       %Cldr.Collation.Options{strength: :primary, alternate: :shifted}
 
   """
+  @spec new(keyword()) :: t()
   def new(options \\ []) do
     options =
       options
@@ -203,6 +204,7 @@ defmodule Cldr.Collation.Options do
       :upper
 
   """
+  @spec from_locale(String.t()) :: t()
   def from_locale(locale) when is_binary(locale) do
     alias Cldr.Collation.Tailoring
     alias Cldr.Collation.Tailoring.LocaleDefaults
@@ -362,6 +364,7 @@ defmodule Cldr.Collation.Options do
       0x0209
 
   """
+  @spec max_variable_primary(t()) :: non_neg_integer()
   def max_variable_primary(%__MODULE__{max_variable: :space}), do: 0x0209
   def max_variable_primary(%__MODULE__{max_variable: :punct}), do: 0x0B61
   def max_variable_primary(%__MODULE__{max_variable: :symbol}), do: 0x0EE3

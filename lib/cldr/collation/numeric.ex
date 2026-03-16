@@ -37,6 +37,7 @@ defmodule Cldr.Collation.Numeric do
       3
 
   """
+  @spec process_elements([{[non_neg_integer()], [Element.t()]}]) :: [Element.t()]
   def process_elements(ce_pairs) do
     ce_pairs
     |> group_digit_runs()

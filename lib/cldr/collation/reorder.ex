@@ -44,6 +44,7 @@ defmodule Cldr.Collation.Reorder do
       true
 
   """
+  @spec build_mapping([atom()]) :: (non_neg_integer() -> non_neg_integer()) | nil
   def build_mapping([]), do: nil
 
   def build_mapping(reorder_codes) do
@@ -201,6 +202,9 @@ defmodule Cldr.Collation.Reorder do
   A map `%{integer() | {:sub, integer()} => non_neg_integer()}`.
 
   """
+  @spec load_primary_to_fractional_lead() :: %{
+          (integer() | {:sub, integer()}) => non_neg_integer()
+        }
   def load_primary_to_fractional_lead do
     path = fractional_uca_path()
 
@@ -296,6 +300,7 @@ defmodule Cldr.Collation.Reorder do
       true
 
   """
+  @spec load_script_ranges() :: %{String.t() => {non_neg_integer(), non_neg_integer()}}
   def load_script_ranges do
     path = fractional_uca_path()
 
@@ -399,6 +404,8 @@ defmodule Cldr.Collation.Reorder do
       true
 
   """
+  @spec apply_mapping((non_neg_integer() -> non_neg_integer()) | nil, non_neg_integer()) ::
+          non_neg_integer()
   def apply_mapping(nil, primary), do: primary
   def apply_mapping(mapping_fn, primary), do: mapping_fn.(primary)
 end

@@ -40,6 +40,7 @@ defmodule Cldr.Collation.SortKey do
       <<0x23, 0xEC>>
 
   """
+  @spec build([{Element.t(), non_neg_integer()}], Options.t(), String.t() | nil) :: binary()
   def build(processed_elements, %Options{} = options, original_string \\ nil) do
     key = build_primary(processed_elements)
 

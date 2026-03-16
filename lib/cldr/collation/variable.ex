@@ -46,6 +46,8 @@ defmodule Cldr.Collation.Variable do
       {0x23EC, 0}
 
   """
+  @spec process([Element.t()], :non_ignorable | :shifted, non_neg_integer()) ::
+          [{Element.t(), non_neg_integer()}]
   def process(elements, :non_ignorable, _max_variable_primary) do
     Enum.map(elements, fn elem -> {elem, 0} end)
   end

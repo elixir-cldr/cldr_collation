@@ -35,8 +35,9 @@ defmodule Cldr.Collation.MixProject do
 
   defp description do
     """
-    Common Locale Data Repository (CLDR) icu4c NIF-based collator providing Unicode
-    default collation sorting. Useful sorting not-ASCII strings.
+    Elixir implementation of the Cldr Collation algorithm, providing
+    language-aware string sorting and comparison. An opt-in NIF is
+    provided for high performance collating.
     """
   end
 

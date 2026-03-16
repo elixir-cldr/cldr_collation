@@ -4,13 +4,51 @@ An Elixir implementation of the [Unicode Collation Algorithm](https://www.unicod
 as extended by [CLDR](http://www.unicode.org/reports/tr35/tr35-collation.html), providing
 language-aware string sorting and comparison.
 
-## Installation
+### Introduction
 
-`ex_cldr_collation` depends upon [libicu](https://unicode-org.github.io/icu/userguide/icu/) to provide the underlying collator. There are two required components:
+Information is displayed in sorted order to enable users to easily find the items they are looking for. However, users of different languages might have very different expectations of what a “sorted” list should look like. Not only does the alphabetical order vary from one language to another, but it also can vary from document to document within the same language. For example, phonebook ordering might be different than dictionary ordering. String comparison is one of the basic functions most applications require, and yet implementations often do not match local conventions. This library  provides string comparison capability with support for appropriate sort orderings for each of the locales you need. In the event there is a very unusual requirement, it is also possible to customize orderings.
 
-* At *build* time (compilation), the `libicu` development headers are are required. On MacOS these headers are provided as part of the library. For Linux systems the package typically called `libicu-dev` is required.
+`ex_cldr_collation` is compliant to the Unicode Collation Algorithm (UCA) (Unicode Technical Standard #10) and based on the Default Unicode Collation Element Table (DUCET) which defines the same sort order as ISO 14651. It also contains several enhancements that are not available in UCA. These have been adopted into the CLDR Collation Algorithm. For example:
 
-* At *runtime* the `libicu` library is required. On MacOS and Ubuntu this library is delivered as part of the OS. For Alpine and Debian the `icu` package needs to be installed.
+* Additional case handling (as specified by CLDR): ICU allows case differences to be ignored or flipped. Uppercase letters can be sorted before lowercase letters, or vice-versa.
+
+* Easy customization (as specified by CLDR): Services can be easily tailored to address a wide range of collation requirements.
+
+* The default (root) sort order has been tailored slightly for improved functionality and performance.
+
+In other words, ICU implements the CLDR Collation Algorithm which is an extension of the Unicode Collation Algorithm (UCA) which is an extension of ISO 14651.
+
+There are several benefits to using the collation algorithms defined in these standards, including:
+
+* The algorithms have been designed and reviewed by experts in multilingual collation, and therefore are robust and comprehensive.
+
+* Applications that share sorted data but do not agree on how the data should be ordered fail to perform correctly. By conforming to the CLDR/UCA/14651 standards for collation and using CLDR language-specific collation data, independently developed applications sort data identically and perform properly.
+
+There are many challenges when accommodating the world’s languages and writing systems and the different orderings that are used. However, `ex_cldr_collation` provides an excellent means for comparing strings in a locale-sensitive fashion.
+
+For example, here are some of the ways languages vary in ordering strings:
+
+* The letters A-Z can be sorted in a different order than in English. For example, in Lithuanian, “y” is sorted between “i” and “k”.
+
+* Combinations of letters can be treated as if they were one letter. For example, in traditional Spanish “ch” is treated as a single letter, and sorted between “c” and “d”.
+
+* Accented letters can be treated as minor variants of the unaccented letter. For example, “é” can be treated equivalent to “e”.
+
+* Accented letters can be treated as distinct letters. For example, “Å” in Danish is treated as a separate letter that sorts just after “Z”.
+
+* Unaccented letters that are considered distinct in one language can be indistinct in another. For example, the letters “v” and “w” are two different letters according to English. However, “v” and “w” are traditionally considered variant forms of the same letter in Swedish.
+
+* A letter can be treated as if it were two letters. For example, in German phonebook (or “lists of names”) order “ä” is compared as if it were “ae”.
+
+* Thai requires that the order of certain letters be reversed.
+
+* Some French dictionary ordering traditions sort accents in backwards order, from the end of the string. For example, the word “côte” sorts before “coté” because the acute accent on the final “e” is more significant than the circumflex on the “o”.
+
+* Sometimes lowercase letters sort before uppercase letters. The reverse is required in other situations. For example, lowercase letters are usually sorted before uppercase letters in English. Danish letters are the exact opposite.
+
+* Even in the same language, different applications might require different sorting orders. For example, in German dictionaries, “öf” would come before “of”. In phone books the situation is the exact opposite.
+
+* Sorting orders can change over time due to government regulations or new characters/scripts in Unicode.
 
 ### Installation on MacOS
 

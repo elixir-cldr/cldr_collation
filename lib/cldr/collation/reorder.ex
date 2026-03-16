@@ -2,11 +2,15 @@ defmodule Cldr.Collation.Reorder do
   @moduledoc """
   Script reordering for collation (kr= / reorder option).
 
-  Remaps primary weight lead bytes to change the relative order of scripts.
+  Remaps primary weights to change the relative order of scripts.
   For example, `reorder: [:Grek, :Latn]` would sort Greek characters
   before Latin characters.
 
-  The reorder groups and their lead byte ranges are parsed from FractionalUCA.txt.
+  Script boundaries are determined from the fractional lead bytes in
+  FractionalUCA.txt, which cleanly partition scripts. Since the CLDR
+  allkeys integer primary weights interleave scripts within lead bytes,
+  a per-primary-weight lookup is used to identify each weight's script
+  before applying the reorder permutation.
 
   """
 
@@ -15,7 +19,7 @@ defmodule Cldr.Collation.Reorder do
   @doc """
   Build a reorder mapping function from the given script codes.
 
-  Creates a function that remaps primary weight lead bytes to reorder scripts.
+  Creates a function that remaps primary weights to reorder scripts.
   Core codes (space, punct, symbol, currency, digit) that are not explicitly
   listed are prepended automatically.
 
@@ -43,14 +47,48 @@ defmodule Cldr.Collation.Reorder do
   def build_mapping([]), do: nil
 
   def build_mapping(reorder_codes) do
-    # Get the script-to-lead-byte mapping
+    # Get the script-to-fractional-lead-byte-range mapping
     script_ranges = load_script_ranges()
 
-    # Build the new ordering
-    # Special codes: space, punct, symbol, currency, digit
-    # Script codes: Latn, Grek, Cyrl, etc.
-    # "others" / "Zzzz": everything not explicitly listed
+    # Build the fractional lead byte permutation
+    lead_byte_remap = build_lead_byte_permutation(reorder_codes, script_ranges)
 
+    if lead_byte_remap == nil do
+      nil
+    else
+      # Build primary-weight-to-fractional-lead-byte lookup
+      primary_to_frac_lead = load_primary_to_fractional_lead()
+
+      fn primary ->
+        if primary == 0 do
+          0
+        else
+          case Map.get(primary_to_frac_lead, primary) do
+            nil ->
+              # Unknown primary — leave unchanged
+              primary
+
+            frac_lead ->
+              case Map.get(lead_byte_remap, frac_lead) do
+                nil ->
+                  primary
+
+                new_lead ->
+                  # Encode the reordered lead byte as a synthetic primary
+                  # that preserves relative ordering within the script.
+                  # Use: (new_frac_lead << 8) | (original_frac_sub_byte)
+                  # This ensures within-script ordering is preserved while
+                  # between-script ordering follows the permutation.
+                  frac_sub = Map.get(primary_to_frac_lead, {:sub, primary}, 0)
+                  new_lead <<< 8 ||| frac_sub
+              end
+          end
+        end
+      end
+    end
+  end
+
+  defp build_lead_byte_permutation(reorder_codes, script_ranges) do
     # Collect lead byte ranges for each code in order
     {ordered_ranges, remaining} =
       Enum.reduce(reorder_codes, {[], script_ranges}, fn code, {ordered, remaining} ->
@@ -71,8 +109,11 @@ defmodule Cldr.Collation.Reorder do
     has_others = Enum.any?(reorder_codes, fn c -> c in [:others, :Zzzz] end)
 
     # Build the final ordering
-    # Missing core codes (space, punct, symbol, currency, digit) are prepended
-    core_codes = ["space", "punct", "symbol", "currency", "digit"]
+    # Missing core codes (space, punct, symbol, currency, digit) are prepended.
+    # In FractionalUCA.txt, some groups share the same byte ranges
+    # (e.g., space/punctuation both map to {3,11}). Deduplicate by range
+    # to avoid assigning the same lead bytes twice in the permutation.
+    core_codes = ["space", "punctuation", "symbol", "currency", "digit"]
 
     missing_core =
       Enum.filter(core_codes, fn c ->
@@ -80,12 +121,14 @@ defmodule Cldr.Collation.Reorder do
       end)
 
     core_entries =
-      Enum.flat_map(missing_core, fn c ->
+      missing_core
+      |> Enum.flat_map(fn c ->
         case Map.get(script_ranges, c) do
           nil -> []
           range -> [{c, range}]
         end
       end)
+      |> dedup_by_range()
 
     # Others = remaining scripts not explicitly listed
     others_entries =
@@ -95,12 +138,28 @@ defmodule Cldr.Collation.Reorder do
         remaining
         |> Map.drop(core_codes)
         |> Enum.sort_by(fn {_k, {start, _end}} -> start end)
+        |> dedup_by_range()
       end
 
-    all_entries = core_entries ++ ordered_ranges ++ others_entries
+    all_entries =
+      (core_entries ++ ordered_ranges ++ others_entries)
+      |> dedup_by_range()
 
-    # Build a lead byte remapping table
     build_lead_byte_remap(all_entries)
+  end
+
+  # Remove entries with duplicate ranges, keeping the first occurrence.
+  defp dedup_by_range(entries) do
+    {deduped, _seen} =
+      Enum.reduce(entries, {[], MapSet.new()}, fn {name, range}, {acc, seen} ->
+        if MapSet.member?(seen, range) do
+          {acc, seen}
+        else
+          {[{name, range} | acc], MapSet.put(seen, range)}
+        end
+      end)
+
+    Enum.reverse(deduped)
   end
 
   defp build_lead_byte_remap(entries) do
@@ -119,18 +178,90 @@ defmodule Cldr.Collation.Reorder do
     if map_size(remap) == 0 do
       nil
     else
-      fn primary ->
-        if primary == 0 do
-          0
-        else
-          lead_byte = primary >>> 8
+      remap
+    end
+  end
 
-          case Map.get(remap, lead_byte) do
-            nil -> primary
-            new_lead -> new_lead <<< 8 ||| (primary &&& 0xFF)
-          end
-        end
+  @doc """
+  Load a mapping from allkeys integer primary weights to their
+  fractional lead bytes and sub-bytes.
+
+  Parses FractionalUCA.txt data lines to extract both the fractional CE
+  (which gives the lead byte and sub-byte) and the allkeys integer primary
+  weight (from the comment portion).
+
+  The returned map has two types of entries:
+
+  * `primary_weight => fractional_lead_byte` - the script-identifying lead byte.
+  * `{:sub, primary_weight} => fractional_sub_byte` - the within-script sub-byte
+    for preserving relative ordering during remapping.
+
+  ### Returns
+
+  A map `%{integer() | {:sub, integer()} => non_neg_integer()}`.
+
+  """
+  def load_primary_to_fractional_lead do
+    path = fractional_uca_path()
+
+    if File.exists?(path) do
+      parse_primary_to_frac(path)
+    else
+      %{}
+    end
+  end
+
+  defp parse_primary_to_frac(path) do
+    path
+    |> File.stream!()
+    |> Enum.reduce(%{}, fn line, acc ->
+      line = String.trim(line)
+
+      cond do
+        line == "" or String.starts_with?(line, "#") or
+          String.starts_with?(line, "[") or String.starts_with?(line, "FDD") ->
+          acc
+
+        String.contains?(line, ";") ->
+          parse_frac_line_for_lead(line, acc)
+
+        true ->
+          acc
       end
+    end)
+  end
+
+  defp parse_frac_line_for_lead(line, acc) do
+    # Format: "0061; [2B, 05, 05]	# Latn Ll	[23EC.0020.0002]	* LATIN SMALL LETTER A"
+    # We need:
+    #   - The fractional CE lead byte (first byte of first CE, e.g., 0x2B)
+    #   - The fractional CE sub-byte (second byte if present, e.g., 0x00)
+    #   - The allkeys primary weight from the comment (e.g., 0x23EC)
+
+    with [_cp_part, rest] <- String.split(line, ";", parts: 2),
+         # Extract fractional CE bytes from [XX YY, ...]
+         [_, frac_hex] <- Regex.run(~r/\[([0-9A-Fa-f ]+),/, rest),
+         # Extract allkeys primary from comment [XXXX.YYYY.ZZZZ]
+         [_, allkeys_hex] <- Regex.run(~r/\[([0-9A-Fa-f]+)\.[0-9A-Fa-f]+\.[0-9A-Fa-f]+\]/, rest) do
+      frac_bytes =
+        frac_hex
+        |> String.trim()
+        |> String.split()
+        |> Enum.map(&String.to_integer(&1, 16))
+
+      frac_lead = hd(frac_bytes)
+      frac_sub = if length(frac_bytes) > 1, do: Enum.at(frac_bytes, 1), else: 0
+      allkeys_primary = String.to_integer(allkeys_hex, 16)
+
+      if allkeys_primary > 0 do
+        acc
+        |> Map.put_new(allkeys_primary, frac_lead)
+        |> Map.put_new({:sub, allkeys_primary}, frac_sub)
+      else
+        acc
+      end
+    else
+      _ -> acc
     end
   end
 
@@ -142,13 +273,7 @@ defmodule Cldr.Collation.Reorder do
     code
     |> String.downcase()
     |> case do
-      "latn" -> "latin"
-      "grek" -> "greek"
-      "cyrl" -> "cyrillic"
-      "hang" -> "hangul"
-      "hira" -> "hiragana"
-      "kana" -> "katakana"
-      "hani" -> "han"
+      "punct" -> "punctuation"
       other -> other
     end
   end
@@ -162,7 +287,7 @@ defmodule Cldr.Collation.Reorder do
   ### Returns
 
   A map `%{String.t() => {start_byte, end_byte}}` where keys are lowercase
-  script/group names and values are lead byte range tuples.
+  script/group names and values are fractional lead byte range tuples.
 
   ### Examples
 
@@ -181,6 +306,20 @@ defmodule Cldr.Collation.Reorder do
     end
   end
 
+  # Groups that are not reorderable scripts — these are metadata entries
+  # from FractionalUCA.txt that describe byte properties, not script assignments.
+  @non_reorderable_groups MapSet.new([
+                            "terminator",
+                            "level-separator",
+                            "field-separator",
+                            "compress",
+                            "implicit",
+                            "trailing",
+                            "special",
+                            "reorder_reserved_before_latin",
+                            "reorder_reserved_after_latin"
+                          ])
+
   defp parse_top_bytes(path) do
     path
     |> File.stream!()
@@ -188,7 +327,13 @@ defmodule Cldr.Collation.Reorder do
       case Regex.run(~r/^\[top_byte\s+([0-9A-Fa-f]+)\s+(.+?)\s*\]/, line) do
         [_, hex, group_name] ->
           byte = String.to_integer(hex, 16)
-          groups = group_name |> String.downcase() |> String.split() |> Enum.map(&String.trim/1)
+
+          groups =
+            group_name
+            |> String.downcase()
+            |> String.split()
+            |> Enum.map(&String.trim/1)
+            |> Enum.reject(&MapSet.member?(@non_reorderable_groups, &1))
 
           Enum.reduce(groups, acc, fn group, inner_acc ->
             case Map.get(inner_acc, group) do
@@ -214,19 +359,19 @@ defmodule Cldr.Collation.Reorder do
   end
 
   # Default ranges based on UCA 17.0.0
+  # Keys use the lowercased forms that match the parsed FractionalUCA.txt output.
   defp default_script_ranges do
     %{
-      "space" => {0x03, 0x04},
-      "punctuation" => {0x05, 0x0B},
-      "punct" => {0x05, 0x0B},
-      "symbol" => {0x0C, 0x0C},
-      "currency" => {0x0D, 0x0E},
+      "space" => {0x03, 0x0B},
+      "punctuation" => {0x03, 0x0B},
+      "symbol" => {0x0C, 0x0E},
+      "currency" => {0x0C, 0x0E},
       "digit" => {0x0F, 0x27},
-      "latin" => {0x2A, 0x5F},
-      "greek" => {0x61, 0x61},
-      "cyrillic" => {0x62, 0x62},
-      "han" => {0x81, 0xE3},
-      "hangul" => {0x7C, 0x7C}
+      "latn" => {0x2A, 0x5E},
+      "grek" => {0x61, 0x61},
+      "cyrl" => {0x62, 0x62},
+      "hani" => {0x81, 0xDF},
+      "hang" => {0x7C, 0x7C}
     }
   end
 
@@ -236,6 +381,7 @@ defmodule Cldr.Collation.Reorder do
   ### Arguments
 
   * `mapping_fn` - a reorder mapping function from `build_mapping/1`, or `nil`.
+
   * `primary` - the primary weight to remap.
 
   ### Returns

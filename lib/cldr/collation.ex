@@ -110,32 +110,60 @@ defmodule Cldr.Collation do
   ### Arguments
 
   * `string_a` - the first string to compare.
+
   * `string_b` - the second string to compare.
+
   * `options` - a keyword list of collation options.
 
   ### Options
 
-  * `:strength` - comparison level: `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`, or `:identical`.
+  * `:strength` - comparison level: `:primary`, `:secondary`, `:tertiary` (default), `:quaternary`,
+     or `:identical`.
+
   * `:alternate` - variable weight handling: `:non_ignorable` (default) or `:shifted`.
+
   * `:backwards` - reverse secondary weights for French sorting: `false` (default) or `true`.
+
   * `:normalization` - NFD normalize input: `false` (default) or `true`.
+
   * `:case_level` - insert case-only comparison level: `false` (default) or `true`.
+
   * `:case_first` - case ordering: `false` (default), `:upper`, or `:lower`.
+
   * `:numeric` - numeric string comparison: `false` (default) or `true`.
+
   * `:reorder` - list of script code atoms to reorder: `[]` (default).
-  * `:max_variable` - variable weight boundary: `:punct` (default), `:space`, `:symbol`, or `:currency`.
-  * `:locale` - a BCP47 locale string (e.g., `"en-u-ks-level2"`) or a `Cldr.LanguageTag` struct (when `ex_cldr` is available). When `ex_cldr` is loaded and a string is provided, it is parsed via `Cldr.Locale.canonical_language_tag/2` using the default CLDR backend.
-  * `:cldr_backend` - a CLDR backend module to use for locale parsing (e.g., `MyApp.Cldr`). Only used when `:locale` is a string. Defaults to `Cldr.default_backend!()`.
-  * `:ignore_accents` - `true` to ignore accent differences (sets `strength: :primary`). Explicit `:strength` takes precedence.
-  * `:ignore_case` - `true` to ignore case differences (sets `strength: :secondary`). Explicit `:strength` takes precedence.
-  * `:ignore_punctuation` - `true` to ignore punctuation and whitespace (sets `alternate: :shifted`). Explicit `:strength` or `:alternate` take precedence.
-  * `:casing` - `:sensitive` or `:insensitive` (convenience alias for strength, compatible with `ex_cldr_collation`).
+
+  * `:max_variable` - variable weight boundary: `:punct` (default), `:space`,
+    `:symbol`, or `:currency`.
+
+  * `:ignore_accents` - `true` to ignore accent differences (sets `strength: :primary`).
+    Explicit `:strength` takes precedence.
+
+  * `:ignore_case` - `true` to ignore case differences (sets `strength: :secondary`).
+    Explicit `:strength` takes precedence.
+
+  * `:ignore_punctuation` - `true` to ignore punctuation and whitespace (sets `alternate: :shifted`).
+    Explicit `:strength` or `:alternate` take precedence.
+
+  * `:casing` - `:sensitive` or `:insensitive` (convenience alias for strength, compatible
+    with `ex_cldr_collation`).
+
+  * `:locale` - a BCP47 locale string (e.g., `"en-u-ks-level2"`) or a `Cldr.LanguageTag`
+    struct (when `ex_cldr` is available). When `ex_cldr` is loaded and a string is provided,
+    it is parsed via `Cldr.Locale.canonical_language_tag/2` using the default CLDR backend.
+
+  * `:cldr_backend` - a CLDR backend module to use for locale parsing (e.g., `MyApp.Cldr`).
+    Only used when `:locale` is a string. Defaults to `Cldr.default_backend!()`.
+
   * `:backend` - `:default` (NIF if available), `:nif` (require NIF), or `:elixir` (pure Elixir).
 
   ### Returns
 
   * `:lt` - if `string_a` sorts before `string_b`.
+
   * `:eq` - if `string_a` and `string_b` are equal at the given strength.
+
   * `:gt` - if `string_a` sorts after `string_b`.
 
   ### Examples
@@ -176,7 +204,9 @@ defmodule Cldr.Collation do
   ### Arguments
 
   * `input` - a UTF-8 string or a list of integer codepoints.
-  * `options` - a keyword list of collation options, or a `%Cldr.Collation.Options{}` struct.
+
+  * `options` - a keyword list of collation options, or a `t:Cldr.Collation.Options.t/0`
+     struct.
 
   ### Options
 
@@ -184,7 +214,8 @@ defmodule Cldr.Collation do
 
   ### Returns
 
-  A binary sort key that can be compared with standard binary comparison operators.
+  A binary sort key that can be compared with standard binary
+  comparison operators.
 
   ### Examples
 
@@ -250,6 +281,7 @@ defmodule Cldr.Collation do
   ### Arguments
 
   * `strings` - a list of UTF-8 strings to sort.
+
   * `options` - a keyword list of collation options.
 
   ### Options

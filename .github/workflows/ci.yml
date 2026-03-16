@@ -105,4 +105,9 @@ jobs:
       env:
         CLDR_COLLATION_NIF: true
       run: mix test
+      
+   # Step: Dialyzer
+   - name: Dialyzer
+     run: mix dialyzer
+      
 

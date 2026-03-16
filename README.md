@@ -79,18 +79,38 @@ $ pkg-config --libs icu-uc icu-io
 iex> Cldr.Collation.sort(["café", "cafe", "Cafe"])
 ["cafe", "Cafe", "café"]
 
+# Cased comparisons
+
+iex> Cldr.Collation.sort(["café", "cafe", "Cafe"], case_first: :upper)
+["Cafe", "cafe", "café"]
+
 iex> Cldr.Collation.compare("café", "cafe")
 :gt
 
 iex> Cldr.Collation.compare("a", "A", casing: :insensitive)
 :eq
 
+# Numeric ordering
+iex> Cldr.Collation.sort(["Level 10", "Level 2"], numeric: true)
+["Level 2", "Level 10"]
+
+iex> Cldr.Collation.sort(["Level 10", "Level 2"], numeric: false)
+["Level 10", "Level 2"]
+
+# German phonebook ordering
+iex> words = ["Ärger", "Alter", "Ofen", "Öl", "Über", "Ulm"]
+
+iex> Cldr.Collation.sort(words)
+["Alter", "Ärger", "Ofen", "Öl", "Über", "Ulm"]
+
+iex> Cldr.Collation.sort(words, locale: "de-u-co-phonebk")
+["Ärger", "Alter", "Öl", "Ofen", "Über", "Ulm"]
+
+# Locale-based ordering
 iex> Cldr.Collation.compare("a", "A", locale: "en-u-ks-level2")
 :eq
 
-iex> Enum.sort(["c", "a", "b"], Cldr.Collation.Sensitive)
-["a", "b", "c"]
-
+# Sort key generation
 iex> Cldr.Collation.sort_key("hello")
 <<36, 196, 36, 83, 37, 40, 37, 40, 37, 152, 0, 0, 0, 32, 0, 32, 0, 32, 0, 32, 0,
   32, 0, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2>>

@@ -103,8 +103,8 @@ defmodule Cldr.Collation.Normalizer do
   end
 
   defp reorder_pass([a, b | rest], swapped) do
-    ccc_a = Unicode.CanonicalCombiningClass.combining_class(a) || 0
-    ccc_b = Unicode.CanonicalCombiningClass.combining_class(b) || 0
+    ccc_a = combining_class(a)
+    ccc_b = combining_class(b)
 
     if ccc_a > ccc_b and ccc_b > 0 do
       {tail, s} = reorder_pass([a | rest], true)
@@ -117,4 +117,14 @@ defmodule Cldr.Collation.Normalizer do
 
   defp reorder_pass([cp], swapped), do: {[cp], swapped}
   defp reorder_pass([], swapped), do: {[], swapped}
+
+  # The upstream typespec doesn't include nil, but the function can return
+  # nil for unassigned codepoints.
+  @dialyzer {:nowarn_function, combining_class: 1}
+  defp combining_class(cp) do
+    case Unicode.CanonicalCombiningClass.combining_class(cp) do
+      nil -> 0
+      ccc -> ccc
+    end
+  end
 end

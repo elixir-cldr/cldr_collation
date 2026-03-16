@@ -66,8 +66,7 @@ defmodule Cldr.Collation.MixProject do
         "mix.exs",
         "README*",
         "CHANGELOG*",
-        "LICENSE*",
-        "COLLATION_OPTIONS.md"
+        "LICENSE*"
       ]
     ]
   end

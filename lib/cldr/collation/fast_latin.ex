@@ -88,8 +88,14 @@ defmodule Cldr.Collation.FastLatin do
   # Characters with canonical combining class > 0 in the Basic Latin
   # and Latin Extended-A range. These are the combining diacritical
   # marks that appear in U+0000..U+017F after NFD decomposition.
+  # The upstream typespec doesn't include nil, but the function can return
+  # nil for unassigned codepoints.
+  @dialyzer {:nowarn_function, combining_mark?: 1}
   defp combining_mark?(cp) do
-    ccc = Unicode.CanonicalCombiningClass.combining_class(cp)
-    ccc != nil and ccc > 0
+    case Unicode.CanonicalCombiningClass.combining_class(cp) do
+      nil -> false
+      0 -> false
+      _ccc -> true
+    end
   end
 end

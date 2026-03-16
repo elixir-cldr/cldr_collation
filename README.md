@@ -115,8 +115,7 @@ The collation options are summarised here. See the [detailed explanation](collat
 | `backend`       | `:default`, `:nif`, `:elixir`                                | `:default`         |
 | `locale`        | BCP47 string (e.g., `"da"`, `"en-u-ks-level2"`)             | `nil`              |
 
-The `casing` option is a convenience alias compatible with `ex_cldr_collation`:
-`casing: :insensitive` is equivalent to `strength: :secondary`.
+The `casing` option is a convenience alias. `casing: :insensitive` is equivalent to `strength: :secondary`.
 
 ## NIF Backend
 

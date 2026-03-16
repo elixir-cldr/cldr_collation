@@ -352,7 +352,7 @@ defmodule Cldr.Collation.Han do
   end
 
   defp fractional_uca_path do
-    case :code.priv_dir(:cldr_collation) do
+    case :code.priv_dir(:ex_cldr_collation) do
       {:error, :bad_name} -> Path.join([File.cwd!(), "priv", "FractionalUCA.txt"])
       priv_dir -> Path.join(priv_dir, "FractionalUCA.txt")
     end

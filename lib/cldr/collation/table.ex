@@ -415,7 +415,7 @@ defmodule Cldr.Collation.Table do
   end
 
   defp data_path(filename) do
-    case :code.priv_dir(:cldr_collation) do
+    case :code.priv_dir(:ex_cldr_collation) do
       {:error, :bad_name} ->
         Path.join([File.cwd!(), "priv", filename])
 

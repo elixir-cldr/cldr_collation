@@ -76,28 +76,24 @@ $ pkg-config --libs icu-uc icu-io
 ## Example Usage
 
 ```elixir
-# Sort a list of strings
-Cldr.Collation.sort(["café", "cafe", "Cafe"])
-#=> ["cafe", "Cafe", "café"]
+iex> Cldr.Collation.sort(["café", "cafe", "Cafe"])
+["cafe", "Cafe", "café"]
 
-# Compare two strings
-Cldr.Collation.compare("café", "cafe")
-#=> :gt
+iex> Cldr.Collation.compare("café", "cafe")
+:gt
 
-# Case-insensitive comparison
-Cldr.Collation.compare("a", "A", casing: :insensitive)
-#=> :eq
+iex> Cldr.Collation.compare("a", "A", casing: :insensitive)
+:eq
 
-# With BCP47 locale
-Cldr.Collation.compare("a", "A", locale: "en-u-ks-level2")
-#=> :eq
+iex> Cldr.Collation.compare("a", "A", locale: "en-u-ks-level2")
+:eq
 
-# Use as an Enum.sort comparator
-Enum.sort(["c", "a", "b"], Cldr.Collation.Sensitive)
-#=> ["a", "b", "c"]
+iex> Enum.sort(["c", "a", "b"], Cldr.Collation.Sensitive)
+["a", "b", "c"]
 
-# Generate sort keys for efficient batch comparisons
-key = Cldr.Collation.sort_key("hello")
+iex> Cldr.Collation.sort_key("hello")
+<<36, 196, 36, 83, 37, 40, 37, 40, 37, 152, 0, 0, 0, 32, 0, 32, 0, 32, 0, 32, 0,
+  32, 0, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2>>
 ```
 
 ## Options

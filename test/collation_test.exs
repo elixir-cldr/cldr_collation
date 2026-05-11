@@ -74,13 +74,17 @@ defmodule Cldr.CollationTest do
     end
 
     test "raises with a helpful message on non-binary arguments" do
-      assert_raise ArgumentError, ~r/requires binary arguments.+Cldr\.Collation\.Insensitive/s, fn ->
-        Cldr.Collation.compare(true, false)
-      end
+      assert_raise ArgumentError,
+                   ~r/requires binary arguments.+Cldr\.Collation\.Insensitive/s,
+                   fn ->
+                     Cldr.Collation.compare(true, false)
+                   end
 
-      assert_raise ArgumentError, ~r/requires binary arguments.+Cldr\.Collation\.Insensitive/s, fn ->
-        Cldr.Collation.compare({:tag, "x"}, {:tag, "y"})
-      end
+      assert_raise ArgumentError,
+                   ~r/requires binary arguments.+Cldr\.Collation\.Insensitive/s,
+                   fn ->
+                     Cldr.Collation.compare({:tag, "x"}, {:tag, "y"})
+                   end
     end
   end
 

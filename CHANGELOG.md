@@ -1,5 +1,13 @@
 # Changelog
 
+## Ex_Cldr_Collation v1.1.0
+
+This is the changelog for Ex_Cldr_Collation v1.1.0 released on May 11th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)
+
+### Bug Fixes
+
+* `Cldr.Collation.Insensitive.compare/2` now accepts any term, falling back to Erlang term order when either argument is non-binary so it can be used safely as a comparator with `Enum.sort_by/3` and multi-key sort functions. `Cldr.Collation.compare/3` and `sort_key/2` now raise a clear `ArgumentError` (instead of crashing in internal lookup) when given non-binary input. Thanks to @tjchambers for the report. Closes #20.
+
 ## Ex_Cldr_Collation v1.0.0
 
 This is the changelog for Ex_Cldr_Collation v1.0.0 released on March 17th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_collation/tags)

@@ -92,6 +92,59 @@ defmodule Cldr.Collation.NifTest do
     test "case-insensitive ordering treats a and A as equal" do
       assert Cldr.Collation.Insensitive.compare("a", "A") == :eq
     end
+
+    # Regression tests for elixir-cldr/cldr_collation#20:
+    # Cldr.Collation.Insensitive must not crash when used as the comparator
+    # to Enum.sort_by/3 with a multi-key sort function returning mixed terms.
+    # When either argument is non-binary it falls back to Erlang term order.
+    test "compare/2 falls back to term order for booleans" do
+      assert Cldr.Collation.Insensitive.compare(true, false) == :gt
+      assert Cldr.Collation.Insensitive.compare(false, true) == :lt
+      assert Cldr.Collation.Insensitive.compare(true, true) == :eq
+    end
+
+    test "compare/2 falls back to term order for integers (numeric, not lex)" do
+      # Lexicographic would put "100" before "99". Numeric (term order) gets it right.
+      assert Cldr.Collation.Insensitive.compare(99, 100) == :lt
+      assert Cldr.Collation.Insensitive.compare(100, 99) == :gt
+      assert Cldr.Collation.Insensitive.compare(42, 42) == :eq
+    end
+
+    test "compare/2 falls back to term order for atoms" do
+      assert Cldr.Collation.Insensitive.compare(:apple, :banana) == :lt
+      assert Cldr.Collation.Insensitive.compare(:banana, :apple) == :gt
+    end
+
+    test "compare/2 falls back to term order for tuples" do
+      assert Cldr.Collation.Insensitive.compare({:raw_seed, "Alice"}, {:raw_seed, "Bob"}) == :lt
+      assert Cldr.Collation.Insensitive.compare({:a, 1}, {:a, 1}) == :eq
+    end
+
+    test "compare/2 doesn't crash on mixed-type arguments" do
+      # Erlang term ordering across types is consistent (numbers < atoms < binaries < ...).
+      # Whatever it returns, we must not crash.
+      assert Cldr.Collation.Insensitive.compare(1, :atom) in [:lt, :gt, :eq]
+      assert Cldr.Collation.Insensitive.compare("string", :atom) in [:lt, :gt, :eq]
+    end
+
+    test "Enum.sort_by/3 with multi-key tuple of mixed types (issue #20 repro)" do
+      participants = [
+        %{saved: false, visited: true, a: 1, b: 0, name: "Alice"},
+        %{saved: true, visited: false, a: 0, b: 1, name: "bob"},
+        %{saved: false, visited: false, a: 2, b: 0, name: "alice"}
+      ]
+
+      sorted =
+        Enum.sort_by(
+          participants,
+          fn %{saved: s, visited: v, a: a, b: b, name: n} -> [s, v, a, b, n] end,
+          Cldr.Collation.Insensitive
+        )
+
+      # saved:false sorts before saved:true → Alice & alice before bob.
+      # Among those, visited:false ("alice") sorts before visited:true ("Alice").
+      assert Enum.map(sorted, & &1.name) == ["alice", "Alice", "bob"]
+    end
   end
 
   describe "Options.nif_compatible?/1" do

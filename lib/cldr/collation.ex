@@ -184,7 +184,9 @@ defmodule Cldr.Collation do
 
   """
   @spec compare(String.t(), String.t(), keyword() | Options.t()) :: :lt | :eq | :gt
-  def compare(string_a, string_b, options \\ []) do
+  def compare(string_a, string_b, options \\ [])
+
+  def compare(string_a, string_b, options) when is_binary(string_a) and is_binary(string_b) do
     options = resolve_options(options)
 
     if use_nif?(options) do
@@ -199,6 +201,10 @@ defmodule Cldr.Collation do
         true -> :eq
       end
     end
+  end
+
+  def compare(a, b, _options) do
+    raise ArgumentError, non_binary_argument_message(:compare, a, b)
   end
 
   @doc """
@@ -260,6 +266,24 @@ defmodule Cldr.Collation do
       end
 
     build_sort_key(codepoints, options, nil)
+  end
+
+  def sort_key(input, %Options{}) do
+    raise ArgumentError, non_binary_argument_message(:sort_key, input)
+  end
+
+  defp non_binary_argument_message(function, a, b) do
+    "Cldr.Collation.#{function}/3 requires binary arguments. " <>
+      "Got: #{inspect(a)}, #{inspect(b)}. " <>
+      "For Enum.sort_by/3 with mixed-type sort keys use Cldr.Collation.Insensitive " <>
+      "which falls back to Erlang term order for non-binary terms."
+  end
+
+  defp non_binary_argument_message(function, input) do
+    "Cldr.Collation.#{function}/2 requires a binary or list of codepoints. " <>
+      "Got: #{inspect(input)}. " <>
+      "For Enum.sort_by/3 with mixed-type sort keys use Cldr.Collation.Insensitive " <>
+      "which falls back to Erlang term order for non-binary terms."
   end
 
   defp build_sort_key(codepoints, options, original_string) do

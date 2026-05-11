@@ -72,6 +72,16 @@ defmodule Cldr.CollationTest do
     test "sorts empty strings" do
       assert Cldr.Collation.sort(["b", "", "a"]) == ["", "a", "b"]
     end
+
+    test "raises with a helpful message on non-binary arguments" do
+      assert_raise ArgumentError, ~r/requires binary arguments.+Cldr\.Collation\.Insensitive/s, fn ->
+        Cldr.Collation.compare(true, false)
+      end
+
+      assert_raise ArgumentError, ~r/requires binary arguments.+Cldr\.Collation\.Insensitive/s, fn ->
+        Cldr.Collation.compare({:tag, "x"}, {:tag, "y"})
+      end
+    end
   end
 
   describe "sort_key/2" do
@@ -92,6 +102,16 @@ defmodule Cldr.CollationTest do
     test "empty string produces a sort key" do
       key = Cldr.Collation.sort_key("")
       assert is_binary(key)
+    end
+
+    test "raises with a helpful message on non-binary, non-codepoint-list input" do
+      assert_raise ArgumentError, ~r/requires a binary or list of codepoints/, fn ->
+        Cldr.Collation.sort_key(true)
+      end
+
+      assert_raise ArgumentError, ~r/requires a binary or list of codepoints/, fn ->
+        Cldr.Collation.sort_key({:tag, "x"})
+      end
     end
   end
 end
